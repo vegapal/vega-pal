@@ -63,7 +63,10 @@ function ForgotPassword() {
     setLoading(true);
     try {
       await turnstile.verifyBeforeAuth();
-      await auth.resetPassword(parsed.data.email.toLowerCase());
+      await auth.resetPassword(
+        parsed.data.email.toLowerCase(),
+        turnstile.enabled ? turnstile.token : undefined,
+      );
       setSent(true);
     } catch (err) {
       turnstile.reset();

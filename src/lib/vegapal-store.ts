@@ -15,6 +15,7 @@ import {
   FREE_PLAN_LIMIT_MESSAGE,
   type InvoicePlanUsage,
 } from "@/lib/plan/invoice-limit";
+import { authApiRequest } from "@/lib/auth/auth-client";
 import {
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_INVOICE_CURRENCY,
@@ -437,31 +438,56 @@ export function useSession() {
 
 // ---------- Auth actions ----------
 export const auth = {
-  async signUp(email: string, password: string, name: string, business?: string) {
-    const redirectTo = getEmailConfirmRedirectUrl();
-    logAuthRedirect("signUp", redirectTo);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectTo, data: { name, business: business ?? "" } },
+  async signUp(
+    email: string,
+    password: string,
+    name: string,
+    business?: string,
+    turnstileToken?: string,
+  ) {
+    logAuthRedirect("signUp", getEmailConfirmRedirectUrl());
+    await authApiRequest("/api/auth/signup", {
+      method: "POST",
+      json: {
+        email,
+        password,
+        name,
+        business,
+        confirmPassword: password,
+        turnstileToken,
+      },
     });
-    if (error) throw error;
-    if (data.user?.identities?.length === 0) {
-      const dup = new Error("User already registered") as Error & { code?: string };
-      dup.code = "user_already_exists";
-      throw dup;
-    }
     await supabase.auth.signOut();
     cachedProfile = null;
     cachedPendingEmailConfirmation = false;
     cachedAuthEmail = null;
     notifySession();
-    return data;
+    return { user: null };
   },
-  async signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    if (data.user && !isEmailConfirmed(data.user)) {
+  async signIn(email: string, password: string, turnstileToken?: string) {
+    const result = await authApiRequest<{
+      session: {
+        access_token: string;
+        refresh_token: string;
+        expires_in?: number;
+        expires_at?: number;
+        token_type?: string;
+      };
+      user: { id: string; email: string | null } | null;
+    }>("/api/auth/login", {
+      method: "POST",
+      json: { email, password, turnstileToken },
+    });
+
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: result.session.access_token,
+      refresh_token: result.session.refresh_token,
+    });
+    if (sessionError) throw sessionError;
+
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (user && !isEmailConfirmed(user)) {
       await supabase.auth.signOut();
       cachedProfile = null;
       cachedPendingEmailConfirmation = false;
@@ -471,7 +497,7 @@ export const auth = {
       unconfirmed.code = "email_not_confirmed";
       throw unconfirmed;
     }
-    const profile = data.user ? await loadProfile(data.user) : null;
+    const profile = user ? await loadProfile(user) : null;
     if (profile?.isDisabled) {
       await supabase.auth.signOut();
       cachedProfile = null;
@@ -482,30 +508,33 @@ export const auth = {
       disabled.code = "account_disabled";
       throw disabled;
     }
-    return data;
+    return { user, session: result.session };
   },
   async signOut() {
+    try {
+      await authApiRequest("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Best-effort; always clear local session.
+    }
     await supabase.auth.signOut();
     cachedProfile = null;
     cachedPendingEmailConfirmation = false;
     cachedAuthEmail = null;
     notifySession();
   },
-  async resetPassword(email: string) {
-    const redirectTo = getPasswordResetRedirectUrl();
-    logAuthRedirect("resetPassword", redirectTo);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    if (error) throw error;
+  async resetPassword(email: string, turnstileToken?: string) {
+    logAuthRedirect("resetPassword", getPasswordResetRedirectUrl());
+    await authApiRequest("/api/auth/forgot-password", {
+      method: "POST",
+      json: { email, turnstileToken },
+    });
   },
   async resendConfirmationEmail(email: string) {
-    const redirectTo = getEmailConfirmRedirectUrl();
-    logAuthRedirect("resend", redirectTo);
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: { emailRedirectTo: redirectTo },
+    logAuthRedirect("resend", getEmailConfirmRedirectUrl());
+    await authApiRequest("/api/auth/resend-confirmation", {
+      method: "POST",
+      json: { email },
     });
-    if (error) throw error;
   },
   async updateProfile(patch: Partial<User>) {
     const { data: u } = await supabase.auth.getUser();

@@ -1,5 +1,6 @@
 import type { AuthError } from "@supabase/supabase-js";
 import type { z } from "zod";
+import { AuthApiError } from "@/lib/auth/auth-api-error";
 
 const FALLBACK = "Something went wrong. Please try again.";
 
@@ -107,7 +108,7 @@ function mapSupabaseAuthMessage(message: string): string {
   if (lower.includes("no password recovery token")) {
     return "Open the password reset link from your email, or request a new one.";
   }
-  if (lower.includes("failed to fetch") || lower.includes("network")) {
+  if (lower.includes("failed to fetch") || lower.includes("fetch failed") || lower.includes("network")) {
     return "Network error. Check your connection and try again.";
   }
   if (lower.includes("captcha")) {
@@ -126,6 +127,10 @@ export function formatAuthError(err: unknown): string {
   }
 
   if (typeof err === "object" && err !== null) {
+    if (err instanceof AuthApiError && err.code) {
+      const fromCode = mapSupabaseAuthCode(err.code);
+      if (fromCode) return fromCode;
+    }
     const authErr = err as AuthError;
     if (typeof authErr.code === "string") {
       const fromCode = mapSupabaseAuthCode(authErr.code);

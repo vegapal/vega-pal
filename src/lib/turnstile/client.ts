@@ -19,7 +19,16 @@ export async function verifyTurnstileOnServer(token: string): Promise<void> {
   });
 
   if (!response.ok) {
-    const data = (await response.json().catch(() => ({}))) as { error?: string };
-    throw new Error(data.error ?? "Captcha verification failed. Please try again.");
+    const text = await response.text();
+    let message = "Captcha verification failed. Please try again.";
+    try {
+      const data = JSON.parse(text) as { error?: string };
+      if (data.error) message = data.error;
+    } catch {
+      if (response.status === 503 || text.includes("FUNCTION_INVOCATION_FAILED")) {
+        message = "Service temporarily unavailable. Please try again in a moment.";
+      }
+    }
+    throw new Error(message);
   }
 }

@@ -9,7 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test:auth-api": "node scripts/qa-auth-api.mjs",
+    "test:smoke": "node scripts/qa-smoke.mjs",
+    "test:auth": "node scripts/qa-auth.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -70,12 +70,29 @@ export default {
         return await applySecurityHeaders(response);
       }
 
+      if (url.pathname.startsWith("/api/auth")) {
+        const { handleAuthApiRequest } = await import("@/lib/auth/auth-api.server");
+        const response = await handleAuthApiRequest(request);
+        return await applySecurityHeaders(response);
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(response);
       return await applySecurityHeaders(normalized);
     } catch (error) {
       console.error(error);
+      const pathname = new URL(request.url).pathname;
+      if (pathname.startsWith("/api/")) {
+        const apiHeaders = new Headers({
+          "content-type": "application/json; charset=utf-8",
+        });
+        applySecurityHeadersTo(apiHeaders);
+        return new Response(
+          JSON.stringify({ error: "Internal server error", code: "internal_error" }),
+          { status: 500, headers: apiHeaders },
+        );
+      }
       const errorHeaders = new Headers({
         "content-type": "text/html; charset=utf-8",
       });

@@ -81,6 +81,7 @@ function RegisterPage() {
         data.password,
         data.name,
         data.business || undefined,
+        turnstile.enabled ? turnstile.token : undefined,
       );
       setRegisteredEmail(data.email.toLowerCase());
       setRegistered(true);

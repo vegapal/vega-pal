@@ -67,6 +67,31 @@ const envBools = Object.fromEntries(envKeys.map((k) => [k, !!process.env[k]]));
 console.log("\n=== Env presence (booleans only) ===");
 console.log(JSON.stringify(envBools));
 
+// --- Auth API ---
+try {
+  const invalidSignup = await fetchJson("/api/auth/signup", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: "bad", password: "x", name: "" }),
+  });
+  if (invalidSignup.res.status === 400 && invalidSignup.json?.error) {
+    pass("auth signup invalid", "400 JSON");
+  } else if (invalidSignup.text.includes("<!DOCTYPE")) {
+    fail("auth signup invalid", "HTML response");
+  } else {
+    fail("auth signup invalid", String(invalidSignup.res.status));
+  }
+
+  const unauthSession = await fetchJson("/api/auth/session");
+  if (unauthSession.res.status === 401 && unauthSession.json?.error) {
+    pass("auth session 401 JSON");
+  } else {
+    fail("auth session 401 JSON", String(unauthSession.res.status));
+  }
+} catch (e) {
+  fail("auth API", e.message);
+}
+
 // --- Health ---
 try {
   const { res, json, text } = await fetchJson("/api/health");
