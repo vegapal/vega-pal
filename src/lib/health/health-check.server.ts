@@ -1,3 +1,5 @@
+import { safeNetworkErrorFields } from "@/lib/health/network-error-log.server";
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -16,6 +18,17 @@ export async function handleHealthCheckRequest(): Promise<Response> {
     turnstileSiteKey: !!(process.env.VITE_TURNSTILE_SITE_KEY),
   };
 
+  const { probeSupabaseUrlConfig, describeProfilesProbeTarget } = await import(
+    "@/lib/health/supabase-url-probe.server"
+  );
+  const urlDebug = await probeSupabaseUrlConfig();
+  const probeTarget = describeProfilesProbeTarget(urlDebug.host);
+  console.error("[health] supabase url debug (temporary)", {
+    ...urlDebug,
+    profilesProbeTarget: probeTarget,
+    serviceRoleKeyDefined: env.supabaseServiceRoleKey,
+  });
+
   let supabaseReachable = false;
   if (env.supabaseUrl && env.supabaseServiceRoleKey) {
     try {
@@ -25,19 +38,24 @@ export async function handleHealthCheckRequest(): Promise<Response> {
         .select("id", { count: "exact", head: true })
         .limit(1);
       if (error) {
+        const wrapped = new Error(error.message);
         console.error("[health] supabase profiles probe failed", {
-          code: error.code,
-          message: error.message,
+          postgrestCode: error.code,
+          postgrestDetails: error.details,
+          postgrestHint: error.hint,
+          ...safeNetworkErrorFields(wrapped),
         });
         supabaseReachable = false;
       } else {
         supabaseReachable = true;
       }
     } catch (probeError) {
-      console.error(
-        "[health] supabase client init or probe failed",
-        probeError instanceof Error ? probeError.message : probeError,
-      );
+      console.error("[health] supabase client init or probe failed", {
+        ...safeNetworkErrorFields(probeError),
+        profilesProbeTarget: probeTarget,
+        dnsResolved: urlDebug.dnsResolved,
+        dnsErrorCode: urlDebug.dnsErrorCode,
+      });
       supabaseReachable = false;
     }
   } else {

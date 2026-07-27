@@ -1,25 +1,23 @@
-# Database migration — manual run (required)
+# Database migration — manual run
 
-Automated `node scripts/run-migrations.mjs` could not connect: **password authentication failed** on the pooler (`aws-1-ap-south-1`). The REST API is live, but **no tables exist yet** (empty database).
+> **Prefer:** [`docs/MIGRATION_GUIDE.md`](./MIGRATION_GUIDE.md) and **`docs/BOOTSTRAP_FRESH_DATABASE.sql`** (regenerate with `npm run db:bootstrap`).
 
 ## Run migrations in Supabase SQL Editor
 
-1. Open [Supabase Dashboard](https://supabase.com/dashboard/project/rudqfhqawqmhclqmaflj/sql/new)
-2. Paste the full contents of **`docs/MIGRATION_ALL.sql`**
-3. Click **Run**
-4. Confirm no errors
+1. Create a **new** Supabase project (you own the org account).
+2. Open **SQL → New query** in that project’s dashboard.
+3. Paste the full contents of **`docs/BOOTSTRAP_FRESH_DATABASE.sql`**.
+4. Click **Run** and confirm no errors.
 
-That file runs all 5 repository migrations in order (no schema changes beyond existing migration files).
+## Optional: CLI runner
 
-## Optional: fix database password for CLI
-
-1. **Project Settings → Database → Reset database password**
+1. **Project Settings → Database** — copy database password and pooler host (region-specific).
 2. Add to `.env.local`:
    ```
-   SUPABASE_DB_PASSWORD=your-new-password
-   SUPABASE_DB_HOST=aws-1-ap-south-1.pooler.supabase.com
+   SUPABASE_URL=https://<project-ref>.supabase.co
+   SUPABASE_DB_PASSWORD=your-database-password
+   SUPABASE_DB_POOLER_HOST=<from-dashboard-session-pooler-host>
    ```
-   (Use the **Session pooler** host from the dashboard if different.)
 3. Run:
    ```bash
    node scripts/run-migrations.mjs
@@ -29,19 +27,7 @@ That file runs all 5 repository migrations in order (no schema changes beyond ex
 
 ## After migrations
 
-### Register migration history (optional, for Supabase CLI)
-
-```sql
-INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
-  ('20260624073831', '6545babe-9c15-45c1-91aa-19476cbe6545'),
-  ('20260624073841', 'bdff3ce9-427f-42e7-830d-f852b5581113'),
-  ('20260625120000', 'invoice_phase1'),
-  ('20260626120000', 'tighten_public_invoice_rls'),
-  ('20260627120000', 'admin_plans')
-ON CONFLICT (version) DO NOTHING;
-```
-
-(Run only after `MIGRATION_ALL.sql` succeeds. The runner script creates this table automatically when using CLI.)
+See **Final verification** in [`MIGRATION_GUIDE.md`](./MIGRATION_GUIDE.md).
 
 ### First admin user
 
@@ -56,6 +42,7 @@ UPDATE public.profiles SET role = 'admin' WHERE email = 'your@email.com';
 **Authentication → URL Configuration** — add:
 
 - `http://localhost:5173/**`
+- `http://localhost:8080/**`
 - `https://vega-pal.com/**`
 - `https://www.vega-pal.com/**`
 - `https://*.vercel.app/**`

@@ -13,7 +13,10 @@
     "typecheck": "tsc --noEmit",
     "test:auth-api": "node scripts/qa-auth-api.mjs",
     "test:smoke": "node scripts/qa-smoke.mjs",
-    "test:auth": "node scripts/qa-auth.mjs"
+    "test:auth": "node scripts/qa-auth.mjs",
+    "db:bootstrap": "node scripts/build-bootstrap-sql.mjs",
+    "db:migrate": "node scripts/run-migrations.mjs",
+    "db:check-refs": "node scripts/check-hardcoded-supabase-refs.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

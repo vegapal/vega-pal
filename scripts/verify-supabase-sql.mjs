@@ -5,6 +5,7 @@
  *   SUPABASE_DB_PASSWORD=... node scripts/verify-supabase-sql.mjs
  */
 import pg from "pg";
+import { resolveSupabaseProjectRef } from "./lib/supabase-project-ref.mjs";
 
 const regions = [
   "us-east-1",
@@ -27,7 +28,7 @@ async function discoverConnectionString(explicit) {
       "Set SUPABASE_DB_PASSWORD in .env.local or pass a connection string as the first argument.",
     );
   }
-  const ref = process.env.SUPABASE_PROJECT_REF || "rudqfhqawqmhclqmaflj";
+  const ref = resolveSupabaseProjectRef();
   const encoded = encodeURIComponent(password);
   const candidates = [
     `postgresql://postgres:${encoded}@db.${ref}.supabase.co:5432/postgres`,

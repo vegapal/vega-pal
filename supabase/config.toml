@@ -1,1 +1,3 @@
-project_id = "rudqfhqawqmhclqmaflj"
+# Local Supabase CLI — set project_id when you link a project (`supabase link --project-ref <ref>`).
+# Do not commit a real production project ref; use env vars for deployed apps.
+project_id = "local-dev"

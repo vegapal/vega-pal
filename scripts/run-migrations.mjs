@@ -6,6 +6,7 @@ import pg from "pg";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { resolveSupabaseProjectRef } from "./lib/supabase-project-ref.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(__dirname, "..", "supabase", "migrations");
@@ -26,7 +27,7 @@ const regions = [
 async function discoverConnectionString(explicit) {
   if (explicit) return explicit;
 
-  const ref = "rudqfhqawqmhclqmaflj";
+  const ref = resolveSupabaseProjectRef();
   const password = process.env.SUPABASE_DB_PASSWORD;
   if (!password && !explicit) {
     throw new Error("Set SUPABASE_DB_PASSWORD in .env.local (Database password from Supabase Dashboard).");
@@ -34,6 +35,22 @@ async function discoverConnectionString(explicit) {
   const dbPassword = password || "";
 
   const directConfigs = [
+    ...(process.env.SUPABASE_DB_POOLER_HOST
+      ? [
+          {
+            label: "pooler-env-session",
+            host: process.env.SUPABASE_DB_POOLER_HOST.trim(),
+            port: 5432,
+            user: `postgres.${ref}`,
+          },
+          {
+            label: "pooler-env-tx",
+            host: process.env.SUPABASE_DB_POOLER_HOST.trim(),
+            port: 6543,
+            user: `postgres.${ref}`,
+          },
+        ]
+      : []),
     {
       label: "pooler-ap-south-1-session",
       host: "aws-1-ap-south-1.pooler.supabase.com",

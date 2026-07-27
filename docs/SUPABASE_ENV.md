@@ -1,5 +1,7 @@
 # Supabase & Vercel environment variables
 
+**Migrating to a new project?** Start with [`docs/MIGRATION_GUIDE.md`](./MIGRATION_GUIDE.md).
+
 VegaPal reads Supabase config from environment variables. After migrating to a new Supabase project, update **all** of the following.
 
 ## Variable reference
@@ -61,11 +63,21 @@ Add **Redirect URLs**:
 
 ## Database migrations
 
-Schema is managed only via files in `supabase/migrations/`. On a **new** Supabase project, run `docs/MIGRATION_ALL.sql` in the SQL Editor (see `docs/MIGRATION_MANUAL.md`).
+Schema is managed only via files in `supabase/migrations/`. On a **new** Supabase project, run **`docs/BOOTSTRAP_FRESH_DATABASE.sql`** in the SQL Editor (see [`docs/MIGRATION_GUIDE.md`](./MIGRATION_GUIDE.md)).
 
-**Current project:** `rudqfhqawqmhclqmaflj` (`supabase/config.toml`)
+Regenerate the bootstrap file after editing migrations:
 
-**Replaced project:** `fqelxvilafgnuupqlkwm` (old Lovable-managed — retire after Vercel env update)
+```bash
+npm run db:bootstrap
+```
+
+Optional script env (local migrations only — never commit passwords):
+
+| Variable | Purpose |
+|----------|---------|
+| `SUPABASE_PROJECT_REF` | Project ref; auto-derived from `SUPABASE_URL` if omitted |
+| `SUPABASE_DB_PASSWORD` | Postgres password for `run-migrations.mjs` / `verify-supabase-sql.mjs` |
+| `SUPABASE_DB_POOLER_HOST` | Session pooler hostname from Supabase Dashboard |
 
 ## Storage
 

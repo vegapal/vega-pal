@@ -4,6 +4,7 @@
  */
 import { readFileSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
+import { resolveSupabaseProjectRef } from "./lib/supabase-project-ref.mjs";
 
 const base = process.argv[2] ?? "http://localhost:8080";
 
@@ -231,7 +232,7 @@ for (const v of ["20260630120000_invoice_plan_limit.sql", "20260630140000_admin_
 if (process.env.SUPABASE_DB_PASSWORD) {
   try {
     const { default: pg } = await import("pg");
-    const ref = "rudqfhqawqmhclqmaflj";
+    const ref = resolveSupabaseProjectRef();
     const encoded = encodeURIComponent(process.env.SUPABASE_DB_PASSWORD);
     const connStr = `postgresql://postgres:${encoded}@db.${ref}.supabase.co:5432/postgres`;
     const client = new pg.Client({ connectionString: connStr, ssl: { rejectUnauthorized: false } });

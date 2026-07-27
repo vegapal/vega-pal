@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import pg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
+import { resolveSupabaseProjectRef } from "./lib/supabase-project-ref.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,7 +21,7 @@ if (!password) {
   process.exit(1);
 }
 
-const ref = process.env.SUPABASE_PROJECT_REF || "rudqfhqawqmhclqmaflj";
+const ref = resolveSupabaseProjectRef();
 const version = "20260630120000";
 const file = "20260630120000_invoice_plan_limit.sql";
 const sql = readFileSync(path.join(__dirname, "..", "supabase", "migrations", file), "utf8");
