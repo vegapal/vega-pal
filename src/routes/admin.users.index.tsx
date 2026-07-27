@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, UserSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/form-error";
@@ -85,7 +85,7 @@ function AdminUsersPage() {
   useEffect(() => {
     if (!deleted) return;
     const timer = window.setTimeout(() => {
-      navigate({ to: "/admin/users", search: {}, replace: true });
+      navigate({ to: "/admin/users", search: { deleted: false }, replace: true });
     }, 0);
     return () => window.clearTimeout(timer);
   }, [deleted, navigate]);
@@ -172,7 +172,19 @@ function AdminUsersPage() {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-6">
-                    <EmptyState title={emptyTitle} />
+                    <EmptyState
+                      icon={UserSearch}
+                      title={emptyTitle}
+                      description={
+                        hasFilters
+                          ? t("users.emptySearchDescription", {
+                              defaultValue: "Try changing or clearing your search filters.",
+                            })
+                          : t("users.emptyDescription", {
+                              defaultValue: "No users have joined VegaPal yet.",
+                            })
+                      }
+                    />
                   </td>
                 </tr>
               ) : (

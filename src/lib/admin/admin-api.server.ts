@@ -1,4 +1,5 @@
-import type { TablesUpdate } from "@/integrations/supabase/types";
+import type { TablesUpdate, Database } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UserPlan } from "@/lib/admin/plans";
 import { normalizeUserPlan } from "@/lib/admin/plans";
 import { requireAdminFromRequest } from "@/lib/admin/admin-auth.server";
@@ -82,7 +83,7 @@ function startOfUtcNextMonth() {
 }
 
 async function countInvoicesThisMonth(
-  supabaseAdmin: Awaited<ReturnType<typeof import("@/integrations/supabase/client.server")>>["supabaseAdmin"],
+  supabaseAdmin: SupabaseClient<Database>,
   userId: string,
 ) {
   const { count, error } = await supabaseAdmin

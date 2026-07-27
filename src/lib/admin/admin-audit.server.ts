@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 export type AuditAction = "plan_changed" | "user_disabled" | "user_enabled" | "user_deleted";
 
@@ -9,8 +9,8 @@ export async function writeAdminAuditLog(
     adminUserId: string;
     targetUserId: string;
     action: AuditAction;
-    oldValue: Record<string, unknown> | null;
-    newValue: Record<string, unknown> | null;
+    oldValue: Json;
+    newValue: Json;
     ipAddress?: string | null;
     userAgent?: string | null;
   },

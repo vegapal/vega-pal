@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, History, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { FormError } from "@/components/ui/form-error";
@@ -51,7 +51,7 @@ function AdminUserDetailRouteError() {
         })}
       />
       <Button asChild variant="outline" className="mt-4">
-        <Link to="/admin/users">
+        <Link to="/admin/users" search={{ deleted: false }}>
           {t("userDetail.back", { defaultValue: "Back to users" })}
         </Link>
       </Button>
@@ -127,7 +127,7 @@ function AdminUserDetailPage() {
     try {
       await deleteAdminUser(userId);
       setDeleteDialogOpen(false);
-      navigate({ to: "/admin/users", search: { deleted: "1" } });
+      navigate({ to: "/admin/users", search: { deleted: true } });
     } catch (err) {
       setError(formatAppError(err));
     } finally {
@@ -146,7 +146,7 @@ function AdminUserDetailPage() {
       <div className="p-4 sm:p-6 max-w-3xl mx-auto">
         <FormError message={error || t("userDetail.notFound")} />
         <Button asChild variant="outline" className="mt-4">
-          <Link to="/admin/users">{t("userDetail.back", { defaultValue: "Back to users" })}</Link>
+          <Link to="/admin/users" search={{ deleted: false }}>{t("userDetail.back", { defaultValue: "Back to users" })}</Link>
         </Button>
       </div>
     );
@@ -165,7 +165,7 @@ function AdminUserDetailPage() {
     <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto min-w-0 space-y-8">
       <div>
         <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
-          <Link to="/admin/users">
+          <Link to="/admin/users" search={{ deleted: false }}>
             <ArrowLeft className="h-4 w-4" />
             {t("userDetail.back", { defaultValue: "Back to users" })}
           </Link>
@@ -279,11 +279,23 @@ function AdminUserDetailPage() {
         </div>
         {user.recentInvoicesUnavailable ? (
           <div className="px-5 sm:px-6 py-8">
-            <EmptyState title={t("userDetail.invoicesUnavailable")} />
+            <EmptyState
+              icon={AlertCircle}
+              title={t("userDetail.invoicesUnavailable")}
+              description={t("userDetail.invoicesUnavailableDescription", {
+                defaultValue: "Invoice data could not be loaded for this user.",
+              })}
+            />
           </div>
         ) : recentInvoices.length === 0 ? (
           <div className="px-5 sm:px-6 py-8">
-            <EmptyState title={t("userDetail.noInvoices")} />
+            <EmptyState
+              icon={FileText}
+              title={t("userDetail.noInvoices")}
+              description={t("userDetail.noInvoicesDescription", {
+                defaultValue: "This user has not created any invoices yet.",
+              })}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -327,11 +339,23 @@ function AdminUserDetailPage() {
         </div>
         {user.auditLogsUnavailable ? (
           <div className="px-5 sm:px-6 py-8">
-            <EmptyState title={t("userDetail.auditUnavailable")} />
+            <EmptyState
+              icon={AlertCircle}
+              title={t("userDetail.auditUnavailable")}
+              description={t("userDetail.auditUnavailableDescription", {
+                defaultValue: "Audit history could not be loaded.",
+              })}
+            />
           </div>
         ) : auditLogs.length === 0 ? (
           <div className="px-5 sm:px-6 py-8">
-            <EmptyState title={t("userDetail.noAuditLogs")} />
+            <EmptyState
+              icon={History}
+              title={t("userDetail.noAuditLogs")}
+              description={t("userDetail.noAuditLogsDescription", {
+                defaultValue: "No administrative actions have been recorded for this user.",
+              })}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto">

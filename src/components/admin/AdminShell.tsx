@@ -94,6 +94,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
+                {...(item.to === "/admin/users" ? { search: { deleted: false } } : {})}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-primary/10 text-primary"
@@ -125,7 +126,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-2">
             <Button asChild size="sm" variant={pathname.startsWith("/admin/users") ? "secondary" : "ghost"}>
-              <Link to="/admin/users">Users</Link>
+              <Link to="/admin/users" search={{ deleted: false }}>
+                Users
+              </Link>
             </Button>
             <Button asChild size="sm" variant={pathname === "/admin" ? "secondary" : "ghost"}>
               <Link to="/admin">Overview</Link>
