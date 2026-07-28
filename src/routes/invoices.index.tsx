@@ -47,7 +47,7 @@ export const Route = createFileRoute("/invoices/")({
   },
   beforeLoad: () => ensureNamespacesLoaded(["invoices"]),
   head: () => ({
-    meta: [{ title: "Invoices — VegaPal" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Invoices — VegaPal" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: () => (
     <AppShell>

@@ -27,7 +27,7 @@ export const Route = createFileRoute("/login")({
         name: "description",
         content: "Sign in to VegaPal to manage invoices, payments, and your business profile.",
       },
-      { name: "robots", content: "index, follow" },
+      { name: "robots", content: "noindex, follow" },
     ],
   }),
   component: LoginPage,

@@ -21,7 +21,7 @@ import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/reset-password")({
   beforeLoad: () => ensureNamespacesLoaded(["auth"]),
   head: () => ({
-    meta: [{ title: "Reset your password — VegaPal" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Reset your password — VegaPal" }, { name: "robots", content: "noindex, follow" }],
   }),
   component: ResetPassword,
 });

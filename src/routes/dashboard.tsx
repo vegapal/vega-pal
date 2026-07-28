@@ -24,7 +24,7 @@ import {
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: () => ensureNamespacesLoaded(["dashboard"]),
   head: () => ({
-    meta: [{ title: "Dashboard — VegaPal" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Dashboard — VegaPal" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: () => (
     <AppShell>

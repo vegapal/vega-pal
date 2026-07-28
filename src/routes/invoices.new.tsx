@@ -60,7 +60,7 @@ import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
 export const Route = createFileRoute("/invoices/new")({
   beforeLoad: () => ensureNamespacesLoaded(["invoices"]),
   head: () => ({
-    meta: [{ title: "Create invoice — VegaPal" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Create invoice — VegaPal" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: () => (
     <AppShell>

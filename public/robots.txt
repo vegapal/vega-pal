@@ -1,9 +1,14 @@
 User-agent: *
 Allow: /
+
 Disallow: /dashboard
 Disallow: /invoices
 Disallow: /settings
 Disallow: /admin
 Disallow: /pay
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
 
 Sitemap: https://vega-pal.com/sitemap.xml

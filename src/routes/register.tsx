@@ -25,7 +25,7 @@ export const Route = createFileRoute("/register")({
         name: "description",
         content: "Create your VegaPal account to send USDT invoices and accept crypto payments.",
       },
-      { name: "robots", content: "index, follow" },
+      { name: "robots", content: "noindex, follow" },
     ],
   }),
   component: RegisterPage,

@@ -15,6 +15,12 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { THEME_INIT_SCRIPT } from "../lib/theme";
 import i18n from "@/lib/i18n";
 import { DEFAULT_LANGUAGE } from "@/lib/i18n/languages";
+import {
+  SITE_NAME,
+  DEFAULT_TITLE,
+  DEFAULT_DESCRIPTION,
+  absoluteUrl,
+} from "@/lib/seo/site";
 
 function NotFoundComponent() {
   const { t } = useTranslation("common");
@@ -103,6 +109,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         crossOrigin: "anonymous",
       },
       { rel: "dns-prefetch", href: "https://challenges.cloudflare.com" },
+      { rel: "canonical", href: absoluteUrl("/") },
     ];
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -118,20 +125,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "VegaPal — Secure USDT Invoices & Crypto Payments" },
-      { name: "description", content: "VegaPal helps freelancers and businesses create professional USDT invoices and accept crypto payments securely." },
-      { property: "og:title", content: "VegaPal — Secure USDT Invoices & Crypto Payments" },
-      { property: "og:description", content: "VegaPal helps freelancers and businesses create professional USDT invoices and accept crypto payments securely." },
+      { title: DEFAULT_TITLE },
+      { name: "description", content: DEFAULT_DESCRIPTION },
+      { property: "og:title", content: DEFAULT_TITLE },
+      { property: "og:description", content: DEFAULT_DESCRIPTION },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "VegaPal — Secure USDT Invoices & Crypto Payments" },
-      { name: "twitter:description", content: "VegaPal helps freelancers and businesses create professional USDT invoices and accept crypto payments securely." },
-      { property: "og:url", content: "https://vegapal.com/" },
+      { name: "twitter:title", content: DEFAULT_TITLE },
+      { name: "twitter:description", content: DEFAULT_DESCRIPTION },
+      { property: "og:url", content: absoluteUrl("/") },
       { name: "robots", content: "index, follow" },
       { name: "theme-color", content: "#0B1220" },
-      { property: "og:site_name", content: "VegaPal" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5bca70e8-c221-4739-abe1-d5adcc1be3b7/id-preview-6aef7401--fe66886f-3dfd-4ac9-867a-b0a2c3483bbd.lovable.app-1782281956253.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5bca70e8-c221-4739-abe1-d5adcc1be3b7/id-preview-6aef7401--fe66886f-3dfd-4ac9-867a-b0a2c3483bbd.lovable.app-1782281956253.png" },
+      { property: "og:site_name", content: SITE_NAME },
     ],
     links,
     };

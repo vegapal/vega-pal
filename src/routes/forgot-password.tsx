@@ -24,7 +24,7 @@ export const Route = createFileRoute("/forgot-password")({
     meta: [
       { title: "Reset password — VegaPal" },
       { name: "description", content: "Reset your VegaPal account password securely." },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, follow" },
     ],
   }),
   component: ForgotPassword,

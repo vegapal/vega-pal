@@ -21,7 +21,7 @@ import { PlanBadge } from "@/components/admin/AdminBadges";
 export const Route = createFileRoute("/settings")({
   beforeLoad: () => ensureNamespacesLoaded(["settings"]),
   head: () => ({
-    meta: [{ title: "Settings — VegaPal" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Settings — VegaPal" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: () => (
     <AppShell>

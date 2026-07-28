@@ -17,6 +17,11 @@ import {
 import { cn } from "@/lib/utils";
 import { LANDING_JSON_LD } from "@/lib/seo/landing-json-ld";
 import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+  absoluteUrl,
+} from "@/lib/seo/site";
+import {
   ShieldCheck, Zap, Globe2, ArrowRight, Check, FileText, BarChart3,
   Sparkles, Banknote, Mail, Headphones,
 } from "lucide-react";
@@ -110,28 +115,18 @@ function PricingCard({
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "VegaPal — Secure USDT Invoices & Crypto Payments" },
-      {
-        name: "description",
-        content:
-          "Create professional USDT invoices and accept crypto payments. Built for freelancers and businesses who want secure, trusted deals.",
-      },
-      { property: "og:title", content: "VegaPal — Secure USDT Invoices" },
-      {
-        property: "og:description",
-        content: "Professional crypto invoicing for freelancers and businesses.",
-      },
-      { property: "og:url", content: "https://vegapal.com/" },
+      { title: DEFAULT_TITLE },
+      { name: "description", content: DEFAULT_DESCRIPTION },
+      { property: "og:title", content: DEFAULT_TITLE },
+      { property: "og:description", content: DEFAULT_DESCRIPTION },
+      { property: "og:url", content: absoluteUrl("/") },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      {
-        name: "twitter:description",
-        content:
-          "Create professional USDT invoices and accept crypto payments. Built for freelancers and businesses.",
-      },
+      { name: "twitter:title", content: DEFAULT_TITLE },
+      { name: "twitter:description", content: DEFAULT_DESCRIPTION },
       { name: "robots", content: "index, follow" },
     ],
-    links: [{ rel: "canonical", href: "https://vegapal.com/" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/") }],
     scripts: [
       {
         type: "application/ld+json",

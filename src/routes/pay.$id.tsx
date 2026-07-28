@@ -30,7 +30,7 @@ export const Route = createFileRoute("/pay/$id")({
   head: () => ({
     meta: [
       { title: "Pay invoice — VegaPal" },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: PublicInvoice,

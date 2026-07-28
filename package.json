@@ -16,7 +16,8 @@
     "test:auth": "node scripts/qa-auth.mjs",
     "db:bootstrap": "node scripts/build-bootstrap-sql.mjs",
     "db:migrate": "node scripts/run-migrations.mjs",
-    "db:check-refs": "node scripts/check-hardcoded-supabase-refs.mjs"
+    "db:check-refs": "node scripts/check-hardcoded-supabase-refs.mjs",
+    "seo:check-origin": "node scripts/check-seo-origin.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

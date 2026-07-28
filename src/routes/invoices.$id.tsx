@@ -42,7 +42,7 @@ export const Route = createFileRoute("/invoices/$id")({
   head: () => ({
     meta: [
       { title: "Invoice — VegaPal" },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: () => (

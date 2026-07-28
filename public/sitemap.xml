@@ -6,14 +6,9 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://vega-pal.com/login</loc>
+    <loc>https://vega-pal.com/pricing</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://vega-pal.com/register</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://vega-pal.com/learn</loc>
