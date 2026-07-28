@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { trackInvoicePaid } from "@/lib/analytics/events";
 import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppShell } from "@/components/AppShell";
@@ -103,7 +104,11 @@ function InvoiceDetails() {
   };
 
   const setStatus = async (s: InvoiceStatus) => {
+    const previous = inv.status;
     await invoices.setStatus(inv.id, s);
+    if (s === "paid" && previous !== "paid") {
+      trackInvoicePaid(inv.id, inv.total, inv.invoiceCurrency);
+    }
     notifyInvoices();
     refresh();
   };

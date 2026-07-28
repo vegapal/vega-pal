@@ -17,7 +17,9 @@
     "db:bootstrap": "node scripts/build-bootstrap-sql.mjs",
     "db:migrate": "node scripts/run-migrations.mjs",
     "db:check-refs": "node scripts/check-hardcoded-supabase-refs.mjs",
-    "seo:check-origin": "node scripts/check-seo-origin.mjs"
+    "seo:check-origin": "node scripts/check-seo-origin.mjs",
+    "analytics:check": "node scripts/check-analytics-config.mjs",
+    "analytics:check-pii": "node scripts/check-analytics-pii.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

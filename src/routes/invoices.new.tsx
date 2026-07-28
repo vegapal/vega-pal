@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { trackInvoiceCreated } from "@/lib/analytics/events";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { invoiceCreateSchema, firstZodError } from "@/lib/validation/schemas";
@@ -408,6 +409,7 @@ function CreateInvoice() {
         navigate({ to: "/invoices/$id", params: { id: existing.id } });
       } else {
         const inv = await invoices.create(payload);
+        trackInvoiceCreated(inv.id, inv.invoiceCurrency);
         notifyInvoices();
         navigate({ to: "/invoices/$id", params: { id: inv.id } });
       }

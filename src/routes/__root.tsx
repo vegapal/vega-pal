@@ -21,6 +21,9 @@ import {
   DEFAULT_DESCRIPTION,
   absoluteUrl,
 } from "@/lib/seo/site";
+import { GOOGLE_SITE_VERIFICATION } from "@/lib/analytics/config";
+import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 
 function NotFoundComponent() {
   const { t } = useTranslation("common");
@@ -121,8 +124,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       }
     }
 
-    return {
-    meta: [
+    const meta: Array<Record<string, string>> = [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: DEFAULT_TITLE },
@@ -137,8 +139,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "robots", content: "index, follow" },
       { name: "theme-color", content: "#0B1220" },
       { property: "og:site_name", content: SITE_NAME },
-    ],
-    links,
+    ];
+
+    if (GOOGLE_SITE_VERIFICATION) {
+      meta.push({
+        name: "google-site-verification",
+        content: GOOGLE_SITE_VERIFICATION,
+      });
+    }
+
+    return {
+      meta,
+      links,
     };
   },
   shellComponent: RootShell,
@@ -157,6 +169,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
+        <AnalyticsScripts />
         {children}
         <Scripts />
       </body>
@@ -171,6 +184,7 @@ function RootComponent() {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <PageViewTracker />
         <Outlet />
       </QueryClientProvider>
     </I18nextProvider>

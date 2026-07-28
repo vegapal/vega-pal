@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { trackSignUp } from "@/lib/analytics/events";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
@@ -85,6 +86,7 @@ function RegisterPage() {
       );
       setRegisteredEmail(data.email.toLowerCase());
       setRegistered(true);
+      trackSignUp("email");
     } catch (err) {
       turnstile.reset();
       setError(formatAuthError(err));

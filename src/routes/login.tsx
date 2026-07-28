@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { trackLogin } from "@/lib/analytics/events";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,7 @@ function LoginPage() {
     try {
       await turnstile.verifyBeforeAuth();
       await auth.signIn(normalizedEmail, parsed.data.password, turnstile.enabled ? turnstile.token : undefined);
+      trackLogin("email");
       navigate({ to: "/dashboard" });
     } catch (err) {
       turnstile.reset();
