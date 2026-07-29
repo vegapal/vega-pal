@@ -10,7 +10,7 @@ import {
   isCryptoPaymentVisible,
   showReferenceField,
 } from "./invoice-display";
-import { clientIdentityLines } from "@/lib/invoice/document-identity";
+import { clientIdentityLines, normalizeIdentity, identitiesEqual } from "@/lib/invoice/document-identity";
 import {
   compactStatusLabel,
   documentTypeHeading,
@@ -18,18 +18,35 @@ import {
   finalTotalLabel,
 } from "@/lib/invoice/document-labels";
 import { documentTotalsView } from "@/lib/invoice/document-totals-display";
+import { DEFAULT_DISPLAY_OPTIONS } from "@/lib/invoice-constants";
 
-const MARGIN = 44;
-const FOOTER_H = 36;
-const ROW_GAP = 10;
-const SECTION_GAP = 22;
-const BLOCK_GAP = 28;
+// ── Page constants (mm) ───────────────────────────────────────────────────
+export const PDF_LEFT = 18;
+export const PDF_RIGHT = 18;
+export const PDF_TOP = 18;
+export const PDF_BOTTOM = 18;
+export const PDF_PAGE_WIDTH = 210;
+export const PDF_PAGE_HEIGHT = 297;
+export const PDF_CONTENT_WIDTH = PDF_PAGE_WIDTH - PDF_LEFT - PDF_RIGHT;
+export const PDF_LEFT_COLUMN_WIDTH = 105;
+export const PDF_RIGHT_COLUMN_WIDTH = 55;
+export const PDF_COLUMN_GAP = PDF_CONTENT_WIDTH - PDF_LEFT_COLUMN_WIDTH - PDF_RIGHT_COLUMN_WIDTH;
+export const PDF_FOOTER_RESERVE = 15;
 
-const BLACK: [number, number, number] = [15, 15, 17];
-const MUTED: [number, number, number] = [95, 98, 104];
-const BORDER: [number, number, number] = [218, 220, 224];
+const GRAY_555: [number, number, number] = [85, 85, 85];
+const GRAY_777: [number, number, number] = [119, 119, 119];
+const BLACK: [number, number, number] = [0, 0, 0];
+const BORDER: [number, number, number] = [209, 213, 219];
 const HEAD_FILL: [number, number, number] = [248, 249, 250];
-const BADGE_FILL: [number, number, number] = [250, 250, 251];
+
+export type LayoutRect = { id: string; x: number; y: number; w: number; h: number };
+
+export type PdfBuildResult = {
+  doc: jsPDF;
+  layout: LayoutRect[];
+};
+
+const MIN_HEADER_GAP_MM = 1.5;
 
 function formatPdfDate(iso: string): string {
   const d = new Date(`${iso}T12:00:00`);
@@ -37,201 +54,183 @@ function formatPdfDate(iso: string): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function sellerCompanyName(inv: Invoice): string {
-  const company = (inv.sellerBusiness ?? "").trim();
-  const person = (inv.sellerName ?? "").trim();
-  return company || person;
-}
-
-type DocWithTable = jsPDF & { lastAutoTable?: { finalY: number } };
-
-function pageHeight(doc: jsPDF) {
-  return doc.internal.pageSize.getHeight();
-}
-
-function pageWidth(doc: jsPDF) {
-  return doc.internal.pageSize.getWidth();
-}
-
-function contentBottom(doc: jsPDF) {
-  return pageHeight(doc) - FOOTER_H - 8;
-}
-
 function amt(n: number, currency: string) {
   return formatInvoiceAmountWithCurrency(n, currency);
 }
 
-export async function generateInvoicePDF(inv: Invoice) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const W = pageWidth(doc);
-  const H = pageHeight(doc);
+function sellerCompanyName(inv: Invoice): string {
+  const company = normalizeIdentity(inv.sellerBusiness);
+  const person = normalizeIdentity(inv.sellerName);
+  return company || person;
+}
+
+function sellerContactLines(inv: Invoice): string[] {
+  const lines: string[] = [];
+  const company = sellerCompanyName(inv);
+  const email = normalizeIdentity(inv.sellerEmail);
+  const person = normalizeIdentity(inv.sellerName);
+  const address = normalizeIdentity(inv.sellerAddress);
+
+  const push = (v: string) => {
+    const t = normalizeIdentity(v);
+    if (!t) return;
+    if (lines.some((l) => identitiesEqual(l, t))) return;
+    if (company && identitiesEqual(t, company)) return;
+    lines.push(t);
+  };
+
+  if (email) push(email);
+  if (person && company && !identitiesEqual(person, company)) push(person);
+  if (address) push(address);
+
+  return lines;
+}
+
+function truncateCompanyLines(doc: jsPDF, name: string, maxW: number, maxLines: number): string[] {
+  let lines = doc.splitTextToSize(name, maxW) as string[];
+  if (lines.length <= maxLines) return lines;
+  lines = lines.slice(0, maxLines);
+  let last = lines[maxLines - 1];
+  while (last.length > 3 && doc.getTextWidth(`${last}…`) > maxW) {
+    last = last.slice(0, -1);
+  }
+  lines[maxLines - 1] = `${last}…`;
+  return lines;
+}
+
+type DocWithTable = jsPDF & { lastAutoTable?: { finalY: number } };
+
+function contentBottomY(): number {
+  return PDF_PAGE_HEIGHT - PDF_BOTTOM - PDF_FOOTER_RESERVE;
+}
+
+function record(layout: LayoutRect[], rect: LayoutRect) {
+  layout.push(rect);
+}
+
+export function verifyPdfLayout(layout: LayoutRect[]): void {
+  const headerIds = [
+    "documentType",
+    "documentNumber",
+    "statusBadge",
+    "issueDateLabel",
+    "issueDateValue",
+    "dueDateLabel",
+    "dueDateValue",
+  ];
+  const headerRects = layout.filter((r) => headerIds.includes(r.id)).sort((a, b) => a.y - b.y);
+  for (let i = 0; i < headerRects.length - 1; i++) {
+    const a = headerRects[i];
+    const b = headerRects[i + 1];
+    const gap = b.y - (a.y + a.h);
+    if (gap < MIN_HEADER_GAP_MM - 0.01) {
+      throw new Error(
+        `Header overlap: ${a.id} (bottom ${a.y + a.h}) and ${b.id} (top ${b.y}) gap ${gap}mm`,
+      );
+    }
+  }
+
+  const payment = layout.find((r) => r.id === "paymentSection");
+  if (payment && payment.h > 0 && payment.h < 20) {
+    throw new Error(`Payment section height ${payment.h}mm looks too small`);
+  }
+}
+
+export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildResult> {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const layout: LayoutRect[] = [];
+  const sellerX = PDF_LEFT;
+  const documentRightX = PDF_PAGE_WIDTH - PDF_RIGHT;
+  const rightMetaX = documentRightX - PDF_RIGHT_COLUMN_WIDTH;
+
   const currency = inv.invoiceCurrency;
   const d = inv.displayOptions;
   const totals = documentTotalsView(inv);
   const typeHeading = documentTypeHeading(inv.documentType);
 
-  let y = MARGIN;
-
-  const drawPageFooters = () => {
-    const total = doc.getNumberOfPages();
-    for (let i = 1; i <= total; i++) {
-      doc.setPage(i);
-      const lineY = H - FOOTER_H;
-      doc.setDrawColor(...BORDER);
-      doc.setLineWidth(0.5);
-      doc.line(MARGIN, lineY, W - MARGIN, lineY);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(...MUTED);
-      doc.text("Created with VegaPal", MARGIN, lineY + 12);
-      doc.text("vega-pal.com", MARGIN, lineY + 21);
-
-      if (total > 1) {
-        doc.text(`Page ${i} of ${total}`, W - MARGIN, lineY + 16, { align: "right" });
-      }
-    }
-  };
-
-  const ensureSpace = (needed: number) => {
-    if (y + needed > contentBottom(doc)) {
-      doc.addPage();
-      y = MARGIN;
-    }
-  };
-
-  const drawBodyText = (text: string, x: number, yy: number, maxW: number, size = 10) => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(size);
-    doc.setTextColor(...BLACK);
-    const lines = doc.splitTextToSize(text, maxW);
-    doc.text(lines, x, yy);
-    return yy + lines.length * (size + 3);
-  };
-
-  const measureWrapped = (text: string, maxW: number, size = 9) => {
-    doc.setFontSize(size);
-    return doc.splitTextToSize(text, maxW).length * (size + 3);
-  };
-
-  const drawKvRow = (label: string, value: string, x: number, yy: number, valueBold = false) => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...MUTED);
-    doc.text(label.toUpperCase(), x, yy);
-    doc.setFont("helvetica", valueBold ? "bold" : "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(...BLACK);
-    doc.text(value, x, yy + 13);
-    return yy + 13 + ROW_GAP + 6;
-  };
-
-  const drawStatusBadge = (text: string, rightX: number, yy: number) => {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    const padX = 8;
-    const tw = doc.getTextWidth(text);
-    const bw = tw + padX * 2;
-    const bh = 14;
-    const bx = rightX - bw;
-    const by = yy - 9;
-    doc.setDrawColor(...BORDER);
-    doc.setFillColor(...BADGE_FILL);
-    doc.roundedRect(bx, by, bw, bh, 3, 3, "FD");
-    doc.setTextColor(...BLACK);
-    doc.text(text, bx + padX, yy);
-    return yy + bh + 8;
-  };
-
-  const drawRightField = (label: string, value: string, rightX: number, yy: number) => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...MUTED);
-    doc.text(label, rightX, yy, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(...BLACK);
-    doc.text(value, rightX, yy + 13, { align: "right" });
-    return yy + 13 + ROW_GAP + 4;
-  };
-
-  // ── Header ───────────────────────────────────────────────────────────────
-  const headerTop = y;
-  const rightX = W - MARGIN;
-  const SELLER_MAX_W = W * 0.48;
-  const companyName = sellerCompanyName(inv);
-  let sellerBottom = headerTop;
+  // ── B. Header ───────────────────────────────────────────────────────────
+  let sellerY = PDF_TOP;
+  let companyBottom = PDF_TOP;
 
   if (d.showSellerInfo) {
-    let textX = MARGIN;
-    const showLogo = !companyName && !!inv.sellerLogoUrl;
-    let sy = headerTop;
+    const company = sellerCompanyName(inv);
+    const showLogo = !company && !!inv.sellerLogoUrl;
+    let textX = sellerX;
 
     if (showLogo && inv.sellerLogoUrl) {
       try {
-        doc.addImage(inv.sellerLogoUrl, "PNG", MARGIN, sy, 44, 44);
-        textX = MARGIN + 52;
-        sy += 8;
+        doc.addImage(inv.sellerLogoUrl, "PNG", sellerX, sellerY, 14, 14);
+        textX = sellerX + 16;
       } catch {
-        textX = MARGIN;
+        /* ignore */
       }
     }
 
-    const email = (inv.sellerEmail ?? "").trim();
-    const person = (inv.sellerName ?? "").trim();
-    const business = (inv.sellerBusiness ?? "").trim();
-    const displayName = companyName || person;
-
-    if (displayName) {
+    if (company) {
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(32);
+      doc.setFontSize(30);
       doc.setTextColor(...BLACK);
-      const nameLines = doc.splitTextToSize(displayName, SELLER_MAX_W);
-      doc.text(nameLines, textX, sy + 28);
-      sy += 28 + nameLines.length * 34;
+      const lines = truncateCompanyLines(doc, company, PDF_LEFT_COLUMN_WIDTH, 2);
+      let cy = sellerY + 8;
+      for (const line of lines) {
+        doc.text(line, textX, cy);
+        cy += 11;
+      }
+      companyBottom = cy;
+      record(layout, {
+        id: "sellerBlock",
+        x: sellerX,
+        y: sellerY,
+        w: PDF_LEFT_COLUMN_WIDTH,
+        h: companyBottom - sellerY,
+      });
     }
 
-    if (business && person && person.toLowerCase() !== business.toLowerCase()) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(...MUTED);
-      doc.text(person, textX, sy);
-      sy += 16;
+    let contactY = companyBottom + 7;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...GRAY_555);
+    for (const line of sellerContactLines(inv)) {
+      doc.text(line, textX, contactY);
+      contactY += 5;
     }
-
-    if (email && email.toLowerCase() !== displayName.toLowerCase()) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(...MUTED);
-      doc.text(email, textX, sy);
-      sy += 16;
+    const sellerBlockBottom = Math.max(companyBottom, contactY);
+    if (!company) {
+      record(layout, {
+        id: "sellerBlock",
+        x: sellerX,
+        y: sellerY,
+        w: PDF_LEFT_COLUMN_WIDTH,
+        h: sellerBlockBottom - sellerY,
+      });
     }
-
-    const address = (inv.sellerAddress ?? "").trim();
-    if (address) {
-      const addrLines = doc.splitTextToSize(address, SELLER_MAX_W);
-      doc.setFontSize(10);
-      doc.setTextColor(...MUTED);
-      doc.text(addrLines, textX, sy);
-      sy += addrLines.length * 14;
-    }
-
-    sellerBottom = sy;
+    companyBottom = sellerBlockBottom;
+  } else {
+    companyBottom = PDF_TOP;
   }
 
-  let metaY = headerTop;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  doc.text(typeHeading, rightX, metaY + 8, { align: "right" });
-  metaY += 16;
+  const documentY = PDF_TOP + 1;
+  const showDue = d.showDueDate && !!inv.dueDate;
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
+  doc.setFontSize(10);
+  doc.setTextColor(...GRAY_555);
+  doc.text(typeHeading, documentRightX, documentY, { align: "right" });
+  record(layout, { id: "documentType", x: rightMetaX, y: documentY - 3, w: PDF_RIGHT_COLUMN_WIDTH, h: 4 });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
   doc.setTextColor(...BLACK);
-  doc.text(inv.number, rightX, metaY, { align: "right" });
-  metaY += 20;
+  doc.text(inv.number, documentRightX, documentY + 7, { align: "right" });
+  record(layout, {
+    id: "documentNumber",
+    x: rightMetaX,
+    y: documentY + 4,
+    w: PDF_RIGHT_COLUMN_WIDTH,
+    h: 5,
+  });
 
+  let headerDocBottom = documentY + 34;
   if (d.showStatus) {
     const status = compactStatusLabel({
       documentType: inv.documentType,
@@ -239,89 +238,172 @@ export async function generateInvoicePDF(inv: Invoice) {
       paymentStatus: inv.paymentStatus,
     });
     if (status) {
-      metaY = drawStatusBadge(status, rightX, metaY);
+      const badgeTop = documentY + 11;
+      const badgeH = 7;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      const tw = doc.getTextWidth(status);
+      const badgeW = Math.min(42, tw + 8);
+      const bx = documentRightX - badgeW;
+      doc.setDrawColor(...BORDER);
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(bx, badgeTop, badgeW, badgeH, 1.5, 1.5, "FD");
+      doc.setTextColor(...BLACK);
+      doc.text(status, documentRightX - badgeW / 2, badgeTop + badgeH / 2 + 1, { align: "center" });
+      record(layout, {
+        id: "statusBadge",
+        x: bx,
+        y: badgeTop,
+        w: badgeW,
+        h: badgeH,
+      });
     }
   }
 
-  metaY = drawRightField("Issue date", formatPdfDate(inv.issueDate), rightX, metaY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...GRAY_777);
+  doc.text("Issue date", documentRightX, documentY + 25, { align: "right" });
+  record(layout, {
+    id: "issueDateLabel",
+    x: rightMetaX,
+    y: documentY + 22,
+    w: PDF_RIGHT_COLUMN_WIDTH,
+    h: 3,
+  });
 
-  if (d.showDueDate && inv.dueDate) {
-    metaY = drawRightField(dueDateFieldLabel(inv.documentType), formatPdfDate(inv.dueDate), rightX, metaY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...BLACK);
+  doc.text(formatPdfDate(inv.issueDate), documentRightX, documentY + 30, { align: "right" });
+  record(layout, {
+    id: "issueDateValue",
+    x: rightMetaX,
+    y: documentY + 27,
+    w: PDF_RIGHT_COLUMN_WIDTH,
+    h: 4,
+  });
+
+  if (showDue) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GRAY_777);
+    doc.text(dueDateFieldLabel(inv.documentType), documentRightX, documentY + 37, { align: "right" });
+    record(layout, {
+      id: "dueDateLabel",
+      x: rightMetaX,
+      y: documentY + 34,
+      w: PDF_RIGHT_COLUMN_WIDTH,
+      h: 3,
+    });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...BLACK);
+    doc.text(formatPdfDate(inv.dueDate), documentRightX, documentY + 42, { align: "right" });
+    record(layout, {
+      id: "dueDateValue",
+      x: rightMetaX,
+      y: documentY + 39,
+      w: PDF_RIGHT_COLUMN_WIDTH,
+      h: 4,
+    });
+    headerDocBottom = documentY + 47;
   }
 
-  y = Math.max(sellerBottom, metaY) + SECTION_GAP;
+  const headerBottom = Math.max(companyBottom, headerDocBottom);
+  const dividerY = headerBottom + 8;
   doc.setDrawColor(...BORDER);
-  doc.line(MARGIN, y, W - MARGIN, y);
-  y += SECTION_GAP;
+  doc.setLineWidth(0.2);
+  doc.line(PDF_LEFT, dividerY, PDF_PAGE_WIDTH - PDF_RIGHT, dividerY);
 
-  // ── Reference metadata (no heading, no issue date repeat) ────────────────
-  const metaFields: [string, string][] = [];
-  if (showReferenceField(d, "showPoNumber", inv.poNumber)) {
-    metaFields.push(["PO number", inv.poNumber!]);
-  }
-  if (showReferenceField(d, "showReferenceNumber", inv.referenceNumber)) {
-    metaFields.push(["Reference", inv.referenceNumber!]);
-  }
-  if (showReferenceField(d, "showProjectCode", inv.projectCode)) {
-    metaFields.push(["Project", inv.projectCode!]);
-  }
+  let bodyY = headerBottom + 17;
 
-  if (metaFields.length > 0) {
-    const colW = (W - MARGIN * 2 - 16 * (metaFields.length - 1)) / metaFields.length;
-    let mx = MARGIN;
-    let metaBottom = y;
-    for (const [label, value] of metaFields) {
-      metaBottom = Math.max(metaBottom, drawKvRow(label, value, mx, y));
-      mx += colW + 16;
-    }
-    y = metaBottom + SECTION_GAP;
-  }
+  // ── C. Bill to + metadata ─────────────────────────────────────────────────
+  const identityTop = bodyY;
+  let leftBottom = identityTop;
+  let rightBottom = identityTop;
 
-  // ── Bill to ──────────────────────────────────────────────────────────────
   if (d.showClientInfo) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...MUTED);
-    doc.text("BILL TO", MARGIN, y);
-    y += 14;
-
+    doc.setFontSize(8);
+    doc.setTextColor(...GRAY_777);
+    doc.text("BILL TO", sellerX, bodyY);
+    let ly = bodyY + 5;
     const clientLines = clientIdentityLines(inv);
     for (let i = 0; i < clientLines.length; i++) {
       const line = clientLines[i];
       if (i === 0) {
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
+        doc.setFontSize(15);
         doc.setTextColor(...BLACK);
-        doc.text(line.text, MARGIN, y);
-        y += 20;
+        doc.text(line.text, sellerX, ly + 4);
+        ly += 9;
       } else {
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(...MUTED);
-        doc.text(line.text, MARGIN, y);
-        y += 16;
+        doc.setFontSize(9);
+        doc.setTextColor(...GRAY_555);
+        doc.text(line.text, sellerX, ly);
+        ly += 5;
       }
     }
-    y += BLOCK_GAP;
+    leftBottom = ly;
   }
 
-  // ── Document title ─────────────────────────────────────────────────────
-  if (inv.title?.trim()) {
-    ensureSpace(48);
+  const metaRows: [string, string][] = [];
+  if (showReferenceField(d, "showPoNumber", inv.poNumber)) {
+    metaRows.push(["PO number", inv.poNumber!]);
+  }
+  if (showReferenceField(d, "showReferenceNumber", inv.referenceNumber)) {
+    metaRows.push(["Reference number", inv.referenceNumber!]);
+  }
+  if (showReferenceField(d, "showProjectCode", inv.projectCode)) {
+    metaRows.push(["Project code", inv.projectCode!]);
+  }
+
+  let ry = identityTop;
+  for (const [label, value] of metaRows) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GRAY_777);
+    doc.text(label.toUpperCase(), documentRightX, ry, { align: "right" });
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
+    doc.setFontSize(9.5);
     doc.setTextColor(...BLACK);
-    const titleLines = doc.splitTextToSize(inv.title.trim(), W - MARGIN * 2);
-    doc.text(titleLines, MARGIN, y);
-    y += titleLines.length * 26 + BLOCK_GAP;
+    doc.text(value, documentRightX, ry + 4, { align: "right" });
+    ry += 11;
+  }
+  rightBottom = metaRows.length ? ry : identityTop;
+
+  const bodyIdentityBottom = Math.max(leftBottom, rightBottom);
+  bodyY = bodyIdentityBottom + 12;
+
+  // ── D. Subject ──────────────────────────────────────────────────────────
+  if (inv.title?.trim()) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(...BLACK);
+    const titleLines = doc.splitTextToSize(inv.title.trim(), PDF_CONTENT_WIDTH) as string[];
+    let ty = bodyY + 6;
+    for (const line of titleLines) {
+      doc.text(line, sellerX, ty);
+      ty += 9;
+    }
+    bodyY = ty + 16;
+  } else {
+    bodyY += 16;
   }
 
-  // ── Line items ───────────────────────────────────────────────────────────
+  // ── E. Items table ──────────────────────────────────────────────────────
+  const colDesc = PDF_CONTENT_WIDTH * 0.61;
+  const colQty = PDF_CONTENT_WIDTH * 0.09;
+  const colUnit = PDF_CONTENT_WIDTH * 0.15;
+  const colTotal = PDF_CONTENT_WIDTH * 0.15;
   const unitHead = `Unit price (${currency})`;
   const totalHead = `Line total (${currency})`;
 
   autoTable(doc, {
-    startY: y,
+    startY: bodyY,
     head: [["Description", "Qty", unitHead, totalHead]],
     body: inv.items.map((i) => [
       i.description,
@@ -333,122 +415,114 @@ export async function generateInvoicePDF(inv: Invoice) {
     showHead: "everyPage",
     rowPageBreak: "avoid",
     styles: {
-      fontSize: 10,
-      cellPadding: { top: 10, right: 8, bottom: 10, left: 8 },
-      minCellHeight: 28,
+      fontSize: 8.5,
+      cellPadding: 3,
+      minCellHeight: 10,
       textColor: BLACK,
       lineColor: BORDER,
-      lineWidth: 0.35,
+      lineWidth: 0.1,
       font: "helvetica",
     },
     headStyles: {
       fillColor: HEAD_FILL,
       textColor: BLACK,
       fontStyle: "bold",
-      fontSize: 9,
-      halign: "left",
-      cellPadding: { top: 12, right: 8, bottom: 12, left: 8 },
+      fontSize: 8.5,
     },
     columnStyles: {
-      0: { cellWidth: "auto", halign: "left" },
-      1: { halign: "right", cellWidth: 44 },
-      2: { halign: "right", cellWidth: 82 },
-      3: { halign: "right", cellWidth: 82 },
+      0: { cellWidth: colDesc, halign: "left" },
+      1: { cellWidth: colQty, halign: "right" },
+      2: { cellWidth: colUnit, halign: "right" },
+      3: { cellWidth: colTotal, halign: "right" },
     },
-    margin: { left: MARGIN, right: MARGIN, bottom: FOOTER_H + 12 },
+    margin: { left: PDF_LEFT, right: PDF_RIGHT, bottom: 24 },
   });
 
-  y = ((doc as DocWithTable).lastAutoTable?.finalY ?? y) + BLOCK_GAP;
+  const tableFinalY = (doc as DocWithTable).lastAutoTable?.finalY ?? bodyY;
+  record(layout, {
+    id: "itemsTable",
+    x: PDF_LEFT,
+    y: bodyY,
+    w: PDF_CONTENT_WIDTH,
+    h: tableFinalY - bodyY,
+  });
 
-  // ── Totals ───────────────────────────────────────────────────────────────
-  ensureSpace(120);
-  const totalsX = W - MARGIN - 220;
-  const totalsXR = W - MARGIN;
+  let y = tableFinalY + 8;
 
-  const totalRow = (label: string, value: string, opts?: { grand?: boolean }) => {
-    const grand = opts?.grand;
-    const labelText = grand || label === "Subtotal" ? label.toUpperCase() : label;
-    if (grand) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...BLACK);
-      doc.text(labelText, totalsX, y);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.setTextColor(...BLACK);
-      doc.text(value, totalsXR, y + 6, { align: "right" });
-      y += 38;
-      return;
-    }
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED);
-    doc.text(labelText, totalsX, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
+  // ── F. Totals ───────────────────────────────────────────────────────────
+  const totalsW = 78;
+  const totalsLeft = documentRightX - totalsW;
+
+  const drawTotalLine = (label: string, value: string, fontSize: number, bold = false) => {
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(fontSize);
+    doc.setTextColor(...(bold ? BLACK : GRAY_555));
+    doc.text(label, totalsLeft, y);
     doc.setTextColor(...BLACK);
-    doc.text(value, totalsXR, y, { align: "right" });
-    y += 22;
+    doc.text(value, documentRightX, y, { align: "right" });
+    y += 8;
   };
 
-  totalRow("Subtotal", amt(totals.subtotal, currency));
+  drawTotalLine("Subtotal", amt(totals.subtotal, currency), 9);
   if (totals.discountLabel && totals.discountAmount > 0) {
-    totalRow(totals.discountLabel, `(${amt(totals.discountAmount, currency)})`);
+    drawTotalLine(totals.discountLabel, `(${amt(totals.discountAmount, currency)})`, 9);
   }
   if (totals.taxLabel && totals.taxAmount > 0) {
-    totalRow(totals.taxLabel, amt(totals.taxAmount, currency));
+    drawTotalLine(totals.taxLabel, amt(totals.taxAmount, currency), 9);
   }
 
-  y += 6;
   doc.setDrawColor(...BORDER);
-  doc.line(totalsX, y, totalsXR, y);
-  y += 22;
+  doc.setLineWidth(0.3);
+  doc.line(totalsLeft, y + 1, documentRightX, y + 1);
+  y += 5;
 
   const finalLabel = finalTotalLabel(inv.documentType, inv.paymentStatus);
-  totalRow(finalLabel, amt(inv.total, currency), { grand: true });
-  y += BLOCK_GAP;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(...BLACK);
+  doc.text(finalLabel.toUpperCase(), totalsLeft, y + 5);
+  doc.setFontSize(21);
+  doc.text(amt(inv.total, currency), documentRightX, y + 5, { align: "right" });
+  y += 14;
 
-  const drawTermsBullets = (raw: string, startY: number) => {
-    const lines = raw
+  const totalsBottom = y;
+  record(layout, {
+    id: "totals",
+    x: totalsLeft,
+    y: tableFinalY + 8,
+    w: totalsW,
+    h: totalsBottom - (tableFinalY + 8),
+  });
+
+  // ── G. Terms ────────────────────────────────────────────────────────────
+  if (d.showTerms && inv.termsAndConditions?.trim()) {
+    y = totalsBottom + 18;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(...BLACK);
+    doc.text("Terms & conditions", sellerX, y);
+    y += 10;
+
+    const bullets = inv.termsAndConditions
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter(Boolean)
       .map((l) => l.replace(/^[-*•]\s*/, ""));
-    let cy = startY;
+
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(...BLACK);
-    for (const line of lines) {
-      const wrapped = doc.splitTextToSize(`• ${line}`, W - MARGIN * 2 - 8);
-      doc.text(wrapped, MARGIN + 4, cy);
-      cy += wrapped.length * 16 + 6;
+    doc.setFontSize(10);
+    for (const b of bullets) {
+      const wrapped = doc.splitTextToSize(`• ${b}`, PDF_CONTENT_WIDTH) as string[];
+      for (const line of wrapped) {
+        doc.text(line, sellerX, y);
+        y += 5;
+      }
+      y += 2;
     }
-    return cy;
-  };
-
-  // ── Notes & terms ────────────────────────────────────────────────────────
-  if (d.showNotes && inv.description?.trim()) {
-    ensureSpace(48);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(...BLACK);
-    doc.text("Notes", MARGIN, y);
-    y += 18;
-    y = drawBodyText(inv.description.trim(), MARGIN, y, W - MARGIN * 2, 10) + BLOCK_GAP;
+    record(layout, { id: "terms", x: sellerX, y: totalsBottom + 18, w: PDF_CONTENT_WIDTH, h: y - totalsBottom - 18 });
   }
 
-  if (d.showTerms && inv.termsAndConditions?.trim()) {
-    ensureSpace(80);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(...BLACK);
-    doc.text("Terms & conditions", MARGIN, y);
-    y += 24;
-    y = drawTermsBullets(inv.termsAndConditions.trim(), y) + BLOCK_GAP + 12;
-  }
-
-  const PAY_SECTION_GAP = 40;
-  // ── How to pay ───────────────────────────────────────────────────────────
+  // ── H. How to pay ───────────────────────────────────────────────────────
   if (d.showPaymentInstructions) {
     const showCrypto = isCryptoPaymentVisible(inv);
     const showBank = isBankPaymentVisible(inv);
@@ -458,35 +532,16 @@ export async function generateInvoicePDF(inv: Invoice) {
     const cash = inv.paymentMethods.cash;
 
     if (showCrypto || showBank || showCash) {
-      const contentW = W - MARGIN * 2;
-      const cardGap = 14;
-      const cardPad = 16;
-      const qrSize = 72;
+      const cardPad = 6;
+      const cardGap = 6;
+      const qrMm = 30;
+      const labelW = 32;
+      const rowH = 8;
 
-      const cardField = (label: string, value: string, x: number, cy: number, maxW: number, bold = false) => {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(...MUTED);
-        doc.text(label.toUpperCase(), x, cy);
-        doc.setFont("helvetica", bold ? "bold" : "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(...BLACK);
-        const lines = doc.splitTextToSize(value, maxW);
-        doc.text(lines, x, cy + 12);
-        return cy + 12 + lines.length * 12 + 10;
-      };
+      const paymentStartY =
+        d.showTerms && inv.termsAndConditions?.trim() ? y + 18 : totalsBottom + 18;
 
-      const measureCardFields = (rows: [string, string][], innerW: number) => {
-        let h = cardPad + 22;
-        for (const [label, value] of rows) {
-          if (!value?.trim()) continue;
-          doc.setFontSize(10);
-          h += 12 + doc.splitTextToSize(value.trim(), innerW).length * 12 + 10;
-        }
-        return h + cardPad;
-      };
-
-      const bankRows: [string, string][] = showBank
+      const bankFieldRows = (showBank
         ? [
             ["Bank", bank.bankName ?? ""],
             ["IBAN", bank.iban ?? ""],
@@ -494,163 +549,294 @@ export async function generateInvoicePDF(inv: Invoice) {
             ["Account", bank.accountNumber ?? bank.accountName ?? ""],
             ["Reference", inv.number],
           ]
-        : [];
+        : []).filter((row): row is [string, string] => !!row[1]?.trim());
 
-      const cryptoDetailRows: [string, string][] = showCrypto
+      const cryptoMetaRows = (showCrypto
         ? [
             ["Asset", crypto.currency],
             ["Network", crypto.network],
             ["Reference", inv.number],
           ]
-        : [];
+        : []).filter((row): row is [string, string] => !!row[1]?.trim());
 
-      const halfW = Math.floor((contentW - cardGap) / 2);
-      const bankCardW = showBank && showCrypto ? halfW : showBank ? contentW : 0;
-      const cryptoCardW = showBank && showCrypto ? contentW - halfW - cardGap : showCrypto ? contentW : 0;
-
-      const bankInnerW = Math.max(0, bankCardW - cardPad * 2);
-
-      const measureCryptoCardHeight = (cardW: number) => {
-        if (!showCrypto) return 0;
-        const innerW = cardW - cardPad * 2;
-        const textBesideQrW = innerW - qrSize - 12;
-        let h = cardPad + 22;
-        for (const [, value] of cryptoDetailRows) {
-          if (!value?.trim()) continue;
-          doc.setFontSize(10);
-          h += 12 + doc.splitTextToSize(value.trim(), Math.max(textBesideQrW, 80)).length * 12 + 10;
+      const measureCard = (opts: {
+        title: boolean;
+        rows: [string, string][];
+        extraWallet?: string;
+        qrColumn?: boolean;
+      }) => {
+        let h = cardPad + (opts.title ? 8 : 0);
+        const innerW = PDF_CONTENT_WIDTH - cardPad * 2 - (opts.qrColumn ? qrMm + 8 : 0);
+        for (const [, v] of opts.rows) {
+          h += rowH;
         }
-        const wallet = crypto.walletAddress?.trim() ?? "";
-        const walletTop = cardPad + qrSize + 16;
-        h = Math.max(h, walletTop);
-        if (wallet) {
-          h += 12 + doc.splitTextToSize(wallet, innerW).length * 12 + 10;
+        if (opts.extraWallet) {
+          doc.setFontSize(9);
+          const lines = doc.splitTextToSize(opts.extraWallet, innerW).length;
+          h += 6 + lines * 4.5;
+        }
+        if (opts.qrColumn) {
+          h = Math.max(h, cardPad + qrMm + 4);
         }
         return h + cardPad;
       };
 
-      let bankH = showBank ? measureCardFields(bankRows, bankInnerW) : 0;
-      let cryptoH = measureCryptoCardHeight(cryptoCardW);
+      const dual = showBank && showCrypto;
+      const cardW = dual ? (PDF_CONTENT_WIDTH - cardGap) / 2 : PDF_CONTENT_WIDTH;
 
-      if (showBank && bank.instructions?.trim()) {
-        bankH += 16 + measureWrapped(bank.instructions, bankInnerW, 10);
+      const bankH = showBank
+        ? measureCard({ title: true, rows: bankFieldRows }) +
+          (bank.instructions?.trim()
+            ? 6 + doc.splitTextToSize(bank.instructions.trim(), cardW - cardPad * 2 - labelW).length * 4
+            : 0)
+        : 0;
+
+      const cryptoH = showCrypto
+        ? measureCard({
+            title: true,
+            rows: cryptoMetaRows,
+            extraWallet: crypto.walletAddress?.trim(),
+            qrColumn: true,
+          })
+        : 0;
+
+      const cashH = showCash
+        ? cardPad + 8 + rowH + (cash.instructions?.trim() ? 10 : 0) + (cash.location?.trim() ? 10 : 0) + cardPad
+        : 0;
+
+      const sectionHeadingH = 6;
+      const rowCardsH = dual ? Math.max(bankH, cryptoH) : Math.max(bankH, cryptoH, 0);
+      const cashBlockH = showCash ? (dual ? cashH + 6 : cashH) : 0;
+      const paymentHeight = sectionHeadingH + rowCardsH + cashBlockH;
+
+      const remaining = contentBottomY() - paymentStartY;
+      if (paymentHeight > remaining) {
+        doc.addPage();
+        y = PDF_TOP;
+      } else {
+        y = paymentStartY;
       }
 
-      const rowH = Math.max(showBank ? bankH : 0, showCrypto ? cryptoH : 0);
-      const cashExtra =
-        (cash.instructions?.trim() ? 40 + measureWrapped(cash.instructions, contentW - cardPad * 2, 10) : 0) +
-        (cash.location?.trim() ? 40 + measureWrapped(cash.location, contentW - cardPad * 2, 10) : 0);
-
-      ensureSpace(
-        PAY_SECTION_GAP +
-          BLOCK_GAP +
-          20 +
-          (rowH > 0 ? rowH + SECTION_GAP : 0) +
-          (showCash ? Math.max(100, cashExtra + cardPad * 2) : 0),
-      );
-
-      y += PAY_SECTION_GAP;
+      const payTop = y;
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...MUTED);
-      doc.text("HOW TO PAY", MARGIN, y);
-      y += 20;
+      doc.setFontSize(10);
+      doc.setTextColor(...GRAY_555);
+      doc.text("HOW TO PAY", sellerX, y);
+      y += sectionHeadingH;
 
       const cardsY = y;
 
-      const drawOutlinedCard = (x: number, w: number, h: number) => {
+      const drawCardBorder = (x: number, w: number, h: number, cardY: number) => {
         doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.4);
         doc.setFillColor(255, 255, 255);
-        doc.setLineWidth(0.6);
-        doc.roundedRect(x, cardsY, w, h, 6, 6, "FD");
+        doc.roundedRect(x, cardY, w, h, 3, 3, "FD");
       };
 
-      if (showBank && bankCardW > 0) {
-        drawOutlinedCard(MARGIN, bankCardW, rowH);
-        let by = cardsY + cardPad;
+      const drawRows = (
+        x: number,
+        w: number,
+        cardY: number,
+        title: string,
+        rows: [string, string][],
+        boldRefs: Set<string>,
+      ) => {
+        let cy = cardY + cardPad;
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
+        doc.setFontSize(12);
         doc.setTextColor(...BLACK);
-        doc.text("Bank transfer", MARGIN + cardPad, by);
-        by += 18;
-        for (const [label, value] of bankRows) {
-          if (!value?.trim()) continue;
-          by = cardField(label, value.trim(), MARGIN + cardPad, by, bankInnerW, label === "Reference");
+        doc.text(title, x + cardPad, cy);
+        cy += 8;
+        for (const [label, value] of rows) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(...GRAY_777);
+          doc.text(label.toUpperCase(), x + cardPad, cy);
+          doc.setFont("helvetica", boldRefs.has(label) ? "bold" : "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(...BLACK);
+          const valX = x + cardPad + labelW;
+          const valLines = doc.splitTextToSize(value, w - cardPad * 2 - labelW) as string[];
+          doc.text(valLines, valX, cy);
+          cy += rowH;
         }
+        return cy;
+      };
+
+      if (showBank && bankH > 0) {
+        const h = dual ? Math.max(bankH, cryptoH) : bankH;
+        drawCardBorder(sellerX, dual ? cardW : PDF_CONTENT_WIDTH, h, cardsY);
+        let by = drawRows(sellerX, cardW, cardsY, "Bank transfer", bankFieldRows, new Set(["Reference"]));
         if (bank.instructions?.trim()) {
-          by += 4;
-          by = cardField("Additional instructions", bank.instructions.trim(), MARGIN + cardPad, by, bankInnerW);
+          doc.setFontSize(7.5);
+          doc.setTextColor(...GRAY_777);
+          doc.text("INSTRUCTIONS", sellerX + cardPad, by);
+          doc.setFontSize(9);
+          doc.setTextColor(...BLACK);
+          const lines = doc.splitTextToSize(bank.instructions.trim(), cardW - cardPad * 2 - labelW);
+          doc.text(lines, sellerX + cardPad + labelW, by);
         }
       }
 
-      if (showCrypto && cryptoCardW > 0) {
-        const cx = showBank ? MARGIN + bankCardW + cardGap : MARGIN;
-        drawOutlinedCard(cx, cryptoCardW, rowH);
+      if (showCrypto && cryptoH > 0) {
+        const cx = dual ? sellerX + cardW + cardGap : sellerX;
+        const h = dual ? Math.max(bankH, cryptoH) : cryptoH;
+        drawCardBorder(cx, cardW, h, cardsY);
         const innerLeft = cx + cardPad;
-        const innerW = cryptoCardW - cardPad * 2;
-        const qrX = cx + cryptoCardW - cardPad - qrSize;
+        const qrX = cx + cardW - cardPad - qrMm;
         const qrY = cardsY + cardPad;
 
-        let cy = cardsY + cardPad;
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(...BLACK);
-        doc.text("Cryptocurrency", innerLeft, cy);
+        doc.setFontSize(12);
+        doc.text("Cryptocurrency", innerLeft, qrY + 4);
 
         if (crypto.walletAddress?.trim()) {
           try {
-            const qr = await qrCodeToDataUrl(crypto.walletAddress, { margin: 0, width: 200 });
-            doc.addImage(qr, "PNG", qrX, qrY, qrSize, qrSize);
+            const qr = await qrCodeToDataUrl(crypto.walletAddress, { margin: 0, width: 240 });
+            doc.addImage(qr, "PNG", qrX, qrY, qrMm, qrMm);
           } catch {
             /* ignore */
           }
         }
 
-        cy += 20;
-        const fieldW = Math.max(innerW - qrSize - 14, innerW * 0.55);
-        for (const [label, value] of cryptoDetailRows) {
-          if (!value?.trim()) continue;
-          cy = cardField(label, value.trim(), innerLeft, cy, fieldW, label === "Reference");
+        let cy = qrY + 10;
+        const textW = cardW - cardPad * 2 - qrMm - 8;
+        for (const [label, value] of cryptoMetaRows) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(...GRAY_777);
+          doc.text(label.toUpperCase(), innerLeft, cy);
+          doc.setFont("helvetica", label === "Reference" ? "bold" : "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(...BLACK);
+          const valLines = doc.splitTextToSize(value, textW - labelW) as string[];
+          doc.text(valLines, innerLeft + labelW, cy);
+          cy += rowH;
         }
-
         if (crypto.walletAddress?.trim()) {
-          const walletY = Math.max(cy + 4, qrY + qrSize + 14);
-          cardField("Wallet", crypto.walletAddress.trim(), innerLeft, walletY, innerW, false);
+          cy = Math.max(cy + 2, qrY + qrMm + 4);
+          doc.setFontSize(7.5);
+          doc.setTextColor(...GRAY_777);
+          doc.text("WALLET", innerLeft, cy);
+          doc.setFontSize(9);
+          doc.setTextColor(...BLACK);
+          const wLines = doc.splitTextToSize(crypto.walletAddress.trim(), cardW - cardPad * 2) as string[];
+          doc.text(wLines, innerLeft, cy + 4);
         }
       }
 
-      if ((showBank || showCrypto) && rowH > 0) {
-        y = cardsY + rowH + SECTION_GAP;
-      } else if (!showCash) {
-        y = cardsY;
-      }
+      y = cardsY + (dual ? Math.max(bankH, cryptoH) : Math.max(bankH, cryptoH, cashH));
 
       if (showCash) {
-        const cashH = Math.max(100, cashExtra + cardPad * 2);
-        ensureSpace(cashH + 20);
-        const cashTop = y;
-        doc.setDrawColor(...BORDER);
-        doc.setFillColor(255, 255, 255);
-        doc.setLineWidth(0.6);
-        doc.roundedRect(MARGIN, cashTop, contentW, cashH, 6, 6, "FD");
-        let cy = cashTop + cardPad;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(...BLACK);
-        doc.text("Cash payment", MARGIN + cardPad, cy);
-        cy += 18;
-        cy = cardField("Amount due", amt(inv.total, currency), MARGIN + cardPad, cy, contentW - cardPad * 2);
+        const cashTop = y + 6;
+        drawCardBorder(sellerX, PDF_CONTENT_WIDTH, cashH, cashTop);
+        drawRows(
+          sellerX,
+          PDF_CONTENT_WIDTH,
+          cashTop,
+          "Cash payment",
+          [["Amount", amt(inv.total, currency)]],
+          new Set(),
+        );
         if (cash.instructions?.trim()) {
-          cy = cardField("Instructions", cash.instructions.trim(), MARGIN + cardPad, cy, contentW - cardPad * 2);
+          doc.setFontSize(9);
+          doc.text(
+            cash.instructions.trim(),
+            sellerX + cardPad + labelW,
+            cashTop + cardPad + 20,
+          );
         }
-        if (cash.location?.trim()) {
-          cardField("Location", cash.location.trim(), MARGIN + cardPad, cy, contentW - cardPad * 2);
-        }
-        y = cashTop + cashH + SECTION_GAP;
+        y = cashTop + cashH;
       }
+
+      record(layout, {
+        id: "paymentSection",
+        x: sellerX,
+        y: payTop,
+        w: PDF_CONTENT_WIDTH,
+        h: y - payTop,
+      });
     }
   }
 
-  drawPageFooters();
+  // ── J. Footer every page ──────────────────────────────────────────────────
+  const pageCount = doc.getNumberOfPages();
+  const footerY = PDF_PAGE_HEIGHT - 10;
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.2);
+    doc.line(PDF_LEFT, footerY - 4, PDF_PAGE_WIDTH - PDF_RIGHT, footerY - 4);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(...GRAY_777);
+    doc.text("Created with VegaPal", PDF_LEFT, footerY);
+    doc.text("vega-pal.com", PDF_LEFT, footerY + 3);
+    doc.text(`Page ${i} of ${pageCount}`, documentRightX, footerY + 1.5, { align: "right" });
+  }
+
+  verifyPdfLayout(layout);
+
+  return { doc, layout };
+}
+
+export async function generateInvoicePDF(inv: Invoice) {
+  const { doc } = await buildInvoicePdfDocument(inv);
   doc.save(`${inv.number}.pdf`);
+}
+
+/** @internal test fixtures */
+export function buildPdfTestInvoice(
+  partial: Partial<Invoice> & { number: string; items?: Invoice["items"] },
+): Invoice {
+  const items = partial.items ?? [{ description: "Service", quantity: 1, unitPrice: 100, total: 100 }];
+  const base: Invoice = {
+    id: "test",
+    number: partial.number,
+    invoiceCurrency: "AED",
+    clientName: "Client Co",
+    clientEmail: "c@example.com",
+    clientCompany: "Client Co",
+    title: partial.title ?? "Website Development",
+    description: "",
+    termsAndConditions: partial.termsAndConditions ?? "",
+    documentType: partial.documentType ?? "tax_invoice",
+    documentStatus: "issued",
+    paymentStatus: partial.paymentStatus ?? "unpaid",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+    issueDate: "2026-07-29",
+    dueDate: "2026-08-12",
+    items,
+    subtotal: items.reduce((s, i) => s + i.total, 0),
+    discount: partial.discount ?? 0,
+    tax: partial.tax ?? 0,
+    discountType: partial.discountType ?? "percentage",
+    taxType: partial.taxType ?? "percentage",
+    discountRate: partial.discountRate ?? 0,
+    taxRate: partial.taxRate ?? 5,
+    total: partial.total ?? items.reduce((s, i) => s + i.total, 0),
+    amount: partial.total ?? items.reduce((s, i) => s + i.total, 0),
+    displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, ...partial.displayOptions },
+    paymentMethods: partial.paymentMethods ?? {
+      method: "bank_transfer",
+      crypto: { enabled: false, currency: "USDT", network: "TRON TRC20", walletAddress: "" },
+      bank: {
+        enabled: true,
+        bankName: "Test Bank",
+        accountName: "VegaPal",
+        accountNumber: "123",
+        iban: "AE000000000000000000000",
+        swift: "TESTAEAA",
+      },
+      cash: { enabled: false },
+    },
+    walletAddress: "",
+    network: "TRON TRC20",
+    sellerName: "Founder",
+    sellerBusiness: partial.sellerBusiness ?? "VegaPal",
+    sellerEmail: "billing@vegapal.com",
+    sellerAddress: partial.sellerAddress,
+  };
+  return { ...base, ...partial, number: partial.number, items: partial.items ?? base.items };
 }
