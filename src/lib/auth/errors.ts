@@ -1,6 +1,7 @@
 import type { AuthError } from "@supabase/supabase-js";
 import type { z } from "zod";
 import { AuthApiError } from "@/lib/auth/auth-api-error";
+import { InvoiceNumberAllocationError } from "@/lib/vegapal-store";
 
 const FALLBACK = "Something went wrong. Please try again.";
 
@@ -130,6 +131,9 @@ export function formatAuthError(err: unknown): string {
     if (err instanceof AuthApiError && err.code) {
       const fromCode = mapSupabaseAuthCode(err.code);
       if (fromCode) return fromCode;
+    }
+    if (err instanceof InvoiceNumberAllocationError) {
+      return err.message;
     }
     const authErr = err as AuthError;
     if (typeof authErr.code === "string") {

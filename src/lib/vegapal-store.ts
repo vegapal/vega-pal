@@ -41,6 +41,15 @@ import {
 export type InvoiceStatus = "draft" | "pending" | "paid" | "overdue" | "cancelled";
 export type { DocumentType, DocumentStatus, PaymentStatus };
 
+export class InvoiceNumberAllocationError extends Error {
+  readonly code = "invoice_number_allocation_failed";
+
+  constructor() {
+    super("Unable to assign a document number right now. Please try again in a moment.");
+    this.name = "InvoiceNumberAllocationError";
+  }
+}
+
 export type { DisplayOptions, PaymentMethodsConfig };
 
 export interface InvoiceItem {
@@ -644,21 +653,33 @@ async function fetchInvoiceWithItems(id: string): Promise<Invoice | null> {
   return rowToInvoice(inv as InvoiceRow, (items ?? []) as ItemRow[]);
 }
 
-async function nextInvoiceNumber(userId: string, documentType: DocumentType): Promise<string> {
+async function nextInvoiceNumber(documentType: DocumentType): Promise<string> {
   const { data, error } = await supabase.rpc("allocate_invoice_document_number", {
     p_document_type: documentType,
   });
-  if (!error && typeof data === "string" && data.length > 0) {
-    return data;
+  if (error) {
+    console.warn(
+      JSON.stringify({
+        event: "invoice_number_allocation_failed",
+        operation: "allocate_invoice_document_number",
+        documentType,
+        message: error.code ?? "rpc_error",
+      }),
+    );
+    throw new InvoiceNumberAllocationError();
   }
-  const prefix =
-    documentType === "quotation" ? "QTN" : documentType === "proforma_invoice" ? "PI" : "INV";
-  const { count } = await supabase
-    .from("invoices")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("document_type", documentType);
-  return `${prefix}-${String((count ?? 0) + 1).padStart(4, "0")}`;
+  if (typeof data !== "string" || !data.trim()) {
+    console.warn(
+      JSON.stringify({
+        event: "invoice_number_allocation_failed",
+        operation: "allocate_invoice_document_number",
+        documentType,
+        message: "empty_result",
+      }),
+    );
+    throw new InvoiceNumberAllocationError();
+  }
+  return data.trim();
 }
 
 export interface CreateInvoiceInput {
@@ -765,7 +786,7 @@ export const invoices = {
       paymentStatus,
       dueDate: input.dueDate || addDaysISO(issueDate, 14),
     });
-    const number = await nextInvoiceNumber(u.user.id, documentType);
+    const number = await nextInvoiceNumber(documentType);
 
     const walletAddress = profile.wallet || DEFAULT_WALLET;
     const legacyNetwork = profile.network || DEFAULT_NETWORK;

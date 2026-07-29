@@ -23,6 +23,7 @@ import {
 } from "@/lib/seo/site";
 import { GOOGLE_SITE_VERIFICATION } from "@/lib/analytics/config";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {

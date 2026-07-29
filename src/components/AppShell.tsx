@@ -61,8 +61,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (n: (typeof nav)[number]) =>
     n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/");
 
-  const displayName = user.name?.trim() || user.email;
-  const initial = displayName.charAt(0).toUpperCase();
+  const displayName = user.name?.trim() || user.email?.trim() || t("nav.account");
+  const initial = (displayName.charAt(0) || "?").toUpperCase();
+  const userPlan = user.plan ?? "free";
 
   return (
     <div className="min-h-screen bg-muted/30 flex">
@@ -102,7 +103,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium leading-snug break-words">{displayName}</p>
-              <p className="text-xs text-muted-foreground">{planLabel(user.plan, t)}</p>
+              <p className="text-xs text-muted-foreground">{planLabel(userPlan, t)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
