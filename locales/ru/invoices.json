@@ -98,6 +98,115 @@
       "itemFallback": "Позиция {{index}}"
     }
   },
+  "wizard": {
+    "pageTitle": "Create document",
+    "pageSubtitle": "Follow the steps to build your quotation, proforma, or tax invoice.",
+    "progressLabel": "Creation progress",
+    "stepCounter": "Step {{current}} of {{total}}",
+    "steps": {
+      "documentType": "Document type",
+      "client": "Client",
+      "details": "Details",
+      "items": "Line items",
+      "payment": "Payment",
+      "review": "Review"
+    },
+    "documentType": {
+      "heading": "What are you creating?",
+      "subheading": "Choose the document type. You can change this before finishing."
+    },
+    "documentTypes": {
+      "taxInvoice": {
+        "title": "Tax invoice",
+        "description": "Request payment with a formal tax invoice."
+      },
+      "proforma": {
+        "title": "Proforma invoice",
+        "description": "Share expected costs before delivery or payment."
+      },
+      "quotation": {
+        "title": "Quotation",
+        "description": "Send a quote for client approval — payment comes later."
+      }
+    },
+    "client": {
+      "heading": "Who is this for?",
+      "subheading": "Enter your client's contact details.",
+      "extraFieldsToggle": "Company, phone, tax ID, and address",
+      "phone": "Phone",
+      "phonePlaceholder": "+1 555 000 0000",
+      "taxId": "Tax ID / VAT",
+      "taxIdPlaceholder": "Optional",
+      "address": "Address",
+      "addressPlaceholder": "Street, city, country"
+    },
+    "details": {
+      "heading": "Document details",
+      "subheading": "Set the title, currency, and dates.",
+      "issueDate": "Issue date",
+      "dueDate": "Due date",
+      "quoteDate": "Quote date",
+      "validUntil": "Valid until",
+      "deliveryDate": "Expected delivery"
+    },
+    "optional": {
+      "heading": "Optional fields",
+      "subheading": "Add reference numbers, notes, or terms when you need them.",
+      "addField": "Add {{field}}",
+      "removeField": "Remove {{field}}",
+      "allAdded": "All optional fields are already on this document.",
+      "termsLabel": "Terms & conditions"
+    },
+    "items": {
+      "heading": "Line items",
+      "subheading": "Describe what you're billing for and adjust totals.",
+      "duplicate": "Duplicate line"
+    },
+    "payment": {
+      "heading": "Payment & delivery",
+      "subheading": "Choose how your client can pay.",
+      "subheadingQuotation": "Payment is optional for quotations — skip or add instructions.",
+      "alreadyPaid": "Already paid",
+      "alreadyPaidHint": "Mark this document as paid when you create it.",
+      "quotationOptional": "For quotations, payment methods are optional. You can continue without filling them in."
+    },
+    "review": {
+      "heading": "Review & create",
+      "subheading": "Confirm everything looks correct before you save.",
+      "documentType": "Document type",
+      "lineItems": "Line items",
+      "lineItemsCount": "{{count}} item(s)",
+      "paymentMethod": "Payment method",
+      "paymentSummary": "Payment details"
+    },
+    "preview": {
+      "openMobile": "Preview document",
+      "sampleNumber": "Preview — number assigned on save",
+      "validUntil": "Valid until {{date}}"
+    },
+    "actions": {
+      "continue": "Continue",
+      "saveDraft": "Save as draft",
+      "createDocument": "Create document"
+    },
+    "toast": {
+      "created": "Document created",
+      "savedDraft": "Draft saved",
+      "updated": "Document updated"
+    },
+    "validation": {
+      "clientNameRequired": "Client name is required.",
+      "clientEmailRequired": "Client email is required.",
+      "clientEmailInvalid": "Enter a valid client email.",
+      "titleRequired": "Document title is required.",
+      "issueDateRequired": "Issue date is required.",
+      "dueDateRequired": "Due date is required.",
+      "dueBeforeIssue": "Due date must be on or after the issue date.",
+      "itemsRequired": "Add at least one line item with a description and quantity.",
+      "walletRequired": "Enter a wallet address for crypto payment.",
+      "paymentMethodRequired": "Enable at least one payment method."
+    }
+  },
   "detail": {
     "backToInvoices": "К списку счетов",
     "cancel": "Отменить",

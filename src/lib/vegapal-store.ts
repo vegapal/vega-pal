@@ -17,6 +17,15 @@ import {
 } from "@/lib/plan/invoice-limit";
 import { authApiRequest } from "@/lib/auth/auth-client";
 import {
+  applyAutoOverduePayment,
+  defaultPaymentStatusForType,
+  mapLegacyStatusToFields,
+  syncLegacyStatus,
+  type DocumentStatus,
+  type DocumentType,
+  type PaymentStatus,
+} from "@/lib/invoice/document-model";
+import {
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_INVOICE_CURRENCY,
   buildDefaultPaymentMethods,
@@ -30,6 +39,7 @@ import {
 } from "@/lib/invoice-constants";
 
 export type InvoiceStatus = "draft" | "pending" | "paid" | "overdue" | "cancelled";
+export type { DocumentType, DocumentStatus, PaymentStatus };
 
 export type { DisplayOptions, PaymentMethodsConfig };
 
@@ -53,6 +63,10 @@ export interface Invoice {
   title: string;
   description: string;
   termsAndConditions: string;
+  documentType: DocumentType;
+  documentStatus: DocumentStatus;
+  paymentStatus: PaymentStatus;
+  /** Legacy combined status — synced on write, derived on read */
   status: InvoiceStatus;
   createdAt: string;
   issueDate: string;
@@ -233,6 +247,9 @@ type InvoiceRow = {
   title: string;
   description: string;
   status: string;
+  document_type?: string | null;
+  document_status?: string | null;
+  payment_status?: string | null;
   created_at: string;
   issue_date: string;
   due_date: string;
@@ -265,9 +282,41 @@ type ItemRow = {
   total: number | string;
 };
 
-function autoOverdue(status: string, dueDate: string): InvoiceStatus {
-  if (status === "pending" && dueDate && dueDate < todayISO()) return "overdue";
-  return status as InvoiceStatus;
+function parseDocumentType(value: string | null | undefined): DocumentType {
+  if (value === "quotation" || value === "proforma_invoice" || value === "tax_invoice") {
+    return value;
+  }
+  return "tax_invoice";
+}
+
+function parseDocumentStatus(value: string | null | undefined, legacyStatus: string): DocumentStatus {
+  const allowed: DocumentStatus[] = [
+    "draft",
+    "issued",
+    "accepted",
+    "rejected",
+    "cancelled",
+    "expired",
+  ];
+  if (value && (allowed as string[]).includes(value)) return value as DocumentStatus;
+  return mapLegacyStatusToFields(legacyStatus).documentStatus;
+}
+
+function parsePaymentStatus(
+  value: string | null | undefined,
+  legacyStatus: string,
+  documentType: DocumentType,
+): PaymentStatus {
+  const allowed: PaymentStatus[] = [
+    "not_applicable",
+    "unpaid",
+    "partially_paid",
+    "paid",
+    "overdue",
+    "refunded",
+  ];
+  if (value && (allowed as string[]).includes(value)) return value as PaymentStatus;
+  return mapLegacyStatusToFields(legacyStatus, documentType).paymentStatus;
 }
 
 function rowToInvoice(r: InvoiceRow, items: ItemRow[]): Invoice {
@@ -275,6 +324,22 @@ function rowToInvoice(r: InvoiceRow, items: ItemRow[]): Invoice {
   const paymentMethods = normalizePaymentMethods(r.payment_methods, r.wallet_address, r.network);
   const walletAddress = paymentMethods.crypto.walletAddress || r.wallet_address;
   const network = legacyNetworkFromCanonical(paymentMethods.crypto.network) || r.network;
+
+  const documentType = parseDocumentType(r.document_type);
+  let documentStatus = parseDocumentStatus(r.document_status, r.status);
+  let paymentStatus = parsePaymentStatus(r.payment_status, r.status, documentType);
+  paymentStatus = applyAutoOverduePayment({
+    documentType,
+    documentStatus,
+    paymentStatus,
+    dueDate: r.due_date,
+  });
+  const status = syncLegacyStatus({
+    documentType,
+    documentStatus,
+    paymentStatus,
+    dueDate: r.due_date,
+  });
 
   return {
     id: r.id,
@@ -289,7 +354,10 @@ function rowToInvoice(r: InvoiceRow, items: ItemRow[]): Invoice {
     title: r.title,
     description: r.description ?? "",
     termsAndConditions: r.terms_and_conditions ?? "",
-    status: autoOverdue(r.status, r.due_date),
+    documentType,
+    documentStatus,
+    paymentStatus,
+    status,
     createdAt: r.created_at,
     issueDate: r.issue_date,
     dueDate: r.due_date,
@@ -576,12 +644,21 @@ async function fetchInvoiceWithItems(id: string): Promise<Invoice | null> {
   return rowToInvoice(inv as InvoiceRow, (items ?? []) as ItemRow[]);
 }
 
-async function nextInvoiceNumber(userId: string): Promise<string> {
+async function nextInvoiceNumber(userId: string, documentType: DocumentType): Promise<string> {
+  const { data, error } = await supabase.rpc("allocate_invoice_document_number", {
+    p_document_type: documentType,
+  });
+  if (!error && typeof data === "string" && data.length > 0) {
+    return data;
+  }
+  const prefix =
+    documentType === "quotation" ? "QTN" : documentType === "proforma_invoice" ? "PI" : "INV";
   const { count } = await supabase
     .from("invoices")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-  return `INV-${String((count ?? 0) + 1).padStart(4, "0")}`;
+    .eq("user_id", userId)
+    .eq("document_type", documentType);
+  return `${prefix}-${String((count ?? 0) + 1).padStart(4, "0")}`;
 }
 
 export interface CreateInvoiceInput {
@@ -597,6 +674,9 @@ export interface CreateInvoiceInput {
   issueDate?: string;
   dueDate?: string;
   status?: InvoiceStatus;
+  documentType?: DocumentType;
+  documentStatus?: DocumentStatus;
+  paymentStatus?: PaymentStatus;
   invoiceCurrency?: string;
   poNumber?: string;
   referenceNumber?: string;
@@ -620,11 +700,16 @@ export const invoices = {
     const rows = invRows as InvoiceRow[];
     const list = rows.map((r) => rowToInvoice(r, (items ?? []) as ItemRow[]));
     // Auto-promote overdue
-    const stale = list.filter((i, idx) => i.status === "overdue" && rows[idx].status === "pending");
+    const stale = list.filter(
+      (i, idx) =>
+        i.paymentStatus === "overdue" &&
+        rows[idx].payment_status !== "overdue" &&
+        rows[idx].payment_status === "unpaid",
+    );
     if (stale.length > 0) {
       await supabase
         .from("invoices")
-        .update({ status: "overdue" })
+        .update({ payment_status: "overdue", status: "overdue" })
         .in(
           "id",
           stale.map((i) => i.id),
@@ -635,13 +720,12 @@ export const invoices = {
 
   async get(id: string): Promise<Invoice | null> {
     const inv = await fetchInvoiceWithItems(id);
-    if (inv && inv.status === "overdue") {
-      // persist overdue auto-promotion
+    if (inv && inv.paymentStatus === "overdue") {
       await supabase
         .from("invoices")
-        .update({ status: "overdue" })
+        .update({ payment_status: "overdue", status: "overdue" })
         .eq("id", id)
-        .eq("status", "pending");
+        .eq("payment_status", "unpaid");
     }
     return inv;
   },
@@ -666,7 +750,22 @@ export const invoices = {
     }));
     const { subtotal, total } = computeTotals(items, input.discount || 0, input.tax || 0);
     const issueDate = input.issueDate || todayISO();
-    const number = await nextInvoiceNumber(u.user.id);
+    const documentType = input.documentType ?? "tax_invoice";
+    const documentStatus = input.documentStatus ?? (input.status === "draft" ? "draft" : "issued");
+    const paymentStatus =
+      input.paymentStatus ??
+      (input.status === "paid"
+        ? "paid"
+        : documentStatus === "draft"
+          ? defaultPaymentStatusForType(documentType)
+          : defaultPaymentStatusForType(documentType));
+    const legacyStatus = syncLegacyStatus({
+      documentType,
+      documentStatus,
+      paymentStatus,
+      dueDate: input.dueDate || addDaysISO(issueDate, 14),
+    });
+    const number = await nextInvoiceNumber(u.user.id, documentType);
 
     const walletAddress = profile.wallet || DEFAULT_WALLET;
     const legacyNetwork = profile.network || DEFAULT_NETWORK;
@@ -685,7 +784,10 @@ export const invoices = {
         title: input.title,
         description: input.description ?? "",
         terms_and_conditions: input.termsAndConditions ?? "",
-        status: input.status ?? "pending",
+        status: legacyStatus,
+        document_type: documentType,
+        document_status: documentStatus,
+        payment_status: paymentStatus,
         issue_date: issueDate,
         due_date: input.dueDate || addDaysISO(issueDate, 14),
         subtotal,
@@ -741,6 +843,9 @@ export const invoices = {
     if (patch.description !== undefined) update.description = patch.description;
     if (patch.termsAndConditions !== undefined)
       update.terms_and_conditions = patch.termsAndConditions;
+    if (patch.documentType !== undefined) update.document_type = patch.documentType;
+    if (patch.documentStatus !== undefined) update.document_status = patch.documentStatus;
+    if (patch.paymentStatus !== undefined) update.payment_status = patch.paymentStatus;
     if (patch.status !== undefined) update.status = patch.status;
     if (patch.issueDate !== undefined) update.issue_date = patch.issueDate;
     if (patch.dueDate !== undefined) update.due_date = patch.dueDate;
@@ -798,6 +903,38 @@ export const invoices = {
       }
     }
     if (Object.keys(update).length > 0) {
+      if (
+        update.document_status !== undefined ||
+        update.payment_status !== undefined ||
+        update.document_type !== undefined ||
+        update.due_date !== undefined
+      ) {
+        const existing = await fetchInvoiceWithItems(id);
+        if (existing) {
+          const documentType = (update.document_type as DocumentType) ?? existing.documentType;
+          const documentStatus =
+            (update.document_status as DocumentStatus) ?? existing.documentStatus;
+          const paymentStatus = (update.payment_status as PaymentStatus) ?? existing.paymentStatus;
+          const dueDate = (update.due_date as string) ?? existing.dueDate;
+          update.status = syncLegacyStatus({
+            documentType,
+            documentStatus,
+            paymentStatus: applyAutoOverduePayment({
+              documentType,
+              documentStatus,
+              paymentStatus,
+              dueDate,
+            }),
+            dueDate,
+          });
+          update.payment_status = applyAutoOverduePayment({
+            documentType,
+            documentStatus,
+            paymentStatus: (update.payment_status as PaymentStatus) ?? paymentStatus,
+            dueDate,
+          });
+        }
+      }
       const { error } = await supabase
         .from("invoices")
         .update(update as never)
@@ -807,8 +944,29 @@ export const invoices = {
   },
 
   async setStatus(id: string, status: InvoiceStatus) {
-    const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
-    if (error) throw error;
+    const existing = await fetchInvoiceWithItems(id);
+    if (!existing) return;
+    const documentStatus: DocumentStatus =
+      status === "draft" ? "draft" : status === "cancelled" ? "cancelled" : "issued";
+    let paymentStatus: PaymentStatus = existing.paymentStatus;
+    if (existing.documentType !== "quotation") {
+      if (status === "paid") paymentStatus = "paid";
+      else if (status === "overdue") paymentStatus = "overdue";
+      else if (status === "pending") paymentStatus = "unpaid";
+      else if (status === "draft") paymentStatus = "unpaid";
+      else if (status === "cancelled") paymentStatus = "unpaid";
+    }
+    await invoices.update(id, { documentStatus, paymentStatus, status });
+  },
+
+  async setPaymentStatus(id: string, paymentStatus: PaymentStatus) {
+    const existing = await fetchInvoiceWithItems(id);
+    if (!existing || existing.documentType === "quotation") return;
+    await invoices.update(id, { paymentStatus });
+  },
+
+  async setDocumentStatus(id: string, documentStatus: DocumentStatus) {
+    await invoices.update(id, { documentStatus });
   },
 
   async cancel(id: string) {
@@ -819,6 +977,9 @@ export const invoices = {
     const src = await fetchInvoiceWithItems(id);
     if (!src) return null;
     return invoices.create({
+      documentType: src.documentType,
+      documentStatus: "draft",
+      paymentStatus: defaultPaymentStatusForType(src.documentType),
       clientName: src.clientName,
       clientEmail: src.clientEmail,
       clientCompany: src.clientCompany,

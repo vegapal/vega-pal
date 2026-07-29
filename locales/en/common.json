@@ -15,8 +15,15 @@
     "createInvoice": "Create Invoice",
     "settings": "Settings",
     "signOut": "Sign out",
+    "account": "Account",
+    "accountMenu": "Account menu",
     "adminPanel": "Admin Panel",
     "openMenu": "Open navigation menu"
+  },
+  "plans": {
+    "free": "Free plan",
+    "pro": "Pro plan",
+    "business": "Business plan"
   },
   "language": {
     "label": "Language",

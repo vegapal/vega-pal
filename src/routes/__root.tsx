@@ -23,7 +23,7 @@ import {
 } from "@/lib/seo/site";
 import { GOOGLE_SITE_VERIFICATION } from "@/lib/analytics/config";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
-import { PageViewTracker } from "@/components/analytics/PageViewTracker";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   const { t } = useTranslation("common");
@@ -171,6 +171,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         <AnalyticsScripts />
         {children}
+        <Toaster richColors position="top-center" />
         <Scripts />
       </body>
     </html>

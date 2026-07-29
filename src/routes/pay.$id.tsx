@@ -64,8 +64,8 @@ function PublicInvoice() {
 
   const { displayOptions: d } = inv;
   const currency = inv.invoiceCurrency;
-  const cancelled = inv.status === "cancelled";
-  const paid = inv.status === "paid";
+  const paid = inv.paymentStatus === "paid" || inv.status === "paid";
+  const cancelled = inv.documentStatus === "cancelled" || inv.status === "cancelled";
   const payable = !cancelled && !paid;
 
   const hasReferences =

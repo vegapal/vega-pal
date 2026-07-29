@@ -2,7 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppShell } from "@/components/AppShell";
-import { useInvoices, type Invoice, type InvoiceStatus } from "@/lib/vegapal-store";
+import {
+  useInvoices,
+  type DocumentType,
+  type Invoice,
+  type PaymentStatus,
+} from "@/lib/vegapal-store";
+import { canShowPaymentStatus } from "@/lib/invoice/document-model";
 import { formatInvoiceAmountWithCurrency } from "@/lib/invoice-display";
 import {
   exportInvoicesToExcel,
@@ -15,36 +21,20 @@ import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowUpRight, Download, FileText, Plus, Search } from "lucide-react";
-import { StatusBadge } from "@/components/StatusBadge";
+import {
+  DocumentStatusBadge,
+  DocumentTypeBadge,
+  PaymentStatusBadge,
+} from "@/components/invoice/DocumentBadges";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
 
-const STATUS_SEARCH_VALUES = [
-  "paid",
-  "pending",
-  "overdue",
-  "draft",
-  "cancelled",
-] as const satisfies readonly InvoiceStatus[];
-
-type InvoicesSearch = {
-  status?: (typeof STATUS_SEARCH_VALUES)[number];
-};
+type DocFilter = "all" | DocumentType;
+type PayFilter = "all" | PaymentStatus;
 
 const TABLE_GRID =
-  "md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1.3fr)_7.5rem_6.5rem_minmax(5.5rem,1fr)_2.5rem] md:items-center md:gap-4";
+  "md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.2fr)_7rem_9rem_6.5rem_minmax(5.5rem,1fr)_2.5rem] md:items-center md:gap-3";
 
 export const Route = createFileRoute("/invoices/")({
-  validateSearch: (search: Record<string, unknown>): InvoicesSearch => {
-    if (!search || typeof search !== "object") return {};
-    const status = search.status;
-    if (
-      typeof status === "string" &&
-      (STATUS_SEARCH_VALUES as readonly string[]).includes(status)
-    ) {
-      return { status: status as InvoicesSearch["status"] };
-    }
-    return {};
-  },
   beforeLoad: () => ensureNamespacesLoaded(["invoices"]),
   head: () => ({
     meta: [{ title: "Invoices — VegaPal" }, { name: "robots", content: "noindex, nofollow" }],
@@ -56,28 +46,20 @@ export const Route = createFileRoute("/invoices/")({
   ),
 });
 
-type Filter = "all" | InvoiceStatus;
-
 function InvoicesPage() {
   const { t } = useTranslation("invoices");
   const { t: tc } = useTranslation("common");
   const { data: all, loading } = useInvoices();
-  const { status: statusFromUrl } = Route.useSearch();
-  const navigate = useNavigate({ from: "/invoices/" });
-  const filter: Filter = statusFromUrl ?? "all";
+  const [docFilter, setDocFilter] = useState<DocFilter>("all");
+  const [payFilter, setPayFilter] = useState<PayFilter>("all");
   const [q, setQ] = useState("");
   const [exportFromDate, setExportFromDate] = useState("");
   const [exportToDate, setExportToDate] = useState("");
 
-  const setFilter = (key: Filter) => {
-    navigate({
-      search: key === "all" ? {} : { status: key },
-    });
-  };
-
   const filtered = useMemo(() => {
     return all.filter((i) => {
-      if (filter !== "all" && i.status !== filter) return false;
+      if (docFilter !== "all" && i.documentType !== docFilter) return false;
+      if (payFilter !== "all" && i.paymentStatus !== payFilter) return false;
       if (!q) return true;
       const s = q.toLowerCase();
       return (
@@ -87,15 +69,7 @@ function InvoicesPage() {
         i.clientEmail.toLowerCase().includes(s)
       );
     });
-  }, [all, filter, q]);
-
-  const counts = {
-    all: all.length,
-    pending: all.filter((i) => i.status === "pending").length,
-    paid: all.filter((i) => i.status === "paid").length,
-    overdue: all.filter((i) => i.status === "overdue").length,
-    cancelled: all.filter((i) => i.status === "cancelled").length,
-  };
+  }, [all, docFilter, payFilter, q]);
 
   const handleExport = async () => {
     const toExport = filterInvoicesByIssueDateRange(filtered, exportFromDate, exportToDate);
@@ -104,13 +78,21 @@ function InvoicesPage() {
     }
   };
 
-  const filterButtons = [
-    ["all", t("list.filters.all"), counts.all],
-    ["pending", t("list.filters.pending"), counts.pending],
-    ["paid", t("list.filters.paid"), counts.paid],
-    ["overdue", t("list.filters.overdue"), counts.overdue],
-    ["cancelled", t("list.filters.cancelled"), counts.cancelled],
-  ] as const;
+  const typeFilters: { key: DocFilter; label: string }[] = [
+    { key: "all", label: t("list.filters.all") },
+    { key: "tax_invoice", label: t("list.filters.invoices") },
+    { key: "quotation", label: t("list.filters.quotations") },
+    { key: "proforma_invoice", label: t("list.filters.proformas") },
+  ];
+
+  const payFilters: { key: PayFilter; label: string }[] = [
+    { key: "all", label: t("list.filters.allPayment") },
+    { key: "unpaid", label: t("list.filters.unpaid") },
+    { key: "partially_paid", label: t("list.filters.partiallyPaid") },
+    { key: "paid", label: t("list.filters.paid") },
+    { key: "overdue", label: t("list.filters.overdue") },
+    { key: "refunded", label: t("list.filters.refunded") },
+  ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto min-w-0">
@@ -134,19 +116,36 @@ function InvoicesPage() {
 
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="flex flex-col gap-4 px-4 sm:px-6 py-4 border-b border-border">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted/60 p-1">
-              {filterButtons.map(([key, label, count]) => (
+              {typeFilters.map(({ key, label }) => (
                 <button
                   key={key}
-                  onClick={() => setFilter(key as Filter)}
+                  type="button"
+                  onClick={() => setDocFilter(key)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    filter === key
+                    docFilter === key
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {label} <span className="ml-1 text-muted-foreground">{count}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted/60 p-1">
+              {payFilters.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setPayFilter(key)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    payFilter === key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
                 </button>
               ))}
             </div>
@@ -214,7 +213,8 @@ function InvoicesPage() {
               <span className="text-left">{tc("labels.invoice")}</span>
               <span className="text-left">{tc("labels.client")}</span>
               <span className="text-left">{tc("labels.date")}</span>
-              <span className="text-center">{tc("labels.status")}</span>
+              <span className="text-left">{t("detail.updateStatus")}</span>
+              <span className="text-center">{t("detail.paymentStatus")}</span>
               <span className="text-right">{tc("labels.amount")}</span>
               <span className="sr-only">{tc("labels.action")}</span>
             </div>
@@ -245,6 +245,9 @@ function Row({ inv }: { inv: Invoice }) {
         className={`hidden md:grid ${TABLE_GRID} px-6 py-4 hover:bg-muted/40 transition`}
       >
         <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-0.5">
+            <DocumentTypeBadge type={inv.documentType} />
+          </div>
           <p className="font-medium truncate">{inv.title}</p>
           <p className="text-xs text-muted-foreground font-mono">{inv.number}</p>
         </div>
@@ -253,8 +256,13 @@ function Row({ inv }: { inv: Invoice }) {
           <p className="text-xs text-muted-foreground truncate">{inv.clientEmail}</p>
         </div>
         <p className="text-sm text-muted-foreground">{date}</p>
+        <DocumentStatusBadge status={inv.documentStatus} />
         <div className="flex justify-center">
-          <StatusBadge status={inv.status} />
+          {canShowPaymentStatus(inv.documentType) ? (
+            <PaymentStatusBadge status={inv.paymentStatus} documentType={inv.documentType} />
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
         </div>
         <div className="flex items-center justify-end gap-2">
           <span className="font-semibold tabular-nums whitespace-nowrap">{amount}</span>
@@ -270,10 +278,16 @@ function Row({ inv }: { inv: Invoice }) {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap gap-2 mb-1">
+              <DocumentTypeBadge type={inv.documentType} />
+              <DocumentStatusBadge status={inv.documentStatus} />
+            </div>
             <p className="font-medium leading-snug">{inv.title}</p>
             <p className="text-xs text-muted-foreground font-mono mt-0.5">{inv.number}</p>
           </div>
-          <StatusBadge status={inv.status} />
+          {canShowPaymentStatus(inv.documentType) ? (
+            <PaymentStatusBadge status={inv.paymentStatus} documentType={inv.documentType} />
+          ) : null}
         </div>
         <p className="mt-2 text-sm text-muted-foreground truncate">{inv.clientName}</p>
         <div className="mt-3 flex items-center justify-between gap-3">

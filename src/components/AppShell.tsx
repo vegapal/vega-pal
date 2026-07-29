@@ -5,11 +5,33 @@ import { useTranslation } from "react-i18next";
 import { PageLoading } from "@/components/ui/page-loading";
 import { ConfirmEmailPending } from "@/components/auth/ConfirmEmailPending";
 import { auth, useSession } from "@/lib/vegapal-store";
-import { LayoutDashboard, FilePlus2, Settings, LogOut, FileText, Shield, ShieldCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  FilePlus2,
+  Settings,
+  LogOut,
+  FileText,
+  ShieldCheck,
+  ChevronDown,
+} from "lucide-react";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "@/lib/theme";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+function planLabel(plan: string, t: (k: string) => string) {
+  if (plan === "pro") return t("plans.pro");
+  if (plan === "business") return t("plans.business");
+  return t("plans.free");
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -39,6 +61,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (n: (typeof nav)[number]) =>
     n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/");
 
+  const displayName = user.name?.trim() || user.email;
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen bg-muted/30 flex">
       <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-background sticky top-0 h-screen">
@@ -47,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Logo />
           </Link>
         </div>
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
           {nav.map((n) => {
             const active = isActive(n);
             return (
@@ -67,38 +92,53 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="px-4 pb-3">
-          <div className="rounded-xl border border-border bg-muted/40 p-3 flex items-start gap-2.5">
-            <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xs font-semibold">{t("securePayments.title")}</p>
-              <p className="text-xs text-muted-foreground leading-snug mt-0.5">
-                {t("securePayments.tagline")}
-              </p>
+        <div className="mt-auto p-4 border-t border-border space-y-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="h-10 w-10 rounded-full bg-navy text-navy-foreground flex items-center justify-center text-sm font-semibold shrink-0"
+              aria-hidden
+            >
+              {initial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium leading-snug break-words">{displayName}</p>
+              <p className="text-xs text-muted-foreground">{planLabel(user.plan, t)}</p>
             </div>
           </div>
-        </div>
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-9 w-9 rounded-full bg-navy text-navy-foreground flex items-center justify-center text-sm font-semibold">
-              {(user.name || user.email).charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.name || user.email}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
+          <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeToggle />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto gap-1"
+                  aria-label={t("nav.accountMenu")}
+                >
+                  {t("nav.account")}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">{t("nav.settings")}</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={async () => {
+                    await auth.signOut();
+                    navigate({ to: "/" });
+                  }}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {t("nav.signOut")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <button
-            onClick={async () => {
-              await auth.signOut();
-              navigate({ to: "/" });
-            }}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full px-2 py-1.5 rounded-md hover:bg-muted"
-          >
-            <LogOut className="h-4 w-4" /> {t("nav.signOut")}
-          </button>
         </div>
       </aside>
 

@@ -4,7 +4,13 @@ import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppShell } from "@/components/AppShell";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
-import { useInvoice, invoices, notifyInvoices, type InvoiceStatus } from "@/lib/vegapal-store";
+import { useInvoice, invoices, notifyInvoices, type DocumentStatus, type PaymentStatus } from "@/lib/vegapal-store";
+import {
+  DocumentStatusBadge,
+  DocumentTypeBadge,
+  PaymentStatusBadge,
+} from "@/components/invoice/DocumentBadges";
+import { canShowPaymentStatus } from "@/lib/invoice/document-model";
 import {
   formatInvoiceAmount,
   formatInvoiceAmountWithCurrency,
@@ -103,10 +109,17 @@ function InvoiceDetails() {
     }
   };
 
-  const setStatus = async (s: InvoiceStatus) => {
-    const previous = inv.status;
-    await invoices.setStatus(inv.id, s);
-    if (s === "paid" && previous !== "paid") {
+  const setDocumentStatus = async (next: DocumentStatus) => {
+    await invoices.setDocumentStatus(inv.id, next);
+    notifyInvoices();
+    refresh();
+  };
+
+  const setPaymentStatus = async (next: PaymentStatus) => {
+    if (!canShowPaymentStatus(inv.documentType)) return;
+    const previous = inv.paymentStatus;
+    await invoices.setPaymentStatus(inv.id, next);
+    if (next === "paid" && previous !== "paid") {
       trackInvoicePaid(inv.id, inv.total, inv.invoiceCurrency);
     }
     notifyInvoices();
@@ -129,10 +142,15 @@ function InvoiceDetails() {
 
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{inv.title}</h1>
-            {d.showStatus && <StatusBadge status={inv.status} />}
+          <div className="flex items-center gap-2 flex-wrap">
+            <DocumentTypeBadge type={inv.documentType} />
+            <DocumentStatusBadge status={inv.documentStatus} />
+            {canShowPaymentStatus(inv.documentType) ? (
+              <PaymentStatusBadge status={inv.paymentStatus} documentType={inv.documentType} />
+            ) : null}
+            {d.showStatus ? <StatusBadge status={inv.status} /> : null}
           </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-2">{inv.title}</h1>
           <p className="text-muted-foreground font-mono text-sm mt-1">{inv.number}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {t("detail.invoiceCurrencyLabel")}{" "}
@@ -346,28 +364,36 @@ function InvoiceDetails() {
               {t("detail.updateStatus")}
             </h3>
             <div className="space-y-2">
-              <StatusButton
-                label={t("detail.markAsPaid")}
-                active={inv.status === "paid"}
-                onClick={() => setStatus("paid")}
-              />
-              <StatusButton
-                label={t("detail.markAsPending")}
-                active={inv.status === "pending"}
-                onClick={() => setStatus("pending")}
-              />
-              <StatusButton
-                label={t("detail.markAsDraft")}
-                active={inv.status === "draft"}
-                onClick={() => setStatus("draft")}
-              />
-              <StatusButton
-                label={t("detail.markAsCancelled")}
-                active={inv.status === "cancelled"}
-                onClick={() => setStatus("cancelled")}
-              />
+              {(
+                inv.documentType === "quotation"
+                  ? (["draft", "issued", "accepted", "rejected", "expired", "cancelled"] as const)
+                  : (["draft", "issued", "cancelled", "expired"] as const)
+              ).map((s) => (
+                <StatusButton
+                  key={s}
+                  label={t(`documentStatus.${s}`)}
+                  active={inv.documentStatus === s}
+                  onClick={() => setDocumentStatus(s)}
+                />
+              ))}
             </div>
           </div>
+
+          {canShowPaymentStatus(inv.documentType) && inv.documentStatus !== "cancelled" ? (
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h3 className="font-semibold mb-4">{t("detail.paymentStatus")}</h3>
+              <div className="space-y-2">
+                {(["unpaid", "partially_paid", "paid", "overdue", "refunded"] as const).map((s) => (
+                  <StatusButton
+                    key={s}
+                    label={t(`paymentStatus.${s}`)}
+                    active={inv.paymentStatus === s}
+                    onClick={() => setPaymentStatus(s)}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {d.showPaymentInstructions && (
             <div>

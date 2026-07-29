@@ -101,6 +101,8 @@ export type Database = {
           description: string
           discount: number
           display_options: Json
+          document_status: string
+          document_type: string
           due_date: string
           id: string
           invoice_currency: string
@@ -108,6 +110,7 @@ export type Database = {
           network: string
           number: string
           payment_methods: Json
+          payment_status: string
           po_number: string | null
           project_code: string | null
           reference_number: string | null
@@ -127,6 +130,9 @@ export type Database = {
           wallet_address: string
         }
         Insert: {
+          document_type?: string
+          document_status?: string
+          payment_status?: string
           brand_color?: string
           client_company?: string | null
           client_email: string
@@ -161,6 +167,9 @@ export type Database = {
           wallet_address: string
         }
         Update: {
+          document_type?: string
+          document_status?: string
+          payment_status?: string
           brand_color?: string
           client_company?: string | null
           client_email?: string
@@ -218,6 +227,9 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          document_type?: string
+          document_status?: string
+          payment_status?: string
           brand_color?: string
           business?: string | null
           company_address?: string | null
@@ -238,6 +250,9 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          document_type?: string
+          document_status?: string
+          payment_status?: string
           brand_color?: string
           business?: string | null
           company_address?: string | null
@@ -271,6 +286,10 @@ export type Database = {
           invoices_this_month: number
           monthly_limit: number | null
         }[]
+      }
+      allocate_invoice_document_number: {
+        Args: { p_document_type: string }
+        Returns: string
       }
     }
     Enums: {
