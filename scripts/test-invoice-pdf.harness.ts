@@ -84,10 +84,12 @@ assert.equal(hiddenDue.showDueDate, false);
 assert.equal(DEFAULT_DISPLAY_OPTIONS.showDueDate, true);
 
 const pdfSource = readFileSync(join(process.cwd(), "src/lib/invoice-pdf.ts"), "utf8");
-assert.ok(pdfSource.includes("Payment details"), "PDF uses Payment details heading");
+assert.ok(pdfSource.includes("HOW TO PAY"), "PDF uses How to pay section");
+assert.ok(!pdfSource.includes("DOCUMENT DETAILS"), "PDF must not use DOCUMENT DETAILS heading");
 assert.ok(!pdfSource.includes("Payment instructions"), "PDF must not use Payment instructions");
 assert.ok(!pdfSource.includes("Powered by VegaPal"), "PDF must not use mid-page Powered by");
 assert.ok(pdfSource.includes("Created with VegaPal"), "PDF footer branding");
+assert.ok(pdfSource.includes("vega-pal.com"), "PDF footer URL");
 assert.ok(!pdfSource.includes('doc.text("INVOICE"'), "PDF must not hardcode INVOICE title");
 assert.ok(pdfSource.includes("documentTypeHeading"), "PDF uses document type helper");
 assert.ok(pdfSource.includes('showHead: "everyPage"'), "Table headers repeat on pages");
