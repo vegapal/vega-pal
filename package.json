@@ -22,7 +22,8 @@
     "analytics:check-pii": "node scripts/check-analytics-pii.mjs",
     "test:turnstile": "node scripts/test-turnstile-verify.mjs",
     "test:invoice-document": "node scripts/test-invoice-document.mjs",
-    "test:invoice-numbering": "node scripts/test-invoice-numbering.mjs"
+    "test:invoice-numbering": "node scripts/test-invoice-numbering.mjs",
+    "test:invoice-wizard": "node scripts/test-invoice-wizard.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

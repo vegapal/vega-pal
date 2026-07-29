@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { InvoiceWizard } from "@/components/invoices/create/InvoiceWizard";
+import { InvoiceWizardErrorBoundary } from "@/components/invoices/create/InvoiceWizardErrorBoundary";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
 
 export const Route = createFileRoute("/invoices/new")({
@@ -22,7 +23,9 @@ function NewInvoiceRoute() {
 
   return (
     <AppShell>
-      <InvoiceWizard editId={editId} />
+      <InvoiceWizardErrorBoundary>
+        <InvoiceWizard editId={editId} />
+      </InvoiceWizardErrorBoundary>
     </AppShell>
   );
 }

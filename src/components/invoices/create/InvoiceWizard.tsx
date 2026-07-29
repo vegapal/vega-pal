@@ -1,3 +1,14 @@
+import { defaultPaymentStatusForType } from "@/lib/invoice/document-model";
+import { isAtFreePlanInvoiceLimit } from "@/lib/plan/invoice-limit";
+import {
+  getInvoicePlanUsage,
+  invoices,
+  notifyInvoices,
+  useInvoice,
+  useSession,
+  type Invoice,
+  type InvoicePlanUsage,
+} from "@/lib/vegapal-store";
 import { trackInvoiceCreated } from "@/lib/analytics/events";
 import { formatAppError } from "@/lib/auth/errors";
 import { checkClientRateLimit } from "@/lib/client-rate-limit";
@@ -55,7 +66,7 @@ function optionalFieldsFromExisting(existing: {
   return keys;
 }
 
-function stateFromExisting(existing: NonNullable<ReturnType<typeof useInvoice>["data"]>): InvoiceWizardState {
+function stateFromExisting(existing: Invoice): InvoiceWizardState {
   const base = createInitialWizardState();
   return {
     ...base,

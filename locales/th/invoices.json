@@ -194,6 +194,10 @@
       "savedDraft": "Draft saved",
       "updated": "Document updated"
     },
+    "error": {
+      "title": "Could not open the document builder",
+      "description": "Something went wrong loading this page. Your other invoices are safe — try again or go back to the list."
+    },
     "validation": {
       "clientNameRequired": "Client name is required.",
       "clientEmailRequired": "Client email is required.",

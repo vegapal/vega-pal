@@ -196,6 +196,10 @@
       "saveDraft": "Save as draft",
       "createDocument": "Create document"
     },
+    "error": {
+      "title": "Could not open the document builder",
+      "description": "Something went wrong loading this page. Your other invoices are safe — try again or go back to the list."
+    },
     "toast": {
       "created": "Document created",
       "savedDraft": "Draft saved",
