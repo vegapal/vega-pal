@@ -104,7 +104,7 @@ console.log(`\n=== Auth API QA (${base}) ===\n`);
   });
   if (json && typeof json.error === "string") {
     if (res.status === 503) pass("signup service config", "503 JSON (check Vercel Supabase env)");
-    else if (res.status === 403) pass("signup captcha gate", "403 JSON");
+    else if (res.status === 403 && json?.error === "captcha_verification_failed") pass("signup captcha gate", "403 captcha_verification_failed");
     else pass("signup error JSON", `status ${res.status}`);
   } else if (res.status === 200 && json?.ok) {
     pass("signup success", json.email);

@@ -20,7 +20,7 @@ In [Supabase Dashboard → Authentication → Rate Limits](https://supabase.com/
 Set in Vercel / local env:
 
 - `VITE_TURNSTILE_SITE_KEY` — public site key (widget on register, login, forgot-password)
-- `TURNSTILE_SECRET_KEY` — server only; verified at `POST /api/turnstile/verify` before Supabase auth
+- `TURNSTILE_SECRET_KEY` — server only; verified inside `POST /api/auth/signup`, `POST /api/auth/login`, and `POST /api/auth/forgot-password` (one Siteverify call per request; tokens are single-use)
 
 ### Where Turnstile runs
 

@@ -77,7 +77,7 @@ function LoginPage() {
     setLoading(true);
     const normalizedEmail = parsed.data.email.toLowerCase();
     try {
-      await turnstile.verifyBeforeAuth();
+      turnstile.requireToken();
       await auth.signIn(normalizedEmail, parsed.data.password, turnstile.enabled ? turnstile.token : undefined);
       trackLogin("email");
       navigate({ to: "/dashboard" });

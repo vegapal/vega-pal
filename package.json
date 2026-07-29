@@ -19,7 +19,8 @@
     "db:check-refs": "node scripts/check-hardcoded-supabase-refs.mjs",
     "seo:check-origin": "node scripts/check-seo-origin.mjs",
     "analytics:check": "node scripts/check-analytics-config.mjs",
-    "analytics:check-pii": "node scripts/check-analytics-pii.mjs"
+    "analytics:check-pii": "node scripts/check-analytics-pii.mjs",
+    "test:turnstile": "node scripts/test-turnstile-verify.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -75,7 +75,7 @@ function RegisterPage() {
 
     setLoading(true);
     try {
-      await turnstile.verifyBeforeAuth();
+      turnstile.requireToken();
       const data = parsed.data;
       await auth.signUp(
         data.email.toLowerCase(),
@@ -86,6 +86,7 @@ function RegisterPage() {
       );
       setRegisteredEmail(data.email.toLowerCase());
       setRegistered(true);
+      turnstile.reset();
       trackSignUp("email");
     } catch (err) {
       turnstile.reset();

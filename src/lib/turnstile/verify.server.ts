@@ -8,22 +8,48 @@ export type TurnstileVerifyResult = {
   skipped?: boolean;
 };
 
+type CloudflareSiteverifyResponse = {
+  success?: boolean;
+  "error-codes"?: string[];
+  hostname?: string;
+  action?: string;
+};
+
+export function logTurnstileVerificationFailed(result: CloudflareSiteverifyResponse): void {
+  console.warn(
+    JSON.stringify({
+      event: "turnstile_verification_failed",
+      errorCodes: result["error-codes"] ?? [],
+      hostname: result.hostname ?? null,
+      action: result.action ?? null,
+    }),
+  );
+}
+
+export type TurnstileVerifyDeps = {
+  fetchImpl?: typeof fetch;
+  getSecret?: () => string | undefined;
+};
+
 export async function verifyTurnstileToken(
   token: string,
   options?: { remoteIp?: string; host?: string | null },
+  deps?: TurnstileVerifyDeps,
 ): Promise<TurnstileVerifyResult> {
   const host = options?.host ?? null;
+  const fetchImpl = deps?.fetchImpl ?? fetch;
+  const getSecret = deps?.getSecret ?? (() => process.env.TURNSTILE_SECRET_KEY);
 
   if (shouldBypassTurnstile(serverTurnstilePolicy(host))) {
     return { success: true, skipped: true };
   }
 
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+  const secret = getSecret();
   const isProductionHost = host && !shouldBypassTurnstile(serverTurnstilePolicy(host));
 
   if (!secret) {
     if (isProductionHost) {
-      return { success: false, error: "Captcha verification failed. Please try again." };
+      return { success: false, error: "captcha_verification_failed" };
     }
     if (process.env.NODE_ENV !== "production") {
       console.warn("[turnstile] TURNSTILE_SECRET_KEY is not set — verification skipped");
@@ -32,7 +58,7 @@ export async function verifyTurnstileToken(
   }
 
   if (!token?.trim()) {
-    return { success: false, error: "Captcha token is required." };
+    return { success: false, error: "captcha_verification_failed" };
   }
 
   const form = new URLSearchParams();
@@ -42,47 +68,22 @@ export async function verifyTurnstileToken(
     form.set("remoteip", options.remoteIp);
   }
 
-  const response = await fetch(TURNSTILE_VERIFY_URL, {
+  const response = await fetchImpl(TURNSTILE_VERIFY_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: form.toString(),
   });
 
   if (!response.ok) {
-    return { success: false, error: "Captcha verification failed. Please try again." };
+    logTurnstileVerificationFailed({ "error-codes": ["siteverify_http_error"] });
+    return { success: false, error: "captcha_verification_failed" };
   }
 
-  const data = (await response.json()) as { success?: boolean; "error-codes"?: string[] };
+  const data = (await response.json()) as CloudflareSiteverifyResponse;
   if (!data.success) {
-    if (process.env.NODE_ENV !== "production") {
-      console.debug("[turnstile] siteverify failed", data["error-codes"] ?? []);
-    }
-    return { success: false, error: "Captcha verification failed. Please try again." };
+    logTurnstileVerificationFailed(data);
+    return { success: false, error: "captcha_verification_failed" };
   }
 
   return { success: true };
-}
-
-export async function handleTurnstileVerifyRequest(request: Request): Promise<Response> {
-  if (request.method !== "POST") {
-    return Response.json({ success: false, error: "Method not allowed." }, { status: 405 });
-  }
-
-  try {
-    const body = (await request.json()) as { token?: string };
-    const remoteIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-    const host = request.headers.get("host");
-    const result = await verifyTurnstileToken(body.token ?? "", { remoteIp, host });
-
-    if (!result.success) {
-      return Response.json(
-        { success: false, error: result.error ?? "Captcha verification failed." },
-        { status: 403 },
-      );
-    }
-
-    return Response.json({ success: true, skipped: result.skipped ?? false });
-  } catch {
-    return Response.json({ success: false, error: "Invalid request." }, { status: 400 });
-  }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { isTurnstileEnabled, verifyTurnstileOnServer } from "@/lib/turnstile/client";
+import { isTurnstileEnabled } from "@/lib/turnstile/client";
 
 export function useTurnstile() {
   const enabled = isTurnstileEnabled();
@@ -11,14 +11,13 @@ export function useTurnstile() {
     resetRef.current?.();
   }, []);
 
-  const verifyBeforeAuth = useCallback(async () => {
+  const requireToken = useCallback(() => {
     if (!enabled) {
       return;
     }
     if (!token) {
       throw new Error("Please complete the captcha.");
     }
-    await verifyTurnstileOnServer(token);
   }, [enabled, token]);
 
   return {
@@ -27,6 +26,6 @@ export function useTurnstile() {
     setToken,
     reset,
     resetRef,
-    verifyBeforeAuth,
+    requireToken,
   };
 }

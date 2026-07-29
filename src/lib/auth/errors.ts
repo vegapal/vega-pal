@@ -111,7 +111,7 @@ function mapSupabaseAuthMessage(message: string): string {
   if (lower.includes("failed to fetch") || lower.includes("fetch failed") || lower.includes("network")) {
     return "Network error. Check your connection and try again.";
   }
-  if (lower.includes("captcha")) {
+  if (lower.includes("captcha_verification_failed") || lower.includes("captcha")) {
     return "Captcha verification failed. Please try again.";
   }
   return message;

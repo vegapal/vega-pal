@@ -54,7 +54,7 @@ async function verifyTurnstileForAuth(request: Request, token: string | undefine
   const host = request.headers.get("host");
   const result = await verifyTurnstileToken(token ?? "", { remoteIp, host });
   if (!result.success) {
-    return authApiError(403, result.error ?? "Captcha verification failed. Please try again.", "captcha_failed");
+    return authApiError(403, "captcha_verification_failed");
   }
   return null;
 }

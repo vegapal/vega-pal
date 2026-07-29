@@ -3,8 +3,6 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { applySecurityHeadersTo } from "./lib/security-headers";
-import { handleTurnstileVerifyRequest } from "./lib/turnstile/verify.server";
-
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -53,11 +51,6 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const url = new URL(request.url);
-      if (url.pathname === "/api/turnstile/verify") {
-        const response = await handleTurnstileVerifyRequest(request);
-        return await applySecurityHeaders(response);
-      }
-
       if (url.pathname === "/api/health") {
         const { handleHealthCheckRequest } = await import("@/lib/health/health-check.server");
         const response = await handleHealthCheckRequest();
