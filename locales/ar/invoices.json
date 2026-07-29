@@ -5,8 +5,8 @@
     "detail": "Invoice — VegaPal"
   },
   "list": {
-    "title": "Invoices",
-    "subtitle": "Manage every invoice you've issued.",
+    "title": "المستندات",
+    "subtitle": "إدارة الفواتير وعروض الأسعار والفواتير الأولية في مكان واحد.",
     "searchPlaceholder": "Search invoices...",
     "loading": "Loading invoices…",
     "filters": {
@@ -14,7 +14,14 @@
       "pending": "Pending",
       "paid": "Paid",
       "overdue": "Overdue",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "invoices": "Invoices",
+      "quotations": "Quotations",
+      "proformas": "Proformas",
+      "allPayment": "All payment statuses",
+      "unpaid": "Unpaid",
+      "partiallyPaid": "Partially paid",
+      "refunded": "Refunded"
     },
     "empty": {
       "title": "No invoices found",
@@ -109,7 +116,8 @@
       "details": "Details",
       "items": "Line items",
       "payment": "Payment",
-      "review": "Review"
+      "review": "Review",
+      "document": "Document"
     },
     "documentType": {
       "heading": "What are you creating?",
@@ -138,7 +146,12 @@
       "taxId": "Tax ID / VAT",
       "taxIdPlaceholder": "Optional",
       "address": "Address",
-      "addressPlaceholder": "Street, city, country"
+      "addressPlaceholder": "Street, city, country",
+      "nameLabel": "Client or company name",
+      "namePlaceholder": "Acme Corp or Jane Smith",
+      "emailOptionalPlaceholder": "client@email.com (optional)",
+      "showOnDocument": "Show client details on document",
+      "showOnDocumentHint": "When off, the client block is hidden on the PDF and public page."
     },
     "details": {
       "heading": "Document details",
@@ -147,7 +160,13 @@
       "dueDate": "Due date",
       "quoteDate": "Quote date",
       "validUntil": "Valid until",
-      "deliveryDate": "Expected delivery"
+      "deliveryDate": "Expected delivery",
+      "subjectQuotation": "Quotation subject",
+      "subjectQuotationPlaceholder": "Website development proposal",
+      "subjectProforma": "Proforma subject",
+      "subjectProformaPlaceholder": "Expected website development costs",
+      "subjectTaxInvoice": "Invoice description",
+      "subjectTaxInvoicePlaceholder": "Website development services"
     },
     "optional": {
       "heading": "Optional fields",
@@ -160,7 +179,15 @@
     "items": {
       "heading": "Line items",
       "subheading": "Describe what you're billing for and adjust totals.",
-      "duplicate": "Duplicate line"
+      "duplicate": "Duplicate line",
+      "addLineItem": "Add line item",
+      "addDiscount": "Add discount",
+      "discountPercent": "Discount percentage",
+      "showDiscountOnDocument": "Show discount on document",
+      "addTax": "Add tax",
+      "taxPercent": "Tax percentage",
+      "showTaxOnDocument": "Show tax on document",
+      "legacyFixedHint": "This document uses fixed discount/tax amounts from a previous version."
     },
     "payment": {
       "heading": "Payment & delivery",
@@ -187,7 +214,10 @@
     "actions": {
       "continue": "Continue",
       "saveDraft": "Save as draft",
-      "createDocument": "Create document"
+      "createDocument": "Create document",
+      "createInvoice": "Create invoice",
+      "createProforma": "Create proforma",
+      "createQuotation": "Create quotation"
     },
     "toast": {
       "created": "Document created",
@@ -208,7 +238,8 @@
       "dueBeforeIssue": "Due date must be on or after the issue date.",
       "itemsRequired": "Add at least one line item with a description and quantity.",
       "walletRequired": "Enter a wallet address for crypto payment.",
-      "paymentMethodRequired": "Enable at least one payment method."
+      "paymentMethodRequired": "Enable at least one payment method.",
+      "subjectRequired": "Enter a subject or description for this document."
     }
   },
   "detail": {

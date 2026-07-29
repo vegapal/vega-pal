@@ -16,7 +16,10 @@
     "settings": "Настройки",
     "signOut": "Выйти",
     "adminPanel": "Панель администратора",
-    "openMenu": "Открыть меню навигации"
+    "openMenu": "Открыть меню навигации",
+    "documents": "Documents",
+    "createDocument": "Create document",
+    "plan": "Plan"
   },
   "language": {
     "label": "Язык",
@@ -49,7 +52,8 @@
     "pdf": "PDF",
     "edit": "Редактировать",
     "duplicate": "Дублировать",
-    "viewPublicPage": "Открыть публичную страницу"
+    "viewPublicPage": "Открыть публичную страницу",
+    "createDocument": "New document"
   },
   "status": {
     "draft": "Черновик",
@@ -143,8 +147,15 @@
     "warningNearLimit": "Вы использовали {{used}} из {{limit}} счетов в этом месяце.",
     "limitReached": "Вы достигли лимита Free: 5 счетов в месяц. Перейдите на Pro для безлимитных счетов.",
     "upgradePlan": "Сменить тариф",
-    "badges": { "free": "Free", "pro": "Pro", "business": "Business" },
-    "status": { "active": "Активен", "disabled": "Отключён" }
+    "badges": {
+      "free": "Free",
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "status": {
+      "active": "Активен",
+      "disabled": "Отключён"
+    }
   },
   "empty": {
     "noActivity": "Пока нет активности.",
@@ -169,5 +180,8 @@
   },
   "popular": "Популярный",
   "monthly": "/мес.",
-  "usdtPerMonth": "USDT / мес."
+  "usdtPerMonth": "USDT / мес.",
+  "appearance": {
+    "label": "Appearance"
+  }
 }

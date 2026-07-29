@@ -94,12 +94,17 @@ export function trackLogin(method = "email"): void {
   }
 }
 
-export function trackInvoiceCreated(invoiceId?: string, currency?: string): void {
+export function trackInvoiceCreated(
+  invoiceId?: string,
+  currency?: string,
+  documentType?: "quotation" | "proforma_invoice" | "tax_invoice",
+): void {
   if (!isBrowser() || !analyticsEnabled()) return;
   try {
     const params: Record<string, string> = {};
     if (invoiceId) params.invoice_id = invoiceId;
     if (currency) params.currency = currency;
+    if (documentType) params.document_type = documentType;
     pushDataLayer({ event: "invoice_created", ...params });
     gtagEvent("invoice_created", params);
     adsConversion(GOOGLE_ADS_INVOICE_CREATED_LABEL, params);

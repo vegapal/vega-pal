@@ -1,11 +1,15 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import type { InvoiceItem } from "@/lib/vegapal-store";
+import { clampPercent } from "@/lib/invoice/financial-totals";
 import { Copy, Plus, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { InvoiceWizardState } from "./wizard-state";
+import { wizardFinancialTotals } from "./wizard-state";
 
 function fmtAmount(n: number, currency: string) {
   const maxDecimals = currency === "BTC" || currency === "ETH" ? 8 : 2;
@@ -47,17 +51,21 @@ export function InvoiceItemsStep({ state, onChange, headingRef }: Props) {
   };
 
   const removeItem = (idx: number) => {
-    if (state.items.length === 1) return;
+    if (state.items.length === 1) {
+      onChange({
+        items: [{ description: "", quantity: 1, unitPrice: 0, total: 0 }],
+      });
+      return;
+    }
     onChange({ items: state.items.filter((_, i) => i !== idx) });
   };
 
-  const { subtotal, total } = useMemo(() => {
-    const sub = state.items.reduce(
-      (s, i) => s + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
-      0,
-    );
-    return { subtotal: sub, total: Math.max(0, sub - state.discount + state.tax) };
-  }, [state.items, state.discount, state.tax]);
+  const totals = useMemo(() => wizardFinancialTotals(state), [state]);
+
+  const usesLegacyFixed =
+    state.discountMode === "fixed" || state.taxMode === "fixed";
+
+  const parsePercent = (raw: string) => clampPercent(parseFloat(raw) || 0);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 space-y-6">
@@ -143,7 +151,6 @@ export function InvoiceItemsStep({ state, onChange, headingRef }: Props) {
                     size="icon"
                     className="h-9 w-9 text-muted-foreground hover:text-destructive"
                     onClick={() => removeItem(idx)}
-                    disabled={state.items.length === 1}
                     aria-label={t("create.fields.removeItem")}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -194,7 +201,6 @@ export function InvoiceItemsStep({ state, onChange, headingRef }: Props) {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => removeItem(idx)}
-                  disabled={state.items.length === 1}
                   aria-label={t("create.fields.removeItem")}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -204,63 +210,148 @@ export function InvoiceItemsStep({ state, onChange, headingRef }: Props) {
           </div>
         ))}
         <Button type="button" variant="outline" size="sm" onClick={addItem}>
-          <Plus className="h-4 w-4" /> {tc("buttons.addLineItem")}
+          <Plus className="h-4 w-4" /> {t("wizard.items.addLineItem")}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 border-t border-border pt-6 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="wizard-discount">
-            {t("create.fields.discountLabel", { currency: state.invoiceCurrency })}
+      <div className="space-y-4 border-t border-border pt-6">
+        {usesLegacyFixed ? (
+          <p className="text-xs text-muted-foreground">{t("wizard.items.legacyFixedHint")}</p>
+        ) : null}
+
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor="wizard-discount-enabled" className="font-medium">
+            {t("wizard.items.addDiscount")}
           </Label>
-          <Input
-            id="wizard-discount"
-            type="number"
-            min="0"
-            step="0.01"
-            value={state.discount || ""}
-            onChange={(e) => onChange({ discount: parseFloat(e.target.value) || 0 })}
-            placeholder="0"
+          <Switch
+            id="wizard-discount-enabled"
+            checked={state.discountEnabled}
+            onCheckedChange={(discountEnabled) => onChange({ discountEnabled })}
+            disabled={state.discountMode === "fixed"}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="wizard-tax">
-            {t("create.fields.taxLabel", { currency: state.invoiceCurrency })}
+        {state.discountEnabled ? (
+          <div className="grid gap-4 sm:grid-cols-2 pl-1">
+            {state.discountMode === "percentage" ? (
+              <div className="space-y-2">
+                <Label htmlFor="wizard-discount-pct">{t("wizard.items.discountPercent")}</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="wizard-discount-pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={state.discountPercent || ""}
+                    onChange={(e) => onChange({ discountPercent: parsePercent(e.target.value) })}
+                    className="tabular-nums"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>{t("create.fields.discountLabel", { currency: state.invoiceCurrency })}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={state.legacyDiscountAmount || ""}
+                  onChange={(e) =>
+                    onChange({ legacyDiscountAmount: parseFloat(e.target.value) || 0 })
+                  }
+                  className="tabular-nums"
+                />
+              </div>
+            )}
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox
+                checked={state.showDiscountOnDocument}
+                onCheckedChange={(v) => onChange({ showDiscountOnDocument: v === true })}
+              />
+              <span>{t("wizard.items.showDiscountOnDocument")}</span>
+            </label>
+          </div>
+        ) : null}
+
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor="wizard-tax-enabled" className="font-medium">
+            {t("wizard.items.addTax")}
           </Label>
-          <Input
-            id="wizard-tax"
-            type="number"
-            min="0"
-            step="0.01"
-            value={state.tax || ""}
-            onChange={(e) => onChange({ tax: parseFloat(e.target.value) || 0 })}
-            placeholder="0"
+          <Switch
+            id="wizard-tax-enabled"
+            checked={state.taxEnabled}
+            onCheckedChange={(taxEnabled) => onChange({ taxEnabled })}
+            disabled={state.taxMode === "fixed"}
           />
         </div>
+        {state.taxEnabled ? (
+          <div className="grid gap-4 sm:grid-cols-2 pl-1">
+            {state.taxMode === "percentage" ? (
+              <div className="space-y-2">
+                <Label htmlFor="wizard-tax-pct">{t("wizard.items.taxPercent")}</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="wizard-tax-pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={state.taxPercent || ""}
+                    onChange={(e) => onChange({ taxPercent: parsePercent(e.target.value) })}
+                    className="tabular-nums"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>{t("create.fields.taxLabel", { currency: state.invoiceCurrency })}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={state.legacyTaxAmount || ""}
+                  onChange={(e) => onChange({ legacyTaxAmount: parseFloat(e.target.value) || 0 })}
+                  className="tabular-nums"
+                />
+              </div>
+            )}
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox
+                checked={state.showTaxOnDocument}
+                onCheckedChange={(v) => onChange({ showTaxOnDocument: v === true })}
+              />
+              <span>{t("wizard.items.showTaxOnDocument")}</span>
+            </label>
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-xl bg-muted/30 border border-border p-4 space-y-1 text-sm">
         <div className="flex justify-between gap-3">
           <span className="text-muted-foreground">{tc("labels.subtotal")}</span>
-          <span className="tabular-nums font-medium">{fmtAmount(subtotal, state.invoiceCurrency)}</span>
+          <span className="tabular-nums font-medium">
+            {fmtAmount(totals.subtotal, state.invoiceCurrency)}
+          </span>
         </div>
-        {state.discount > 0 ? (
+        {state.discountEnabled && totals.discountAmount > 0 ? (
           <div className="flex justify-between gap-3">
             <span className="text-muted-foreground">{tc("labels.discount")}</span>
             <span className="tabular-nums">
-              − {fmtAmount(state.discount, state.invoiceCurrency)}
+              − {fmtAmount(totals.discountAmount, state.invoiceCurrency)}
             </span>
           </div>
         ) : null}
-        {state.tax > 0 ? (
+        {state.taxEnabled && totals.taxAmount > 0 ? (
           <div className="flex justify-between gap-3">
             <span className="text-muted-foreground">{tc("labels.tax")}</span>
-            <span className="tabular-nums">{fmtAmount(state.tax, state.invoiceCurrency)}</span>
+            <span className="tabular-nums">{fmtAmount(totals.taxAmount, state.invoiceCurrency)}</span>
           </div>
         ) : null}
         <div className="flex justify-between gap-3 pt-2 border-t border-border text-base font-bold">
           <span>{tc("labels.total")}</span>
-          <span className="tabular-nums">{fmtAmount(total, state.invoiceCurrency)}</span>
+          <span className="tabular-nums">{fmtAmount(totals.total, state.invoiceCurrency)}</span>
         </div>
       </div>
     </div>

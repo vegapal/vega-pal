@@ -8,7 +8,7 @@ import {
   showCashFields,
   showCryptoFields,
 } from "./build-payment-methods";
-import { displayOptionsFromWizard, type InvoiceWizardState } from "./wizard-state";
+import { displayOptionsFromWizard, wizardFinancialTotals, type InvoiceWizardState } from "./wizard-state";
 
 function fmtAmount(n: number, currency: string) {
   const maxDecimals = currency === "BTC" || currency === "ETH" ? 8 : 2;
@@ -43,11 +43,9 @@ export function InvoiceDocumentPreview({ state, user, className }: Props) {
     [state.items],
   );
 
-  const subtotal = items.reduce(
-    (s, i) => s + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
-    0,
-  );
-  const total = Math.max(0, subtotal - state.discount + state.tax);
+  const subtotal = wizardFinancialTotals(state).subtotal;
+  const financial = wizardFinancialTotals(state);
+  const total = financial.total;
 
   const paymentMethods = buildPaymentMethodsForSave(
     state.paymentMethod,
@@ -119,18 +117,27 @@ export function InvoiceDocumentPreview({ state, user, className }: Props) {
       </div>
 
       <div className="text-sm">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">{tc("labels.billTo")}</p>
-        <p className="font-semibold">
-          {state.clientCompany || state.clientName || t("create.preview.clientFallback")}
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {state.clientEmail || t("create.fields.clientEmailPlaceholder")}
-        </p>
-        {state.showExtraClient && state.clientPhone.trim() ? (
-          <p className="text-muted-foreground text-xs mt-0.5">{state.clientPhone}</p>
-        ) : null}
-        {state.showExtraClient && state.clientAddress.trim() ? (
-          <p className="text-muted-foreground text-xs whitespace-pre-line">{state.clientAddress}</p>
+        {displayOptions.showClientInfo ? (
+          <>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              {tc("labels.billTo")}
+            </p>
+            <p className="font-semibold">
+              {state.clientName || state.clientCompany || t("create.preview.clientFallback")}
+            </p>
+            {state.clientEmail.trim() ? (
+              <p className="text-muted-foreground text-xs">{state.clientEmail}</p>
+            ) : null}
+            {state.clientPhone.trim() ? (
+              <p className="text-muted-foreground text-xs mt-0.5">{state.clientPhone}</p>
+            ) : null}
+            {state.clientTaxId.trim() ? (
+              <p className="text-muted-foreground text-xs">{state.clientTaxId}</p>
+            ) : null}
+            {state.clientAddress.trim() ? (
+              <p className="text-muted-foreground text-xs whitespace-pre-line">{state.clientAddress}</p>
+            ) : null}
+          </>
         ) : null}
       </div>
 
@@ -153,14 +160,17 @@ export function InvoiceDocumentPreview({ state, user, className }: Props) {
 
       <div className="border-t border-border pt-3 space-y-1 text-sm">
         <PreviewLine label={tc("labels.subtotal")} value={fmtAmount(subtotal, state.invoiceCurrency)} />
-        {displayOptions.showDiscount && state.discount > 0 ? (
+        {displayOptions.showDiscount && financial.discountAmount > 0 ? (
           <PreviewLine
             label={tc("labels.discount")}
-            value={`− ${fmtAmount(state.discount, state.invoiceCurrency)}`}
+            value={`− ${fmtAmount(financial.discountAmount, state.invoiceCurrency)}`}
           />
         ) : null}
-        {displayOptions.showTax && state.tax > 0 ? (
-          <PreviewLine label={tc("labels.tax")} value={fmtAmount(state.tax, state.invoiceCurrency)} />
+        {displayOptions.showTax && financial.taxAmount > 0 ? (
+          <PreviewLine
+            label={tc("labels.tax")}
+            value={fmtAmount(financial.taxAmount, state.invoiceCurrency)}
+          />
         ) : null}
       </div>
 

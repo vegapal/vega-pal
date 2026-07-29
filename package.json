@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:production": "npm run typecheck && npm run build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -23,7 +24,10 @@
     "test:turnstile": "node scripts/test-turnstile-verify.mjs",
     "test:invoice-document": "node scripts/test-invoice-document.mjs",
     "test:invoice-numbering": "node scripts/test-invoice-numbering.mjs",
-    "test:invoice-wizard": "node scripts/test-invoice-wizard.mjs"
+    "test:invoice-wizard": "node scripts/test-invoice-wizard.mjs",
+    "test:invoice-financial": "node scripts/test-invoice-financial.mjs",
+    "test:locale-documents": "node scripts/merge-locale-documents.mjs && node scripts/test-invoice-wizard.mjs",
+    "test:sidebar-account": "node scripts/test-sidebar-account.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

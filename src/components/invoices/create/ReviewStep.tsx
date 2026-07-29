@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { buildPaymentMethodsForSave, showBankFields, showCashFields, showCryptoFields } from "./build-payment-methods";
 import type { InvoiceWizardState } from "./wizard-state";
+import { wizardFinancialTotals } from "./wizard-state";
 
 function fmtAmount(n: number, currency: string) {
   const maxDecimals = currency === "BTC" || currency === "ETH" ? 8 : 2;
@@ -33,11 +34,7 @@ export function ReviewStep({ state, headingRef }: Props) {
     [state.items],
   );
 
-  const subtotal = items.reduce(
-    (s, i) => s + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
-    0,
-  );
-  const total = Math.max(0, subtotal - state.discount + state.tax);
+  const total = wizardFinancialTotals(state).total;
 
   const paymentMethods = buildPaymentMethodsForSave(
     state.paymentMethod,
@@ -73,12 +70,21 @@ export function ReviewStep({ state, headingRef }: Props) {
 
       <dl className="divide-y divide-border text-sm">
         <ReviewRow label={t("wizard.review.documentType")} value={documentTypeLabel} />
-        <ReviewRow label={t("create.fields.clientName")} value={state.clientName || "—"} />
+        <ReviewRow label={t("wizard.client.nameLabel")} value={state.clientName || "—"} />
         <ReviewRow label={t("create.fields.clientEmail")} value={state.clientEmail || "—"} />
-        {state.clientCompany.trim() ? (
+        {state.clientCompany.trim() && state.clientCompany !== state.clientName.trim() ? (
           <ReviewRow label={t("create.fields.companyOptional")} value={state.clientCompany} />
         ) : null}
-        <ReviewRow label={t("create.fields.invoiceTitle")} value={state.title || "—"} />
+        <ReviewRow
+          label={
+            state.documentType === "quotation"
+              ? t("wizard.details.subjectQuotation")
+              : state.documentType === "proforma_invoice"
+                ? t("wizard.details.subjectProforma")
+                : t("wizard.details.subjectTaxInvoice")
+          }
+          value={state.title || "—"}
+        />
         <ReviewRow
           label={t("create.fields.invoiceCurrency")}
           value={state.invoiceCurrency}

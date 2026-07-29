@@ -38,11 +38,22 @@ for (const name of ["useSession", "useInvoice", "invoices", "notifyInvoices"]) {
 const localeDir = join(ROOT, "locales");
 const requiredKeys = [
   "wizard.pageTitle",
-  "wizard.steps.documentType",
+  "wizard.steps.document",
+  "wizard.steps.client",
+  "wizard.steps.details",
+  "wizard.steps.items",
+  "wizard.steps.payment",
+  "wizard.steps.review",
   "wizard.documentType.heading",
   "wizard.documentTypes.taxInvoice.title",
+  "wizard.client.nameLabel",
+  "wizard.client.showOnDocument",
+  "wizard.details.subjectTaxInvoice",
+  "wizard.items.addDiscount",
   "wizard.preview.openMobile",
   "wizard.error.title",
+  "wizard.actions.createInvoice",
+  "list.title",
 ];
 
 for (const lang of readdirSync(localeDir)) {

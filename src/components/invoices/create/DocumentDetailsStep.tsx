@@ -34,9 +34,29 @@ function dateLabels(documentType: InvoiceWizardState["documentType"]) {
   return { issue: "create.fields.issueDate", due: "wizard.details.dueDate" };
 }
 
+function subjectFieldKeys(documentType: InvoiceWizardState["documentType"]) {
+  if (documentType === "quotation") {
+    return {
+      label: "wizard.details.subjectQuotation",
+      placeholder: "wizard.details.subjectQuotationPlaceholder",
+    };
+  }
+  if (documentType === "proforma_invoice") {
+    return {
+      label: "wizard.details.subjectProforma",
+      placeholder: "wizard.details.subjectProformaPlaceholder",
+    };
+  }
+  return {
+    label: "wizard.details.subjectTaxInvoice",
+    placeholder: "wizard.details.subjectTaxInvoicePlaceholder",
+  };
+}
+
 export function DocumentDetailsStep({ state, onChange, headingRef }: Props) {
   const { t } = useTranslation("invoices");
   const labels = dateLabels(state.documentType);
+  const subject = subjectFieldKeys(state.documentType);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 space-y-8">
@@ -53,13 +73,13 @@ export function DocumentDetailsStep({ state, onChange, headingRef }: Props) {
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="wizard-title">{t("create.fields.invoiceTitle")}</Label>
+          <Label htmlFor="wizard-title">{t(subject.label)}</Label>
           <Input
             id="wizard-title"
             required
             value={state.title}
             onChange={(e) => onChange({ title: e.target.value })}
-            placeholder={t("create.fields.invoiceTitlePlaceholder")}
+            placeholder={t(subject.placeholder)}
           />
         </div>
         <div className="space-y-2">

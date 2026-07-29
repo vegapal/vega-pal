@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { invoiceCreateSchema, firstZodError } from "@/lib/validation/schemas";
 import type { InvoiceWizardState, WizardStep } from "./wizard-state";
+import { financialFieldsForSave } from "./wizard-state";
 import { buildPaymentMethodsForSave, showCryptoFields } from "./build-payment-methods";
 
 export type StepValidationResult = { ok: true } | { ok: false; message: string };
@@ -33,17 +34,14 @@ export function validateWizardStep(
         return { ok: false, message: t("wizard.validation.clientNameRequired") };
       }
       const email = state.clientEmail.trim();
-      if (!email) {
-        return { ok: false, message: t("wizard.validation.clientEmailRequired") };
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return { ok: false, message: t("wizard.validation.clientEmailInvalid") };
       }
       return { ok: true };
     }
     case 3: {
       if (!state.title.trim()) {
-        return { ok: false, message: t("wizard.validation.titleRequired") };
+        return { ok: false, message: t("wizard.validation.subjectRequired") };
       }
       if (!state.issueDate) {
         return { ok: false, message: t("wizard.validation.issueDateRequired") };
@@ -107,15 +105,16 @@ export function validateFinalSubmit(
   }
 
   const clean = cleanItems(state);
+  const financial = financialFieldsForSave(state);
   const parsed = invoiceCreateSchema.safeParse({
     title: state.title,
     clientName: state.clientName,
-    clientEmail: state.clientEmail,
+    clientEmail: state.clientEmail || undefined,
     clientCompany: state.clientCompany || undefined,
     description: state.notes || undefined,
     termsAndConditions: state.terms || undefined,
-    discount: state.discount,
-    tax: state.tax,
+    discount: financial.discount,
+    tax: financial.tax,
     items: clean,
     cryptoWallet: state.crypto.walletAddress,
   });

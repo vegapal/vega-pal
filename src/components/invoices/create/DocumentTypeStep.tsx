@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { FileText, Receipt, ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { InvoiceWizardState } from "./wizard-state";
-import { defaultTitleForType } from "./wizard-state";
 
 const TYPES: {
   value: DocumentType;
@@ -34,19 +33,16 @@ const TYPES: {
 type Props = {
   state: InvoiceWizardState;
   onChange: (patch: Partial<InvoiceWizardState>) => void;
+  onSelectType?: (documentType: DocumentType) => void;
   headingRef?: React.RefObject<HTMLHeadingElement | null>;
 };
 
-export function DocumentTypeStep({ state, onChange, headingRef }: Props) {
+export function DocumentTypeStep({ state, onChange, onSelectType, headingRef }: Props) {
   const { t } = useTranslation("invoices");
 
   const selectType = (documentType: DocumentType) => {
-    const patch: Partial<InvoiceWizardState> = { documentType };
-    const defaultTitle = defaultTitleForType(documentType);
-    if (!state.title.trim() || TYPES.some((x) => defaultTitleForType(x.value) === state.title.trim())) {
-      patch.title = defaultTitle;
-    }
-    onChange(patch);
+    onChange({ documentType });
+    onSelectType?.(documentType);
   };
 
   return (
@@ -70,7 +66,7 @@ export function DocumentTypeStep({ state, onChange, headingRef }: Props) {
               type="button"
               onClick={() => selectType(value)}
               className={cn(
-                "rounded-2xl border p-5 text-left transition cursor-pointer",
+                "rounded-2xl border p-5 text-left transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 selected
                   ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
                   : "border-border bg-card hover:border-primary/30 hover:shadow-sm",

@@ -16,7 +16,10 @@
     "settings": "设置",
     "signOut": "退出登录",
     "adminPanel": "管理面板",
-    "openMenu": "打开导航菜单"
+    "openMenu": "打开导航菜单",
+    "documents": "Documents",
+    "createDocument": "Create document",
+    "plan": "Plan"
   },
   "language": {
     "label": "语言",
@@ -49,7 +52,8 @@
     "pdf": "PDF",
     "edit": "编辑",
     "duplicate": "复制",
-    "viewPublicPage": "查看公开页面"
+    "viewPublicPage": "查看公开页面",
+    "createDocument": "New document"
   },
   "status": {
     "draft": "草稿",
@@ -143,8 +147,15 @@
     "warningNearLimit": "您本月已使用 {{used}} / {{limit}} 张发票。",
     "limitReached": "您已达到 Free 套餐每月 5 张发票的上限。升级到 Pro 可创建无限发票。",
     "upgradePlan": "升级套餐",
-    "badges": { "free": "Free", "pro": "Pro", "business": "Business" },
-    "status": { "active": "正常", "disabled": "已禁用" }
+    "badges": {
+      "free": "Free",
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "status": {
+      "active": "正常",
+      "disabled": "已禁用"
+    }
   },
   "empty": {
     "noActivity": "暂无活动。",
@@ -169,5 +180,8 @@
   },
   "popular": "热门",
   "monthly": "/月",
-  "usdtPerMonth": "USDT / 月"
+  "usdtPerMonth": "USDT / 月",
+  "appearance": {
+    "label": "Appearance"
+  }
 }

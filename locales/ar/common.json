@@ -16,7 +16,10 @@
     "settings": "Settings",
     "signOut": "Sign out",
     "adminPanel": "لوحة الإدارة",
-    "openMenu": "Open navigation menu"
+    "openMenu": "Open navigation menu",
+    "documents": "Documents",
+    "createDocument": "Create document",
+    "plan": "Plan"
   },
   "language": {
     "label": "Language",
@@ -49,7 +52,8 @@
     "pdf": "PDF",
     "edit": "Edit",
     "duplicate": "Duplicate",
-    "viewPublicPage": "View public page"
+    "viewPublicPage": "View public page",
+    "createDocument": "New document"
   },
   "status": {
     "draft": "Draft",
@@ -143,8 +147,15 @@
     "warningNearLimit": "لقد استخدمت {{used}} من {{limit}} فواتير هذا الشهر.",
     "limitReached": "لقد وصلت إلى حد الخطة المجانية البالغ 5 فواتير هذا الشهر. قم بالترقية إلى Pro لإنشاء فواتير غير محدودة.",
     "upgradePlan": "ترقية الخطة",
-    "badges": { "free": "مجاني", "pro": "Pro", "business": "Business" },
-    "status": { "active": "نشط", "disabled": "معطّل" }
+    "badges": {
+      "free": "مجاني",
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "status": {
+      "active": "نشط",
+      "disabled": "معطّل"
+    }
   },
   "empty": {
     "noActivity": "No activity yet.",
@@ -169,5 +180,8 @@
   },
   "popular": "Popular",
   "monthly": "/month",
-  "usdtPerMonth": "USDT / month"
+  "usdtPerMonth": "USDT / month",
+  "appearance": {
+    "label": "Appearance"
+  }
 }

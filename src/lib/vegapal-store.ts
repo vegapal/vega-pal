@@ -37,6 +37,10 @@ import {
   type DisplayOptions,
   type PaymentMethodsConfig,
 } from "@/lib/invoice-constants";
+import {
+  computeFinancialTotals,
+  type AmountMode,
+} from "@/lib/invoice/financial-totals";
 
 export type InvoiceStatus = "draft" | "pending" | "paid" | "overdue" | "cancelled";
 export type { DocumentType, DocumentStatus, PaymentStatus };
@@ -84,6 +88,10 @@ export interface Invoice {
   subtotal: number;
   discount: number;
   tax: number;
+  discountType: AmountMode;
+  taxType: AmountMode;
+  discountRate?: number;
+  taxRate?: number;
   total: number;
   amount: number;
   displayOptions: DisplayOptions;
@@ -132,13 +140,32 @@ function addDaysISO(base: string, days: number) {
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
-function computeTotals(items: InvoiceItem[], discount: number, tax: number) {
-  const subtotal = items.reduce(
-    (s, i) => s + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
-    0,
-  );
-  const total = Math.max(0, subtotal - (discount || 0) + (tax || 0));
-  return { subtotal, total };
+function totalsFromLineItems(
+  items: InvoiceItem[],
+  opts: {
+    discount?: number;
+    tax?: number;
+    discountType?: AmountMode;
+    taxType?: AmountMode;
+    discountRate?: number;
+    taxRate?: number;
+  },
+) {
+  const financial = computeFinancialTotals({
+    items,
+    discountType: opts.discountType ?? "fixed",
+    taxType: opts.taxType ?? "fixed",
+    discountAmount: opts.discount ?? 0,
+    taxAmount: opts.tax ?? 0,
+    discountRate: opts.discountRate,
+    taxRate: opts.taxRate,
+  });
+  return {
+    subtotal: financial.subtotal,
+    discount: financial.discountAmount,
+    tax: financial.taxAmount,
+    total: financial.total,
+  };
 }
 
 // ---------- Row mappers ----------
@@ -265,6 +292,10 @@ type InvoiceRow = {
   subtotal: number | string;
   discount: number | string;
   tax: number | string;
+  discount_type?: string | null;
+  tax_type?: string | null;
+  discount_rate?: number | string | null;
+  tax_rate?: number | string | null;
   total: number | string;
   wallet_address: string;
   network: string;
@@ -382,6 +413,11 @@ function rowToInvoice(r: InvoiceRow, items: ItemRow[]): Invoice {
     subtotal: Number(r.subtotal),
     discount: Number(r.discount),
     tax: Number(r.tax),
+    discountType: r.discount_type === "percentage" ? "percentage" : "fixed",
+    taxType: r.tax_type === "percentage" ? "percentage" : "fixed",
+    discountRate:
+      r.discount_rate != null && r.discount_rate !== "" ? Number(r.discount_rate) : undefined,
+    taxRate: r.tax_rate != null && r.tax_rate !== "" ? Number(r.tax_rate) : undefined,
     total,
     amount: total,
     displayOptions: normalizeDisplayOptions(r.display_options),
@@ -692,6 +728,10 @@ export interface CreateInvoiceInput {
   items: InvoiceItem[];
   discount?: number;
   tax?: number;
+  discountType?: AmountMode;
+  taxType?: AmountMode;
+  discountRate?: number;
+  taxRate?: number;
   issueDate?: string;
   dueDate?: string;
   status?: InvoiceStatus;
@@ -769,7 +809,16 @@ export const invoices = {
       ...i,
       total: (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
     }));
-    const { subtotal, total } = computeTotals(items, input.discount || 0, input.tax || 0);
+    const discountType = input.discountType ?? "percentage";
+    const taxType = input.taxType ?? "percentage";
+    const { subtotal, discount, tax, total } = totalsFromLineItems(items, {
+      discount: input.discount || 0,
+      tax: input.tax || 0,
+      discountType,
+      taxType,
+      discountRate: input.discountRate,
+      taxRate: input.taxRate,
+    });
     const issueDate = input.issueDate || todayISO();
     const documentType = input.documentType ?? "tax_invoice";
     const documentStatus = input.documentStatus ?? (input.status === "draft" ? "draft" : "issued");
@@ -800,7 +849,7 @@ export const invoices = {
         user_id: u.user.id,
         number,
         client_name: input.clientName,
-        client_email: input.clientEmail,
+        client_email: input.clientEmail || "",
         client_company: input.clientCompany ?? null,
         title: input.title,
         description: input.description ?? "",
@@ -812,8 +861,12 @@ export const invoices = {
         issue_date: issueDate,
         due_date: input.dueDate || addDaysISO(issueDate, 14),
         subtotal,
-        discount: input.discount || 0,
-        tax: input.tax || 0,
+        discount,
+        tax,
+        discount_type: discountType,
+        tax_type: taxType,
+        discount_rate: input.discountRate ?? null,
+        tax_rate: input.taxRate ?? null,
         total,
         invoice_currency: input.invoiceCurrency ?? DEFAULT_INVOICE_CURRENCY,
         po_number: input.poNumber ?? null,
@@ -829,7 +882,7 @@ export const invoices = {
         seller_address: profile.companyAddress ?? null,
         seller_logo_url: profile.logoUrl ?? null,
         brand_color: profile.brandColor || DEFAULT_BRAND,
-      })
+      } as never)
       .select("*")
       .single();
     if (error || !invRow) throw error ?? new Error("Failed to create invoice");
@@ -854,7 +907,15 @@ export const invoices = {
 
   async update(
     id: string,
-    patch: Partial<Invoice> & { items?: InvoiceItem[]; discount?: number; tax?: number },
+    patch: Partial<Invoice> & {
+      items?: InvoiceItem[];
+      discount?: number;
+      tax?: number;
+      discountType?: AmountMode;
+      taxType?: AmountMode;
+      discountRate?: number;
+      taxRate?: number;
+    },
   ) {
     const update: Record<string, unknown> = {};
     if (patch.clientName !== undefined) update.client_name = patch.clientName;
@@ -884,28 +945,61 @@ export const invoices = {
       update.network = legacyNetworkFromCanonical(patch.paymentMethods.crypto.network);
     }
 
-    if (patch.items || patch.discount !== undefined || patch.tax !== undefined) {
+    if (
+      patch.items ||
+      patch.discount !== undefined ||
+      patch.tax !== undefined ||
+      patch.discountType !== undefined ||
+      patch.taxType !== undefined ||
+      patch.discountRate !== undefined ||
+      patch.taxRate !== undefined
+    ) {
       // Need to recompute totals - load existing if items missing
       let items = patch.items;
       let discount = patch.discount;
       let tax = patch.tax;
-      if (items === undefined || discount === undefined || tax === undefined) {
+      let discountType = patch.discountType;
+      let taxType = patch.taxType;
+      let discountRate = patch.discountRate;
+      let taxRate = patch.taxRate;
+      if (
+        items === undefined ||
+        discount === undefined ||
+        tax === undefined ||
+        discountType === undefined ||
+        taxType === undefined
+      ) {
         const existing = await fetchInvoiceWithItems(id);
         if (existing) {
           items = items ?? existing.items;
           discount = discount ?? existing.discount;
           tax = tax ?? existing.tax;
+          discountType = discountType ?? existing.discountType;
+          taxType = taxType ?? existing.taxType;
+          discountRate = discountRate ?? existing.discountRate;
+          taxRate = taxRate ?? existing.taxRate;
         }
       }
       const cleanItems = (items ?? []).map((i) => ({
         ...i,
         total: (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
       }));
-      const { subtotal, total } = computeTotals(cleanItems, discount || 0, tax || 0);
-      update.subtotal = subtotal;
-      update.discount = discount || 0;
-      update.tax = tax || 0;
-      update.total = total;
+      const totals = totalsFromLineItems(cleanItems, {
+        discount: discount || 0,
+        tax: tax || 0,
+        discountType: discountType ?? "fixed",
+        taxType: taxType ?? "fixed",
+        discountRate,
+        taxRate,
+      });
+      update.subtotal = totals.subtotal;
+      update.discount = totals.discount;
+      update.tax = totals.tax;
+      update.total = totals.total;
+      if (discountType !== undefined) update.discount_type = discountType;
+      if (taxType !== undefined) update.tax_type = taxType;
+      if (discountRate !== undefined) update.discount_rate = discountRate;
+      if (taxRate !== undefined) update.tax_rate = taxRate;
 
       if (patch.items) {
         await supabase.from("invoice_items").delete().eq("invoice_id", id);

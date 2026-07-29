@@ -68,7 +68,11 @@ const invoiceItemSchema = z.object({
 export const invoiceCreateSchema = z.object({
   title: shortText("Invoice title", 200),
   clientName: shortText("Client name", 120),
-  clientEmail: emailSchema,
+  clientEmail: z
+    .string()
+    .trim()
+    .optional()
+    .refine((v) => !v || emailSchema.safeParse(v).success, "Enter a valid email address."),
   clientCompany: z.string().trim().max(120).optional(),
   description: z.string().trim().max(5000).optional(),
   termsAndConditions: z.string().trim().max(5000).optional(),

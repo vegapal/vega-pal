@@ -16,7 +16,10 @@
     "settings": "ตั้งค่า",
     "signOut": "ออกจากระบบ",
     "adminPanel": "แผงผู้ดูแล",
-    "openMenu": "เปิดเมนูนำทาง"
+    "openMenu": "เปิดเมนูนำทาง",
+    "documents": "Documents",
+    "createDocument": "Create document",
+    "plan": "Plan"
   },
   "language": {
     "label": "ภาษา",
@@ -49,7 +52,8 @@
     "pdf": "PDF",
     "edit": "แก้ไข",
     "duplicate": "ทำสำเนา",
-    "viewPublicPage": "ดูหน้าชำระเงิน"
+    "viewPublicPage": "ดูหน้าชำระเงิน",
+    "createDocument": "New document"
   },
   "status": {
     "draft": "ฉบับร่าง",
@@ -143,8 +147,15 @@
     "warningNearLimit": "คุณใช้ใบแจ้งหนี้ {{used}} จาก {{limit}} ใบในเดือนนี้",
     "limitReached": "คุณถึงขีดจำกัดแพ็กเกจ Free ที่ 5 ใบแจ้งหนี้ต่อเดือนแล้ว อัปเกรดเป็น Pro เพื่อสร้างใบแจ้งหนี้ไม่จำกัด",
     "upgradePlan": "อัปเกรดแพ็กเกจ",
-    "badges": { "free": "Free", "pro": "Pro", "business": "Business" },
-    "status": { "active": "ใช้งาน", "disabled": "ปิดใช้งาน" }
+    "badges": {
+      "free": "Free",
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "status": {
+      "active": "ใช้งาน",
+      "disabled": "ปิดใช้งาน"
+    }
   },
   "empty": {
     "noActivity": "ยังไม่มีกิจกรรม",
@@ -169,5 +180,8 @@
   },
   "popular": "ยอดนิยม",
   "monthly": "/เดือน",
-  "usdtPerMonth": "USDT / เดือน"
+  "usdtPerMonth": "USDT / เดือน",
+  "appearance": {
+    "label": "Appearance"
+  }
 }

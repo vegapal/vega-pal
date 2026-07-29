@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,10 @@ type Props = {
 export function ClientStep({ state, onChange, headingRef }: Props) {
   const { t } = useTranslation("invoices");
 
+  const syncCompanyFromName = (name: string) => {
+    onChange({ clientName: name, clientCompany: name });
+  };
+
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 space-y-6">
       <div>
@@ -27,30 +32,42 @@ export function ClientStep({ state, onChange, headingRef }: Props) {
         <p className="mt-1 text-sm text-muted-foreground">{t("wizard.client.subheading")}</p>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="wizard-client-name">{t("wizard.client.nameLabel")}</Label>
+        <Input
+          id="wizard-client-name"
+          required
+          value={state.clientName}
+          onChange={(e) => syncCompanyFromName(e.target.value)}
+          placeholder={t("wizard.client.namePlaceholder")}
+          autoComplete="organization"
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="wizard-client-name">{t("create.fields.clientName")}</Label>
-          <Input
-            id="wizard-client-name"
-            required
-            value={state.clientName}
-            onChange={(e) => onChange({ clientName: e.target.value })}
-            placeholder={t("create.fields.clientNamePlaceholder")}
-            autoComplete="name"
-          />
-        </div>
         <div className="space-y-2">
           <Label htmlFor="wizard-client-email">{t("create.fields.clientEmail")}</Label>
           <Input
             id="wizard-client-email"
             type="email"
-            required
             value={state.clientEmail}
             onChange={(e) => onChange({ clientEmail: e.target.value })}
-            placeholder={t("create.fields.clientEmailPlaceholder")}
+            placeholder={t("wizard.client.emailOptionalPlaceholder")}
             autoComplete="email"
           />
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium">{t("wizard.client.showOnDocument")}</p>
+          <p className="text-xs text-muted-foreground">{t("wizard.client.showOnDocumentHint")}</p>
+        </div>
+        <Switch
+          checked={state.showClientOnDocument}
+          onCheckedChange={(showClientOnDocument) => onChange({ showClientOnDocument })}
+          aria-label={t("wizard.client.showOnDocument")}
+        />
       </div>
 
       <div className="border-t border-border pt-4">
@@ -71,15 +88,6 @@ export function ClientStep({ state, onChange, headingRef }: Props) {
         </button>
         {state.showExtraClient ? (
           <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="wizard-client-company">{t("create.fields.companyOptional")}</Label>
-              <Input
-                id="wizard-client-company"
-                value={state.clientCompany}
-                onChange={(e) => onChange({ clientCompany: e.target.value })}
-                placeholder={t("create.fields.companyPlaceholder")}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="wizard-client-phone">{t("wizard.client.phone")}</Label>
               <Input

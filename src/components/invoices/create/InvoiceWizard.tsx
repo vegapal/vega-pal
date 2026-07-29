@@ -21,10 +21,9 @@ import {
 import { useSubmitGuard } from "@/hooks/use-submit-guard";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/ui/form-error";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { buildPaymentMethodsForSave } from "./build-payment-methods";
@@ -37,14 +36,17 @@ import { InvoiceWizardProgress } from "./InvoiceWizardProgress";
 import { MobileInvoicePreview } from "./MobileInvoicePreview";
 import { PaymentStep } from "./PaymentStep";
 import { ReviewStep } from "./ReviewStep";
+import { WizardFooter } from "./WizardFooter";
 import {
   createInitialWizardState,
   displayOptionsFromWizard,
+  financialFieldsForSave,
   type InvoiceWizardState,
   type OptionalFieldKey,
   type WizardStep,
 } from "./wizard-state";
 import { cleanItems, validateFinalSubmit, validateWizardStep } from "./wizard-validation";
+import type { DocumentType } from "@/lib/vegapal-store";
 
 type Props = {
   editId?: string;
@@ -90,14 +92,27 @@ function stateFromExisting(existing: Invoice): InvoiceWizardState {
       existing.items.length > 0
         ? existing.items
         : [{ description: "", quantity: 1, unitPrice: 0, total: 0 }],
-    discount: existing.discount || 0,
-    tax: existing.tax || 0,
+    discountMode: existing.discountType,
+    taxMode: existing.taxType,
+    discountEnabled:
+      existing.discountType === "percentage"
+        ? (existing.discountRate ?? 0) > 0
+        : existing.discount > 0,
+    taxEnabled:
+      existing.taxType === "percentage" ? (existing.taxRate ?? 0) > 0 : existing.tax > 0,
+    discountPercent: existing.discountRate ?? 0,
+    taxPercent: existing.taxRate ?? 0,
+    legacyDiscountAmount: existing.discount,
+    legacyTaxAmount: existing.tax,
+    showClientOnDocument: existing.displayOptions.showClientInfo ?? true,
+    showDiscountOnDocument: existing.displayOptions.showDiscount ?? true,
+    showTaxOnDocument: existing.displayOptions.showTax ?? true,
     paymentMethod: existing.paymentMethods.method,
     crypto: { ...existing.paymentMethods.crypto },
     bank: { ...existing.paymentMethods.bank },
     cash: { ...existing.paymentMethods.cash },
     alreadyPaid: existing.paymentStatus === "paid",
-    showExtraClient: !!(existing.clientCompany?.trim()),
+    showExtraClient: false,
   };
 }
 
@@ -119,9 +134,15 @@ export function InvoiceWizard({ editId }: Props) {
   const formErrorRef = useRef<HTMLDivElement>(null);
   const submitGuard = useSubmitGuard();
 
+  const [maxVisitedStep, setMaxVisitedStep] = useState<WizardStep>(1);
+
   const patchState = useCallback((patch: Partial<InvoiceWizardState>) => {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
+
+  useEffect(() => {
+    setMaxVisitedStep((m) => (state.step > m ? state.step : m));
+  }, [state.step]);
 
   useEffect(() => {
     if (editId) return;
@@ -184,6 +205,21 @@ export function InvoiceWizard({ editId }: Props) {
     }
   };
 
+  const goToStep = (step: WizardStep) => {
+    if (step > maxVisitedStep) return;
+    setFormError("");
+    patchState({ step });
+    requestAnimationFrame(() => stepHeadingRef.current?.focus());
+  };
+
+  const handleDocumentTypeSelect = (_documentType: DocumentType) => {
+    patchState({ step: 2 });
+    setMaxVisitedStep((m) => (m < 2 ? 2 : m));
+    requestAnimationFrame(() => stepHeadingRef.current?.focus());
+  };
+
+  const maxReachableStep = useMemo(() => maxVisitedStep, [maxVisitedStep]);
+
   const buildPayload = (documentStatus: "draft" | "issued") => {
     const items = cleanItems(state);
     const paymentMethods = buildPaymentMethodsForSave(
@@ -199,10 +235,12 @@ export function InvoiceWizard({ editId }: Props) {
         ? "paid"
         : defaultPaymentStatusForType(state.documentType);
 
+    const financial = financialFieldsForSave(state);
+
     return {
       clientName: state.clientName.trim(),
       clientEmail: state.clientEmail.trim(),
-      clientCompany: state.clientCompany.trim() || undefined,
+      clientCompany: state.clientCompany.trim() || state.clientName.trim() || undefined,
       title: state.title.trim(),
       description: state.notes.trim() || undefined,
       termsAndConditions: state.terms.trim() || undefined,
@@ -212,8 +250,12 @@ export function InvoiceWizard({ editId }: Props) {
       documentStatus,
       paymentStatus,
       items,
-      discount: state.discount,
-      tax: state.tax,
+      discount: financial.discount,
+      tax: financial.tax,
+      discountType: financial.discountType,
+      taxType: financial.taxType,
+      discountRate: financial.discountRate,
+      taxRate: financial.taxRate,
       invoiceCurrency: state.invoiceCurrency,
       poNumber: state.poNumber.trim() || undefined,
       referenceNumber: state.referenceNumber.trim() || undefined,
@@ -260,7 +302,7 @@ export function InvoiceWizard({ editId }: Props) {
         navigate({ to: "/invoices/$id", params: { id: existing.id } });
       } else {
         const inv = await invoices.create(payload);
-        trackInvoiceCreated(inv.id, inv.invoiceCurrency);
+        trackInvoiceCreated(inv.id, inv.invoiceCurrency, inv.documentType);
         notifyInvoices();
         toast.success(
           asDraft ? t("wizard.toast.savedDraft") : t("wizard.toast.created"),
@@ -330,14 +372,20 @@ export function InvoiceWizard({ editId }: Props) {
       ) : null}
 
       <div className="mt-8 mb-6">
-        <InvoiceWizardProgress currentStep={state.step} />
+        <InvoiceWizardProgress
+          currentStep={state.step}
+          maxReachableStep={maxReachableStep}
+          onStepClick={goToStep}
+        />
       </div>
 
       <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-4">
           <MobileInvoicePreview state={state} user={user} />
 
-          {state.step === 1 ? <DocumentTypeStep {...stepProps} /> : null}
+          {state.step === 1 ? (
+            <DocumentTypeStep {...stepProps} onSelectType={() => handleDocumentTypeSelect(state.documentType)} />
+          ) : null}
           {state.step === 2 ? <ClientStep {...stepProps} /> : null}
           {state.step === 3 ? <DocumentDetailsStep {...stepProps} /> : null}
           {state.step === 4 ? <InvoiceItemsStep {...stepProps} /> : null}
@@ -347,59 +395,47 @@ export function InvoiceWizard({ editId }: Props) {
           <div ref={formErrorRef}>
             <FormError message={formError} />
           </div>
+
+          <div className="hidden lg:block">
+            <WizardFooter
+              step={state.step}
+              documentType={state.documentType}
+              saving={saving}
+              atInvoiceLimit={atInvoiceLimit}
+              editId={editId}
+              onBack={goBack}
+              onContinue={goNext}
+              onSaveDraft={() => void submit(true)}
+              onCreate={() => void submit(false)}
+              variant="inline"
+            />
+          </div>
         </div>
 
         <aside className="hidden lg:block min-w-0 space-y-4">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             {t("create.preview.livePreview")}
           </p>
-          <InvoiceDocumentPreview state={state} user={user} className="lg:sticky lg:top-6" />
+          <InvoiceDocumentPreview
+            state={state}
+            user={user}
+            className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto"
+          />
         </aside>
       </div>
 
-      <footer className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:px-6">
-        <div className="mx-auto flex max-w-6xl flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-2 sm:gap-3">
-            {state.step > 1 ? (
-              <Button type="button" variant="outline" onClick={goBack} disabled={saving}>
-                {tc("buttons.back")}
-              </Button>
-            ) : (
-              <Button type="button" variant="outline" asChild disabled={saving}>
-                <Link to="/invoices">{tc("buttons.cancel")}</Link>
-              </Button>
-            )}
-          </div>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
-            {state.step === 6 ? (
-              <>
-                <LoadingButton
-                  type="button"
-                  variant="outline"
-                  loading={saving}
-                  disabled={saving || atInvoiceLimit}
-                  onClick={() => void submit(true)}
-                >
-                  {t("wizard.actions.saveDraft")}
-                </LoadingButton>
-                <LoadingButton
-                  type="button"
-                  variant="hero"
-                  loading={saving}
-                  disabled={saving || atInvoiceLimit}
-                  onClick={() => void submit(false)}
-                >
-                  {editId ? tc("buttons.save") : t("wizard.actions.createDocument")}
-                </LoadingButton>
-              </>
-            ) : (
-              <Button type="button" variant="hero" onClick={goNext} disabled={saving}>
-                {t("wizard.actions.continue")}
-              </Button>
-            )}
-          </div>
-        </div>
-      </footer>
+      <WizardFooter
+        step={state.step}
+        documentType={state.documentType}
+        saving={saving}
+        atInvoiceLimit={atInvoiceLimit}
+        editId={editId}
+        onBack={goBack}
+        onContinue={goNext}
+        onSaveDraft={() => void submit(true)}
+        onCreate={() => void submit(false)}
+        variant="sticky"
+      />
     </div>
   );
 }

@@ -11,8 +11,11 @@
     "signIn": "Sign in",
     "getStarted": "Get started",
     "overview": "Overview",
-    "invoices": "Invoices",
-    "createInvoice": "Create Invoice",
+    "invoices": "Documents",
+    "documents": "Documents",
+    "createInvoice": "Create document",
+    "createDocument": "Create document",
+    "plan": "Plan",
     "settings": "Settings",
     "signOut": "Sign out",
     "account": "Account",
@@ -24,6 +27,9 @@
     "free": "Free plan",
     "pro": "Pro plan",
     "business": "Business plan"
+  },
+  "appearance": {
+    "label": "Appearance"
   },
   "language": {
     "label": "Language",
@@ -50,8 +56,9 @@
     "remove": "Remove",
     "addLineItem": "Add line item",
     "exportExcel": "Export Excel",
-    "newInvoice": "New invoice",
-    "createInvoice": "Create invoice",
+    "newInvoice": "New document",
+    "createInvoice": "New document",
+    "createDocument": "New document",
     "viewAll": "View all",
     "pdf": "PDF",
     "edit": "Edit",
