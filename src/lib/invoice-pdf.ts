@@ -32,6 +32,9 @@ export const PDF_LEFT_COLUMN_WIDTH = 105;
 export const PDF_RIGHT_COLUMN_WIDTH = 55;
 export const PDF_COLUMN_GAP = PDF_CONTENT_WIDTH - PDF_LEFT_COLUMN_WIDTH - PDF_RIGHT_COLUMN_WIDTH;
 export const PDF_FOOTER_RESERVE = 15;
+export const PDF_TABLE_WIDTH = 176;
+export const PDF_TABLE_RIGHT = PDF_LEFT + PDF_TABLE_WIDTH;
+export const PDF_PAYMENT_STAY_ON_PAGE1_MIN_MM = 70;
 
 const GRAY_555: [number, number, number] = [85, 85, 85];
 const GRAY_777: [number, number, number] = [119, 119, 119];
@@ -67,7 +70,6 @@ function sellerCompanyName(inv: Invoice): string {
 function sellerContactLines(inv: Invoice): string[] {
   const lines: string[] = [];
   const company = sellerCompanyName(inv);
-  const email = normalizeIdentity(inv.sellerEmail);
   const person = normalizeIdentity(inv.sellerName);
   const address = normalizeIdentity(inv.sellerAddress);
 
@@ -79,7 +81,6 @@ function sellerContactLines(inv: Invoice): string[] {
     lines.push(t);
   };
 
-  if (email) push(email);
   if (person && company && !identitiesEqual(person, company)) push(person);
   if (address) push(address);
 
@@ -171,7 +172,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
       doc.setFontSize(30);
       doc.setTextColor(...BLACK);
       const lines = truncateCompanyLines(doc, company, PDF_LEFT_COLUMN_WIDTH, 2);
-      let cy = sellerY + 8;
+      let cy = sellerY + 7;
       for (const line of lines) {
         doc.text(line, textX, cy);
         cy += 11;
@@ -188,7 +189,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
 
     let contactY = companyBottom + 7;
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setTextColor(...GRAY_555);
     for (const line of sellerContactLines(inv)) {
       doc.text(line, textX, contactY);
@@ -381,24 +382,25 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
   // ── D. Subject ──────────────────────────────────────────────────────────
   if (inv.title?.trim()) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setTextColor(...BLACK);
-    const titleLines = doc.splitTextToSize(inv.title.trim(), PDF_CONTENT_WIDTH) as string[];
-    let ty = bodyY + 6;
+    const titleLines = doc.splitTextToSize(inv.title.trim(), PDF_TABLE_WIDTH) as string[];
+    let ty = bodyY + 5;
     for (const line of titleLines) {
       doc.text(line, sellerX, ty);
-      ty += 9;
+      ty += 7;
     }
-    bodyY = ty + 16;
+    bodyY = ty + 8;
   } else {
-    bodyY += 16;
+    bodyY += 8;
   }
 
   // ── E. Items table ──────────────────────────────────────────────────────
-  const colDesc = PDF_CONTENT_WIDTH * 0.61;
-  const colQty = PDF_CONTENT_WIDTH * 0.09;
-  const colUnit = PDF_CONTENT_WIDTH * 0.15;
-  const colTotal = PDF_CONTENT_WIDTH * 0.15;
+  const colDesc = PDF_TABLE_WIDTH * 0.56;
+  const colQty = PDF_TABLE_WIDTH * 0.1;
+  const colUnit = PDF_TABLE_WIDTH * 0.17;
+  const colTotal = PDF_TABLE_WIDTH * 0.17;
+  const tableMarginRight = PDF_PAGE_WIDTH - PDF_LEFT - PDF_TABLE_WIDTH;
   const unitHead = `Unit price (${currency})`;
   const totalHead = `Line total (${currency})`;
 
@@ -417,7 +419,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
     styles: {
       fontSize: 8.5,
       cellPadding: 3,
-      minCellHeight: 10,
+      minCellHeight: 9,
       textColor: BLACK,
       lineColor: BORDER,
       lineWidth: 0.1,
@@ -428,14 +430,16 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
       textColor: BLACK,
       fontStyle: "bold",
       fontSize: 8.5,
+      minCellHeight: 10,
     },
     columnStyles: {
       0: { cellWidth: colDesc, halign: "left" },
-      1: { cellWidth: colQty, halign: "right" },
+      1: { cellWidth: colQty, halign: "center" },
       2: { cellWidth: colUnit, halign: "right" },
       3: { cellWidth: colTotal, halign: "right" },
     },
-    margin: { left: PDF_LEFT, right: PDF_RIGHT, bottom: 24 },
+    margin: { left: PDF_LEFT, right: tableMarginRight, bottom: 24 },
+    tableWidth: PDF_TABLE_WIDTH,
   });
 
   const tableFinalY = (doc as DocWithTable).lastAutoTable?.finalY ?? bodyY;
@@ -443,15 +447,16 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
     id: "itemsTable",
     x: PDF_LEFT,
     y: bodyY,
-    w: PDF_CONTENT_WIDTH,
+    w: PDF_TABLE_WIDTH,
     h: tableFinalY - bodyY,
   });
 
   let y = tableFinalY + 8;
 
   // ── F. Totals ───────────────────────────────────────────────────────────
+  const totalsRightX = PDF_TABLE_RIGHT;
   const totalsW = 78;
-  const totalsLeft = documentRightX - totalsW;
+  const totalsLeft = totalsRightX - totalsW;
 
   const drawTotalLine = (label: string, value: string, fontSize: number, bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
@@ -459,7 +464,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
     doc.setTextColor(...(bold ? BLACK : GRAY_555));
     doc.text(label, totalsLeft, y);
     doc.setTextColor(...BLACK);
-    doc.text(value, documentRightX, y, { align: "right" });
+    doc.text(value, totalsRightX, y, { align: "right" });
     y += 8;
   };
 
@@ -473,7 +478,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
 
   doc.setDrawColor(...BORDER);
   doc.setLineWidth(0.3);
-  doc.line(totalsLeft, y + 1, documentRightX, y + 1);
+  doc.line(totalsLeft, y + 1, totalsRightX, y + 1);
   y += 5;
 
   const finalLabel = finalTotalLabel(inv.documentType, inv.paymentStatus);
@@ -482,7 +487,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
   doc.setTextColor(...BLACK);
   doc.text(finalLabel.toUpperCase(), totalsLeft, y + 5);
   doc.setFontSize(21);
-  doc.text(amt(inv.total, currency), documentRightX, y + 5, { align: "right" });
+  doc.text(amt(inv.total, currency), totalsRightX, y + 5, { align: "right" });
   y += 14;
 
   const totalsBottom = y;
@@ -566,7 +571,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
         qrColumn?: boolean;
       }) => {
         let h = cardPad + (opts.title ? 8 : 0);
-        const innerW = PDF_CONTENT_WIDTH - cardPad * 2 - (opts.qrColumn ? qrMm + 8 : 0);
+        const innerW = PDF_TABLE_WIDTH - cardPad * 2 - (opts.qrColumn ? qrMm + 8 : 0);
         for (const [, v] of opts.rows) {
           h += rowH;
         }
@@ -582,7 +587,8 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
       };
 
       const dual = showBank && showCrypto;
-      const cardW = dual ? (PDF_CONTENT_WIDTH - cardGap) / 2 : PDF_CONTENT_WIDTH;
+      const bankOnly = showBank && !showCrypto && !showCash;
+      const cardW = dual ? (PDF_TABLE_WIDTH - cardGap) / 2 : PDF_TABLE_WIDTH;
 
       const bankH = showBank
         ? measureCard({ title: true, rows: bankFieldRows }) +
@@ -610,7 +616,9 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
       const paymentHeight = sectionHeadingH + rowCardsH + cashBlockH;
 
       const remaining = contentBottomY() - paymentStartY;
-      if (paymentHeight > remaining) {
+      const stayOnPageOne =
+        remaining >= PDF_PAYMENT_STAY_ON_PAGE1_MIN_MM || bankOnly;
+      if (paymentHeight > remaining && !stayOnPageOne) {
         doc.addPage();
         y = PDF_TOP;
       } else {
@@ -665,7 +673,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
 
       if (showBank && bankH > 0) {
         const h = dual ? Math.max(bankH, cryptoH) : bankH;
-        drawCardBorder(sellerX, dual ? cardW : PDF_CONTENT_WIDTH, h, cardsY);
+        drawCardBorder(sellerX, dual ? cardW : PDF_TABLE_WIDTH, h, cardsY);
         let by = drawRows(sellerX, cardW, cardsY, "Bank transfer", bankFieldRows, new Set(["Reference"]));
         if (bank.instructions?.trim()) {
           doc.setFontSize(7.5);
@@ -729,10 +737,10 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
 
       if (showCash) {
         const cashTop = y + 6;
-        drawCardBorder(sellerX, PDF_CONTENT_WIDTH, cashH, cashTop);
+        drawCardBorder(sellerX, PDF_TABLE_WIDTH, cashH, cashTop);
         drawRows(
           sellerX,
-          PDF_CONTENT_WIDTH,
+          PDF_TABLE_WIDTH,
           cashTop,
           "Cash payment",
           [["Amount", amt(inv.total, currency)]],
@@ -753,7 +761,7 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
         id: "paymentSection",
         x: sellerX,
         y: payTop,
-        w: PDF_CONTENT_WIDTH,
+        w: PDF_TABLE_WIDTH,
         h: y - payTop,
       });
     }

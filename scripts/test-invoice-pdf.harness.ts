@@ -35,7 +35,13 @@ const pdfSource = readFileSync(join(process.cwd(), "src/lib/invoice-pdf.ts"), "u
 assert.ok(pdfSource.includes("HOW TO PAY"));
 assert.ok(!pdfSource.includes("DOCUMENT DETAILS"));
 assert.ok(pdfSource.includes("unit: \"mm\""));
-assert.ok(pdfSource.includes("documentY + 7"));
+assert.ok(pdfSource.includes("PDF_TABLE_WIDTH = 176"));
+assert.ok(pdfSource.includes("PDF_PAYMENT_STAY_ON_PAGE1_MIN_MM = 70"));
+assert.ok(!pdfSource.includes("if (email) push(email)"));
+assert.ok(pdfSource.includes("setFontSize(11)"));
+assert.ok(pdfSource.includes("setFontSize(18)"));
+assert.ok(pdfSource.includes("minCellHeight: 9"));
+assert.ok(pdfSource.includes('halign: "center"'));
 assert.ok(pdfSource.includes("verifyPdfLayout"));
 
 const outDir = join(process.cwd(), "tmp", "pdf-exact-layout");
@@ -60,12 +66,18 @@ const oneItem = buildPdfTestInvoice({
   taxType: "percentage",
   total: 105,
   items: [{ description: "Consulting", quantity: 1, unitPrice: 100, total: 100 }],
+  title: "Website Development",
 });
 // Full terms + bank + dual methods covered by INV-DUAL sample below.
 
 const { doc: oneDoc, layout: oneLayout } = await buildInvoicePdfDocument(oneItem);
 verifyPdfLayout(oneLayout);
 assert.equal(oneDoc.getNumberOfPages(), 1, "one-item bank invoice should fit on one page");
+const seller = oneLayout.find((r) => r.id === "sellerBlock");
+assert.ok(seller, "seller block recorded");
+assert.ok(Math.abs(seller!.x - 18) < 0.01 && Math.abs(seller!.y - 18) < 0.01, "seller at 18×18 mm");
+const table = oneLayout.find((r) => r.id === "itemsTable");
+assert.ok(table && Math.abs(table.w - 176) < 0.01, "table width 176 mm");
 const pay = oneLayout.find((r) => r.id === "paymentSection");
 assert.ok(pay, "payment section recorded");
 assert.ok(pay!.h >= 50 && pay!.h <= 95, `payment height ${pay!.h}mm should be compact`);
@@ -107,6 +119,15 @@ const dualPay = buildPdfTestInvoice({
 
 const { doc: dualDoc, layout: dualLayout } = await buildInvoicePdfDocument(dualPay);
 writeFileSync(join(outDir, "INV-DUAL.pdf"), Buffer.from(dualDoc.output("arraybuffer")));
+
+const footerSafeY = 297 - 18 - 15;
+for (const [label, layout] of [
+  ["oneItem", oneLayout],
+  ["dual", dualLayout],
+] as const) {
+  const bottom = Math.max(...layout.map((r) => r.y + r.h));
+  assert.ok(bottom <= footerSafeY + 2, `${label} content bottom ${bottom} within footer reserve`);
+}
 
 const quotation = buildPdfTestInvoice({
   number: "QTN-0001",
