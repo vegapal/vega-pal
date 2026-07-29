@@ -183,5 +183,14 @@
   "usdtPerMonth": "USDT / month",
   "appearance": {
     "label": "Appearance"
+  },
+  "profileMenu": {
+    "openMenu": "Open account menu",
+    "mobileTitle": "Account",
+    "accountSection": "Account",
+    "planRow": "Plan: {{plan}}",
+    "appearanceSystem": "System",
+    "appearanceLight": "Light",
+    "appearanceDark": "Dark"
   }
 }

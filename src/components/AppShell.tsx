@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { PageLoading } from "@/components/ui/page-loading";
@@ -11,9 +11,10 @@ import {
   Settings,
   FileText,
   ShieldCheck,
+  User,
 } from "lucide-react";
 import { Logo } from "./Logo";
-import { SidebarAccountSection } from "@/components/SidebarAccountSection";
+import { MobileProfileSheet, ProfileSidebarMenu } from "@/components/ProfileAccountMenu";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -22,6 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { isAdmin } = useIsAdmin();
   const { t } = useTranslation("common");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user && !pendingEmailConfirmation) navigate({ to: "/login" });
@@ -44,15 +46,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (n: (typeof nav)[number]) =>
     n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/");
 
+  const linkClass = (active: boolean) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 motion-reduce:transition-none ${
+      active
+        ? "bg-primary/8 text-primary"
+        : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+    }`;
+
   return (
-    <div className="min-h-screen bg-muted/30 flex">
-      <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-background sticky top-0 h-[100dvh] max-h-[100dvh] min-h-0">
-        <div className="shrink-0 p-6">
+    <div className="min-h-screen bg-muted/30">
+      <aside
+        className="hidden lg:flex fixed inset-y-0 start-0 z-30 w-64 flex-col border-e border-border bg-background h-[100dvh] max-h-[100dvh] overflow-hidden"
+        aria-label={t("nav.sidebar")}
+      >
+        <div className="shrink-0 p-5 pb-4">
           <Link to="/dashboard">
             <Logo />
           </Link>
         </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto px-3 space-y-1">
+        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 space-y-0.5">
           {nav.map((n) => {
             const active = isActive(n);
             return (
@@ -60,24 +72,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={n.to}
                 to={n.to}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
+                className={linkClass(active)}
               >
-                <n.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
+                <n.icon className={cnIcon(active)} />
                 {n.label}
               </Link>
             );
           })}
         </nav>
-        <div className="mt-auto shrink-0 border-t border-border p-4">
-          <SidebarAccountSection user={user} />
+        <div className="shrink-0 border-t border-border p-2">
+          <ProfileSidebarMenu user={user} />
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-h-screen flex-col min-w-0 lg:ps-64">
         <header className="lg:hidden h-16 border-b border-border bg-background flex items-center justify-between px-4 sticky top-0 z-30">
           <Link to="/dashboard">
             <Logo />
@@ -92,6 +100,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <ShieldCheck className="h-4 w-4" />
               </Link>
             ) : null}
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+              aria-label={t("profileMenu.openMenu")}
+              onClick={() => setMobileProfileOpen(true)}
+            >
+              <User className="h-4 w-4" />
+            </button>
           </div>
         </header>
         <nav
@@ -114,11 +130,26 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          <button
+            type="button"
+            onClick={() => setMobileProfileOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 px-1 py-2 min-h-[3.5rem] text-[10px] font-medium leading-tight text-muted-foreground"
+            aria-label={t("profileMenu.openMenu")}
+          >
+            <User className="h-4 w-4 shrink-0" />
+            <span className="max-w-[4.5rem] truncate text-center">{t("nav.account")}</span>
+          </button>
         </nav>
         <main className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 overflow-x-hidden min-w-0">
           {children}
         </main>
       </div>
+
+      <MobileProfileSheet user={user} open={mobileProfileOpen} onOpenChange={setMobileProfileOpen} />
     </div>
   );
+}
+
+function cnIcon(active: boolean) {
+  return `h-4 w-4 shrink-0 ${active ? "text-primary" : ""}`;
 }

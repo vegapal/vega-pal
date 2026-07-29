@@ -174,7 +174,8 @@
       "addField": "Add {{field}}",
       "removeField": "Remove {{field}}",
       "allAdded": "All optional fields are already on this document.",
-      "termsLabel": "Terms & conditions"
+      "termsLabel": "Terms & conditions",
+      "confirmRemoveWithContent": "Remove {{field}} and discard its text?"
     },
     "items": {
       "heading": "Line items",

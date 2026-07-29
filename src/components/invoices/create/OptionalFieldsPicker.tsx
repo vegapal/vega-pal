@@ -46,13 +46,27 @@ export function OptionalFieldsPicker({ state, onChange }: Props) {
   };
 
   const removeField = (key: OptionalFieldKey) => {
+    const value = valueFor(key).trim();
+    const isLongText = key === "notes" || key === "terms";
+    if (isLongText && value) {
+      const ok = window.confirm(
+        t("wizard.optional.confirmRemoveWithContent", { field: t(FIELD_META.find((f) => f.key === key)!.labelKey) }),
+      );
+      if (!ok) return;
+      onChange({
+        activeOptionalFields: state.activeOptionalFields.filter((k) => k !== key),
+        ...(key === "notes" ? { notes: "" } : { terms: "" }),
+      });
+      return;
+    }
+
     onChange({
       activeOptionalFields: state.activeOptionalFields.filter((k) => k !== key),
       ...(key === "poNumber" ? { poNumber: "" } : {}),
       ...(key === "referenceNumber" ? { referenceNumber: "" } : {}),
       ...(key === "projectCode" ? { projectCode: "" } : {}),
-      ...(key === "notes" ? { notes: "" } : {}),
-      ...(key === "terms" ? { terms: "" } : {}),
+      ...(key === "notes" && !isLongText ? { notes: "" } : {}),
+      ...(key === "terms" && !isLongText ? { terms: "" } : {}),
     });
   };
 
@@ -103,9 +117,11 @@ export function OptionalFieldsPicker({ state, onChange }: Props) {
       {state.activeOptionalFields.length > 0 ? (
         <div className="space-y-4">
           {FIELD_META.filter((f) => state.activeOptionalFields.includes(f.key)).map((field) => (
-            <div key={field.key} className="space-y-2 rounded-xl border border-border bg-muted/20 p-4">
-              <div className="flex items-start justify-between gap-2">
-                <Label htmlFor={`opt-${field.key}`}>{t(field.labelKey)}</Label>
+            <div key={field.key} className="space-y-2 rounded-lg border border-border bg-muted/15 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor={`opt-${field.key}`} className="text-sm font-medium">
+                  {t(field.labelKey)}
+                </Label>
                 <Button
                   type="button"
                   variant="ghost"
@@ -121,6 +137,7 @@ export function OptionalFieldsPicker({ state, onChange }: Props) {
                 <Textarea
                   id={`opt-${field.key}`}
                   rows={3}
+                  className="min-h-[4.5rem] max-h-48 resize-y field-sizing-content"
                   value={valueFor(field.key)}
                   onChange={(e) => setValue(field.key, e.target.value)}
                   placeholder={t(field.placeholderKey)}

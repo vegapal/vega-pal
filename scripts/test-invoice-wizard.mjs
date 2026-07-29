@@ -53,6 +53,7 @@ const requiredKeys = [
   "wizard.preview.openMobile",
   "wizard.error.title",
   "wizard.actions.createInvoice",
+  "wizard.optional.confirmRemoveWithContent",
   "list.title",
 ];
 

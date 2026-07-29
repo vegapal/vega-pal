@@ -24,6 +24,7 @@ for (const lang of langs) {
   deepMerge(inv, { list: enInv.list, wizard: enInv.wizard, conversion: enInv.conversion });
   writeFileSync(invPath, `${JSON.stringify(inv, null, 2)}\n`);
   const com = JSON.parse(readFileSync(comPath, "utf8"));
+  deepMerge(com, { profileMenu: enCom.profileMenu });
   com.nav = com.nav || {};
   for (const k of ["documents", "createDocument", "plan"]) {
     if (!com.nav[k]) com.nav[k] = enCom.nav[k];

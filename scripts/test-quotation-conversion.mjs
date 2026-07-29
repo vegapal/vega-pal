@@ -70,8 +70,8 @@ for (const needle of ["ConvertQuotationDialog", "conversion.action", "convertQuo
 }
 
 const shell = readFileSync(join(ROOT, "src/components/AppShell.tsx"), "utf8");
-if (!shell.includes("h-[100dvh]") || !shell.includes("mt-auto shrink-0")) {
-  fail("AppShell sidebar must pin account section with h-[100dvh] and mt-auto shrink-0");
+if (!shell.includes("fixed inset-y-0") || !shell.includes("shrink-0 border-t")) {
+  fail("AppShell sidebar must be fixed full height with shrink-0 profile footer");
 }
 
 const events = readFileSync(join(ROOT, "src/lib/analytics/events.ts"), "utf8");
