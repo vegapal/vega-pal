@@ -1,24 +1,19 @@
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
-import {
-  clientIdentityFromParts,
-  sellerIdentityFromParts,
-} from "../src/lib/invoice/document-identity.ts";
-import {
-  documentTypeHeading,
-  dueDateFieldLabel,
-  finalTotalLabel,
-} from "../src/lib/invoice/document-labels.ts";
-import { documentTotalsView } from "../src/lib/invoice/document-totals-display.ts";
+import { clientIdentityFromParts } from "../src/lib/invoice/document-identity.ts";
+import { documentTypeHeading } from "../src/lib/invoice/document-labels.ts";
 import { DEFAULT_DISPLAY_OPTIONS } from "../src/lib/invoice-constants.ts";
 import type { Invoice } from "../src/lib/vegapal-store.ts";
 import {
   buildInvoicePdfDocument,
   buildPdfTestInvoice,
+  PDF_CONTENT_WIDTH,
+  PDF_LEFT,
+  PDF_TOP,
   verifyPdfLayout,
 } from "../src/lib/invoice-pdf.ts";
+import { footerTop, PAGE_HEIGHT } from "../src/lib/pdf/layout-context.ts";
 
 assert.equal(documentTypeHeading("quotation"), "QUOTATION");
 assert.equal(documentTypeHeading("proforma_invoice"), "PROFORMA INVOICE");
@@ -31,72 +26,119 @@ const dupClient = clientIdentityFromParts({
 });
 assert.equal(dupClient.length, 2);
 
+const engineSource = readFileSync(join(process.cwd(), "src/lib/pdf/invoice-layout-engine.ts"), "utf8");
 const pdfSource = readFileSync(join(process.cwd(), "src/lib/invoice-pdf.ts"), "utf8");
-assert.ok(pdfSource.includes("HOW TO PAY"));
-assert.ok(!pdfSource.includes("DOCUMENT DETAILS"));
-assert.ok(pdfSource.includes("unit: \"mm\""));
-assert.ok(pdfSource.includes("PDF_TABLE_WIDTH = 176"));
-assert.ok(pdfSource.includes("PDF_PAYMENT_STAY_ON_PAGE1_MIN_MM = 70"));
-assert.ok(!pdfSource.includes("if (email) push(email)"));
-assert.ok(pdfSource.includes("setFontSize(11)"));
-assert.ok(pdfSource.includes("setFontSize(18)"));
-assert.ok(pdfSource.includes("minCellHeight: 9"));
-assert.ok(pdfSource.includes('halign: "center"'));
-assert.ok(pdfSource.includes("verifyPdfLayout"));
+assert.ok(engineSource.includes("PAYMENT DETAILS"));
+assert.ok(!engineSource.includes("HOW TO PAY"));
+assert.ok(!pdfSource.includes("PDF_PAYMENT_STAY_ON_PAGE1_MIN_MM"));
+assert.ok(engineSource.includes("drawAllFooters"));
+assert.ok(engineSource.includes("ensureSectionSpace"));
+assert.ok(engineSource.includes('halign: "center"'));
+assert.ok(!engineSource.includes("if (email) push(email)"));
+assert.ok(!engineSource.includes("sellerEmail"));
 
-const outDir = join(process.cwd(), "tmp", "pdf-exact-layout");
+const outDir = join(process.cwd(), "tmp", "pdf-layout-engine");
 mkdirSync(outDir, { recursive: true });
 
-const oneItem = buildPdfTestInvoice({
-  number: "INV-0001",
-  sellerBusiness: "VegaPal",
+const footerTopY = footerTop(PAGE_HEIGHT);
+
+async function buildAndWrite(name: string, inv: Invoice) {
+  const { doc, layout, layoutRecords } = await buildInvoicePdfDocument(inv);
+  verifyPdfLayout(layout, layoutRecords, doc.getNumberOfPages());
+  const pages = doc.getNumberOfPages();
+  const pdfBytes = Buffer.from(doc.output("arraybuffer"));
+  writeFileSync(join(outDir, name), pdfBytes);
+  const text = pdfBytes.toString("latin1");
+  assert.ok(!text.includes("billing@example.com"), `${name} must not contain seller email`);
+  for (const r of layoutRecords.filter((x) => x.section !== "footer")) {
+    assert.ok(
+      r.rect.y + r.rect.height <= footerTopY + 1,
+      `${name} section ${r.section} page ${r.page} below footerTop`,
+    );
+  }
+  return pages;
+}
+
+const minimal = buildPdfTestInvoice({
+  number: "INV-MINIMAL",
   displayOptions: {
     ...DEFAULT_DISPLAY_OPTIONS,
+    showPaymentInstructions: false,
     showTerms: false,
-    showTax: true,
-    showDiscount: false,
-    showPaymentInstructions: true,
-    showDueDate: false,
     showClientInfo: false,
-    showStatus: true,
+    showDueDate: false,
   },
-  termsAndConditions: "",
-  tax: 5,
-  taxRate: 5,
-  taxType: "percentage",
-  total: 105,
-  items: [{ description: "Consulting", quantity: 1, unitPrice: 100, total: 100 }],
-  title: "Website Development",
+  paymentMethods: {
+    method: "cash",
+    crypto: { enabled: false, currency: "USDT", network: "TRON TRC20", walletAddress: "" },
+    bank: { enabled: false },
+    cash: { enabled: false },
+  },
 });
-// Full terms + bank + dual methods covered by INV-DUAL sample below.
 
-const { doc: oneDoc, layout: oneLayout } = await buildInvoicePdfDocument(oneItem);
-verifyPdfLayout(oneLayout);
-assert.equal(oneDoc.getNumberOfPages(), 1, "one-item bank invoice should fit on one page");
-const seller = oneLayout.find((r) => r.id === "sellerBlock");
-assert.ok(seller, "seller block recorded");
-assert.ok(Math.abs(seller!.x - 18) < 0.01 && Math.abs(seller!.y - 18) < 0.01, "seller at 18×18 mm");
-const table = oneLayout.find((r) => r.id === "itemsTable");
-assert.ok(table && Math.abs(table.w - 176) < 0.01, "table width 176 mm");
-const pay = oneLayout.find((r) => r.id === "paymentSection");
-assert.ok(pay, "payment section recorded");
-assert.ok(pay!.h >= 50 && pay!.h <= 95, `payment height ${pay!.h}mm should be compact`);
-
-writeFileSync(join(outDir, "INV-0001.pdf"), Buffer.from(oneDoc.output("arraybuffer")));
-
-const dualPay = buildPdfTestInvoice({
-  number: "INV-DUAL",
-  sellerBusiness: "Very Long Company Name International Holdings And Services LLC",
+const bank = buildPdfTestInvoice({
+  number: "INV-BANK",
+  items: [
+    { description: "Design", quantity: 1, unitPrice: 200, total: 200 },
+    { description: "Development", quantity: 1, unitPrice: 800, total: 800 },
+  ],
+  total: 1000,
   displayOptions: {
     ...DEFAULT_DISPLAY_OPTIONS,
     showTerms: true,
-    showTax: true,
-    showDueDate: true,
+    showTax: false,
     showPaymentInstructions: true,
     showClientInfo: true,
   },
-  termsAndConditions:
-    "100% advance payment.\nInvoice valid for 14 days.\nPayment confirms acceptance.",
+  termsAndConditions: "Payment within 14 days.",
+});
+
+const bankLong = buildPdfTestInvoice({
+  number: "INV-BANK-LONG",
+  sellerBusiness: "International Beneficiary Holdings With A Very Long Legal Name",
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPaymentInstructions: true, showTerms: false },
+  paymentMethods: {
+    method: "bank_transfer",
+    crypto: { enabled: false, currency: "USDT", network: "TRON TRC20", walletAddress: "" },
+    bank: {
+      enabled: true,
+      bankName: "First National Bank of Extended Naming Conventions Worldwide",
+      accountName: "Beneficiary With An Exceptionally Long Account Holder Name",
+      accountNumber: "00998877665544332211",
+      iban: "AE070331234567890123456",
+      swift: "EBILAEADXXX",
+      instructions:
+        "Include invoice number in transfer reference. Allow 2 business days for reconciliation. Contact finance if amount differs.",
+    },
+    cash: { enabled: false },
+  },
+});
+
+const cryptoInv = buildPdfTestInvoice({
+  number: "INV-CRYPTO",
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPaymentInstructions: true },
+  paymentMethods: {
+    method: "crypto",
+    crypto: {
+      enabled: true,
+      currency: "USDT",
+      network: "TRON TRC20",
+      walletAddress: "TXYZ1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+    },
+    bank: { enabled: false },
+    cash: { enabled: false },
+  },
+});
+
+const dual = buildPdfTestInvoice({
+  number: "INV-DUAL",
+  displayOptions: {
+    ...DEFAULT_DISPLAY_OPTIONS,
+    showTerms: true,
+    showPaymentInstructions: true,
+    showClientInfo: true,
+  },
+  termsAndConditions: "100% advance.\nValid 14 days.",
   paymentMethods: {
     method: "multiple",
     crypto: {
@@ -117,68 +159,91 @@ const dualPay = buildPdfTestInvoice({
   },
 });
 
-const { doc: dualDoc, layout: dualLayout } = await buildInvoicePdfDocument(dualPay);
-writeFileSync(join(outDir, "INV-DUAL.pdf"), Buffer.from(dualDoc.output("arraybuffer")));
+const termsLong = buildPdfTestInvoice({
+  number: "INV-TERMS-LONG",
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showTerms: true, showPaymentInstructions: false },
+  termsAndConditions: Array.from({ length: 20 }, (_, i) => `Term clause ${i + 1} with enough text to wrap.`).join(
+    "\n",
+  ),
+});
 
-const footerSafeY = 297 - 18 - 15;
-for (const [label, layout] of [
-  ["oneItem", oneLayout],
-  ["dual", dualLayout],
-] as const) {
-  const bottom = Math.max(...layout.map((r) => r.y + r.h));
-  assert.ok(bottom <= footerSafeY + 2, `${label} content bottom ${bottom} within footer reserve`);
-}
+const items100 = buildPdfTestInvoice({
+  number: "INV-100-ITEMS",
+  items: Array.from({ length: 100 }, (_, i) => ({
+    description: `Service line ${i + 1} with description`,
+    quantity: 1,
+    unitPrice: 10,
+    total: 10,
+  })),
+  total: 1000,
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPaymentInstructions: true },
+});
 
 const quotation = buildPdfTestInvoice({
   number: "QTN-0001",
   documentType: "quotation",
   paymentStatus: "not_applicable",
-  displayOptions: {
-    ...DEFAULT_DISPLAY_OPTIONS,
-    showPaymentInstructions: false,
-  },
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPaymentInstructions: false },
 });
-const { doc: qDoc } = await buildInvoicePdfDocument(quotation);
-writeFileSync(join(outDir, "QTN-0001.pdf"), Buffer.from(qDoc.output("arraybuffer")));
 
 const proforma = buildPdfTestInvoice({
   number: "PI-0001",
   documentType: "proforma_invoice",
 });
-const { doc: pDoc } = await buildInvoicePdfDocument(proforma);
-writeFileSync(join(outDir, "PI-0001.pdf"), Buffer.from(pDoc.output("arraybuffer")));
 
-const manyItems = buildPdfTestInvoice({
-  number: "INV-20",
-  items: Array.from({ length: 20 }, (_, i) => ({
-    description: `Line ${i + 1}`,
-    quantity: 1,
-    unitPrice: 50,
-    total: 50,
-  })),
-  total: 1000,
-  displayOptions: {
-    ...DEFAULT_DISPLAY_OPTIONS,
-    showPaymentInstructions: true,
-  },
+const hiddenClient = buildPdfTestInvoice({
+  number: "INV-NO-CLIENT",
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showClientInfo: false, showDueDate: false },
 });
-const { doc: manyDoc } = await buildInvoicePdfDocument(manyItems);
-writeFileSync(join(outDir, "INV-20.pdf"), Buffer.from(manyDoc.output("arraybuffer")));
-assert.ok(manyDoc.getNumberOfPages() >= 2, "20-item invoice should paginate");
 
-const dualPages = dualDoc.getNumberOfPages();
-if (dualPages === 2) {
-  const dualPayRect = dualLayout.find((r) => r.id === "paymentSection");
-  assert.ok(dualPayRect && dualPayRect.h < 100, "page-2 payment block should be compact");
-}
+const hiddenDue = buildPdfTestInvoice({
+  number: "INV-NO-DUE",
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showDueDate: false },
+});
+
+const longCompany = buildPdfTestInvoice({
+  number: "INV-LONG-CO",
+  sellerBusiness: "Very Long Company Name International Holdings And Services Limited Liability Company",
+});
+
+const paid = buildPdfTestInvoice({
+  number: "INV-PAID",
+  paymentStatus: "paid",
+});
+
+const partial = buildPdfTestInvoice({
+  number: "INV-PARTIAL",
+  paymentStatus: "partially_paid",
+});
+
+const counts: Record<string, number> = {};
+counts["INV-MINIMAL.pdf"] = await buildAndWrite("INV-MINIMAL.pdf", minimal);
+counts["INV-BANK.pdf"] = await buildAndWrite("INV-BANK.pdf", bank);
+counts["INV-BANK-LONG.pdf"] = await buildAndWrite("INV-BANK-LONG.pdf", bankLong);
+counts["INV-CRYPTO.pdf"] = await buildAndWrite("INV-CRYPTO.pdf", cryptoInv);
+counts["INV-DUAL.pdf"] = await buildAndWrite("INV-DUAL.pdf", dual);
+counts["INV-TERMS-LONG.pdf"] = await buildAndWrite("INV-TERMS-LONG.pdf", termsLong);
+counts["INV-100-ITEMS.pdf"] = await buildAndWrite("INV-100-ITEMS.pdf", items100);
+counts["QTN-0001.pdf"] = await buildAndWrite("QTN-0001.pdf", quotation);
+counts["PI-0001.pdf"] = await buildAndWrite("PI-0001.pdf", proforma);
+
+await buildAndWrite("INV-NO-CLIENT.pdf", hiddenClient);
+await buildAndWrite("INV-NO-DUE.pdf", hiddenDue);
+await buildAndWrite("INV-LONG-CO.pdf", longCompany);
+await buildAndWrite("INV-PAID.pdf", paid);
+await buildAndWrite("INV-PARTIAL.pdf", partial);
+
+assert.equal(counts["INV-MINIMAL.pdf"], 1);
+assert.ok(counts["INV-100-ITEMS.pdf"] >= 3);
+
+const { layoutRecords: bankLayout } = await buildInvoicePdfDocument(bank);
+const table = bankLayout.find((r) => r.section === "items");
+assert.ok(table && Math.abs(table.rect.width - PDF_CONTENT_WIDTH) < 0.5, "table full content width");
+
+const { layoutRecords: headerLayout } = await buildInvoicePdfDocument(minimal);
+const header = headerLayout.find((r) => r.section === "header");
+assert.ok(header && Math.abs(header.rect.x - PDF_LEFT) < 0.1 && Math.abs(header.rect.y - PDF_TOP) < 0.1);
 
 console.log("PDF samples written to", outDir);
-console.log("Page counts:", {
-  oneItem: oneDoc.getNumberOfPages(),
-  dual: dualDoc.getNumberOfPages(),
-  quotation: qDoc.getNumberOfPages(),
-  proforma: pDoc.getNumberOfPages(),
-  twentyItems: manyDoc.getNumberOfPages(),
-});
-
+console.log("Page counts:", counts);
 console.log("Invoice PDF harness: all tests passed");
