@@ -1,10 +1,17 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { trackInvoicePaid } from "@/lib/analytics/events";
+import { trackInvoicePaid, trackQuotationConvertedToInvoice } from "@/lib/analytics/events";
 import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppShell } from "@/components/AppShell";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
-import { useInvoice, invoices, notifyInvoices, type DocumentStatus, type PaymentStatus } from "@/lib/vegapal-store";
+import {
+  useInvoice,
+  invoices,
+  notifyInvoices,
+  QuotationConversionError,
+  type DocumentStatus,
+  type PaymentStatus,
+} from "@/lib/vegapal-store";
 import {
   DocumentStatusBadge,
   DocumentTypeBadge,
@@ -31,7 +38,11 @@ import {
   Files,
   XCircle,
   User,
+  FileInput,
 } from "lucide-react";
+import { ConvertQuotationDialog } from "@/components/invoices/ConvertQuotationDialog";
+import { useSubmitGuard } from "@/hooks/use-submit-guard";
+import { toast } from "sonner";
 
 async function downloadInvoicePdf(inv: import("@/lib/vegapal-store").Invoice) {
   const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
@@ -66,6 +77,9 @@ function InvoiceDetails() {
   const { t } = useTranslation("invoices");
   const { t: tc } = useTranslation("common");
   const [copied, setCopied] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [converting, setConverting] = useState(false);
+  const convertGuard = useSubmitGuard();
 
   if (loading) {
     return (
@@ -131,6 +145,40 @@ function InvoiceDetails() {
     showReferenceField(d, "showReferenceNumber", inv.referenceNumber) ||
     showReferenceField(d, "showProjectCode", inv.projectCode);
 
+  const canConvertQuotation =
+    inv.documentType === "quotation" &&
+    inv.documentStatus !== "cancelled" &&
+    !inv.convertedDocumentId;
+
+  const quotationConverted =
+    inv.documentType === "quotation" && !!inv.convertedDocumentId;
+
+  const runConvertQuotation = async () => {
+    if (!convertGuard.begin()) return;
+    setConverting(true);
+    try {
+      const result = await invoices.convertQuotationToInvoice(inv.id);
+      trackQuotationConvertedToInvoice("draft");
+      notifyInvoices();
+      setConvertOpen(false);
+      if (result.alreadyExisted) {
+        toast.info(t("conversion.toastAlreadyConverted", { number: result.invoiceNumber }));
+      } else {
+        toast.success(t("conversion.toastCreated", { number: result.invoiceNumber }));
+      }
+      navigate({ to: "/invoices/$id", params: { id: result.invoiceId } });
+    } catch (err) {
+      if (err instanceof QuotationConversionError && err.code === "free_plan_invoice_limit") {
+        toast.error(tc("plan.limitReached"));
+      } else {
+        toast.error(t("conversion.errorGeneric"));
+      }
+    } finally {
+      setConverting(false);
+      convertGuard.end();
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto min-w-0">
       <Link
@@ -152,12 +200,57 @@ function InvoiceDetails() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-2">{inv.title}</h1>
           <p className="text-muted-foreground font-mono text-sm mt-1">{inv.number}</p>
+          {quotationConverted && inv.convertedDocumentId ? (
+            <p className="text-sm text-muted-foreground mt-2">
+              {t("conversion.convertedStatus")}{" "}
+              <Link
+                to="/invoices/$id"
+                params={{ id: inv.convertedDocumentId }}
+                className="text-primary font-medium hover:underline"
+              >
+                {inv.convertedDocumentNumber ?? t("conversion.viewInvoice")}
+              </Link>
+            </p>
+          ) : null}
+          {inv.documentType === "tax_invoice" && inv.sourceDocumentId ? (
+            <p className="text-sm text-muted-foreground mt-2">
+              {t("conversion.createdFrom")}{" "}
+              <Link
+                to="/invoices/$id"
+                params={{ id: inv.sourceDocumentId }}
+                className="text-primary font-medium hover:underline"
+              >
+                {inv.sourceDocumentNumber ?? t("conversion.viewQuotation")}
+              </Link>
+            </p>
+          ) : null}
           <p className="text-xs text-muted-foreground mt-1">
             {t("detail.invoiceCurrencyLabel")}{" "}
             <span className="font-medium text-foreground">{currency}</span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canConvertQuotation ? (
+            <Button variant="hero" type="button" onClick={() => setConvertOpen(true)}>
+              <FileInput className="h-4 w-4" /> {t("conversion.action")}
+            </Button>
+          ) : null}
+          {quotationConverted && inv.convertedDocumentId ? (
+            <>
+              <Button variant="hero" asChild>
+                <Link to="/invoices/$id" params={{ id: inv.convertedDocumentId }}>
+                  {t("conversion.viewInvoiceNumber", {
+                    number: inv.convertedDocumentNumber ?? "",
+                  })}
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/invoices/new" search={{ edit: inv.convertedDocumentId }}>
+                  <Pencil className="h-4 w-4" /> {t("conversion.editDraftInvoice")}
+                </Link>
+              </Button>
+            </>
+          ) : null}
           <Button variant="outline" onClick={() => downloadInvoicePdf(inv)}>
             <Download className="h-4 w-4" /> {tc("buttons.pdf")}
           </Button>
@@ -425,6 +518,16 @@ function InvoiceDetails() {
           </div>
         </div>
       </div>
+
+      {canConvertQuotation || convertOpen ? (
+        <ConvertQuotationDialog
+          quotation={inv}
+          open={convertOpen}
+          onOpenChange={setConvertOpen}
+          loading={converting}
+          onConfirm={() => void runConvertQuotation()}
+        />
+      ) : null}
     </div>
   );
 }

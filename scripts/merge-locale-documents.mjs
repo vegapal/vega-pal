@@ -21,7 +21,7 @@ for (const lang of langs) {
   const invPath = join(ROOT, "locales", lang, "invoices.json");
   const comPath = join(ROOT, "locales", lang, "common.json");
   const inv = JSON.parse(readFileSync(invPath, "utf8"));
-  deepMerge(inv, { list: enInv.list, wizard: enInv.wizard });
+  deepMerge(inv, { list: enInv.list, wizard: enInv.wizard, conversion: enInv.conversion });
   writeFileSync(invPath, `${JSON.stringify(inv, null, 2)}\n`);
   const com = JSON.parse(readFileSync(comPath, "utf8"));
   com.nav = com.nav || {};

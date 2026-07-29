@@ -262,7 +262,7 @@
     "refunded": "Refunded"
   },
   "detail": {
-    "backToInvoices": "Back to invoices",
+    "backToInvoices": "Back to documents",
     "cancel": "Cancel",
     "invoiceCurrencyLabel": "Invoice currency:",
     "updateStatus": "Document status",
@@ -276,5 +276,27 @@
   },
   "paymentCards": {
     "cryptoPayment": "Crypto payment"
+  },
+  "conversion": {
+    "action": "Convert to invoice",
+    "dialogTitle": "Convert quotation to invoice?",
+    "dialogDescription": "A new tax invoice will be created. The original quotation will remain available.",
+    "summaryQuotationNumber": "Quotation",
+    "summaryClient": "Client",
+    "summaryTotal": "Total",
+    "summaryNewStatus": "New invoice",
+    "summaryDraftUnpaid": "Draft · Unpaid",
+    "cancel": "Cancel",
+    "confirm": "Convert to invoice",
+    "toastCreated": "Invoice {{number}} created",
+    "toastAlreadyConverted": "This quotation was already converted ({{number}}).",
+    "errorGeneric": "Could not create the invoice. Please try again.",
+    "convertedStatus": "Converted to invoice:",
+    "createdFrom": "Created from",
+    "viewInvoice": "View invoice",
+    "viewQuotation": "View quotation",
+    "viewInvoiceNumber": "View {{number}}",
+    "editDraftInvoice": "Edit draft invoice",
+    "listBadge": "Converted"
   }
 }

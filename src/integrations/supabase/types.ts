@@ -97,9 +97,12 @@ export type Database = {
           client_company: string | null
           client_email: string
           client_name: string
+          converted_document_id: string | null
           created_at: string
           description: string
           discount: number
+          discount_rate: number | null
+          discount_type: string
           display_options: Json
           document_status: string
           document_type: string
@@ -119,9 +122,12 @@ export type Database = {
           seller_email: string
           seller_logo_url: string | null
           seller_name: string
+          source_document_id: string | null
           status: string
           subtotal: number
           tax: number
+          tax_rate: number | null
+          tax_type: string
           terms_and_conditions: string
           title: string
           total: number
@@ -130,17 +136,19 @@ export type Database = {
           wallet_address: string
         }
         Insert: {
-          document_type?: string
-          document_status?: string
-          payment_status?: string
           brand_color?: string
           client_company?: string | null
           client_email: string
           client_name: string
+          converted_document_id?: string | null
           created_at?: string
           description?: string
           discount?: number
+          discount_rate?: number | null
+          discount_type?: string
           display_options?: Json
+          document_status?: string
+          document_type?: string
           due_date: string
           id?: string
           invoice_currency?: string
@@ -148,6 +156,7 @@ export type Database = {
           network: string
           number: string
           payment_methods?: Json
+          payment_status?: string
           po_number?: string | null
           project_code?: string | null
           reference_number?: string | null
@@ -156,9 +165,12 @@ export type Database = {
           seller_email: string
           seller_logo_url?: string | null
           seller_name: string
+          source_document_id?: string | null
           status?: string
           subtotal?: number
           tax?: number
+          tax_rate?: number | null
+          tax_type?: string
           terms_and_conditions?: string
           title: string
           total?: number
@@ -167,17 +179,19 @@ export type Database = {
           wallet_address: string
         }
         Update: {
-          document_type?: string
-          document_status?: string
-          payment_status?: string
           brand_color?: string
           client_company?: string | null
           client_email?: string
           client_name?: string
+          converted_document_id?: string | null
           created_at?: string
           description?: string
           discount?: number
+          discount_rate?: number | null
+          discount_type?: string
           display_options?: Json
+          document_status?: string
+          document_type?: string
           due_date?: string
           id?: string
           invoice_currency?: string
@@ -185,6 +199,7 @@ export type Database = {
           network?: string
           number?: string
           payment_methods?: Json
+          payment_status?: string
           po_number?: string | null
           project_code?: string | null
           reference_number?: string | null
@@ -193,9 +208,12 @@ export type Database = {
           seller_email?: string
           seller_logo_url?: string | null
           seller_name?: string
+          source_document_id?: string | null
           status?: string
           subtotal?: number
           tax?: number
+          tax_rate?: number | null
+          tax_type?: string
           terms_and_conditions?: string
           title?: string
           total?: number
@@ -203,7 +221,22 @@ export type Database = {
           user_id?: string
           wallet_address?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoices_converted_document_id_fkey"
+            columns: ["converted_document_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -290,6 +323,14 @@ export type Database = {
       allocate_invoice_document_number: {
         Args: { p_document_type: string }
         Returns: string
+      }
+      convert_quotation_to_invoice: {
+        Args: { p_quotation_id: string }
+        Returns: {
+          invoice_id: string
+          invoice_number: string
+          already_existed: boolean
+        }[]
       }
     }
     Enums: {

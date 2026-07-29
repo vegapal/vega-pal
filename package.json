@@ -27,7 +27,8 @@
     "test:invoice-wizard": "node scripts/test-invoice-wizard.mjs",
     "test:invoice-financial": "node scripts/test-invoice-financial.mjs",
     "test:locale-documents": "node scripts/merge-locale-documents.mjs && node scripts/test-invoice-wizard.mjs",
-    "test:sidebar-account": "node scripts/test-sidebar-account.mjs"
+    "test:sidebar-account": "node scripts/test-sidebar-account.mjs",
+    "test:quotation-conversion": "node scripts/test-quotation-conversion.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

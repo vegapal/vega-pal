@@ -229,6 +229,7 @@ function InvoicesPage() {
 }
 
 function Row({ inv }: { inv: Invoice }) {
+  const { t } = useTranslation("invoices");
   const { t: tc } = useTranslation("common");
   const currency = inv.invoiceCurrency?.trim() || "USDT";
   const total = Number(inv.total);
@@ -247,6 +248,11 @@ function Row({ inv }: { inv: Invoice }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-0.5">
             <DocumentTypeBadge type={inv.documentType} />
+            {inv.documentType === "quotation" && inv.convertedDocumentId ? (
+              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t("conversion.listBadge")}
+              </span>
+            ) : null}
           </div>
           <p className="font-medium truncate">{inv.title}</p>
           <p className="text-xs text-muted-foreground font-mono">{inv.number}</p>
@@ -281,6 +287,11 @@ function Row({ inv }: { inv: Invoice }) {
             <div className="flex flex-wrap gap-2 mb-1">
               <DocumentTypeBadge type={inv.documentType} />
               <DocumentStatusBadge status={inv.documentStatus} />
+              {inv.documentType === "quotation" && inv.convertedDocumentId ? (
+                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("conversion.listBadge")}
+                </span>
+              ) : null}
             </div>
             <p className="font-medium leading-snug">{inv.title}</p>
             <p className="text-xs text-muted-foreground font-mono mt-0.5">{inv.number}</p>

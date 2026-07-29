@@ -46,13 +46,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-muted/30 flex">
-      <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-background sticky top-0 h-screen">
-        <div className="p-6">
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-background sticky top-0 h-[100dvh] max-h-[100dvh] min-h-0">
+        <div className="shrink-0 p-6">
           <Link to="/dashboard">
             <Logo />
           </Link>
         </div>
-        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 space-y-1">
           {nav.map((n) => {
             const active = isActive(n);
             return (
@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="mt-auto p-4 border-t border-border">
+        <div className="mt-auto shrink-0 border-t border-border p-4">
           <SidebarAccountSection user={user} />
         </div>
       </aside>

@@ -54,6 +54,22 @@ export class InvoiceNumberAllocationError extends Error {
   }
 }
 
+export class QuotationConversionError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "QuotationConversionError";
+    this.code = code;
+  }
+}
+
+export type QuotationConversionResult = {
+  invoiceId: string;
+  invoiceNumber: string;
+  alreadyExisted: boolean;
+};
+
 export type { DisplayOptions, PaymentMethodsConfig };
 
 export interface InvoiceItem {
@@ -106,6 +122,12 @@ export interface Invoice {
   sellerAddress?: string;
   sellerLogoUrl?: string;
   brandColor?: string;
+  sourceDocumentId?: string;
+  convertedDocumentId?: string;
+  /** Populated on detail fetch when sourceDocumentId is set */
+  sourceDocumentNumber?: string;
+  /** Populated on detail fetch when convertedDocumentId is set */
+  convertedDocumentNumber?: string;
 }
 
 export interface User {
@@ -312,6 +334,8 @@ type InvoiceRow = {
   terms_and_conditions?: string | null;
   display_options?: import("@/integrations/supabase/types").Json | null;
   payment_methods?: import("@/integrations/supabase/types").Json | null;
+  source_document_id?: string | null;
+  converted_document_id?: string | null;
 };
 type ItemRow = {
   invoice_id: string;
@@ -430,6 +454,29 @@ function rowToInvoice(r: InvoiceRow, items: ItemRow[]): Invoice {
     sellerAddress: r.seller_address ?? undefined,
     sellerLogoUrl: r.seller_logo_url ?? undefined,
     brandColor: r.brand_color,
+    sourceDocumentId: r.source_document_id ?? undefined,
+    convertedDocumentId: r.converted_document_id ?? undefined,
+  };
+}
+
+async function enrichInvoiceDocumentLinks(inv: Invoice): Promise<Invoice> {
+  const linkIds = [inv.sourceDocumentId, inv.convertedDocumentId].filter(
+    (id): id is string => !!id,
+  );
+  if (linkIds.length === 0) return inv;
+
+  const { data, error } = await supabase.from("invoices").select("id, number").in("id", linkIds);
+  if (error || !data) return inv;
+
+  const byId = new Map(data.map((row) => [row.id, row.number]));
+  return {
+    ...inv,
+    sourceDocumentNumber: inv.sourceDocumentId
+      ? byId.get(inv.sourceDocumentId)
+      : inv.sourceDocumentNumber,
+    convertedDocumentNumber: inv.convertedDocumentId
+      ? byId.get(inv.convertedDocumentId)
+      : inv.convertedDocumentNumber,
   };
 }
 
@@ -686,7 +733,8 @@ async function fetchInvoiceWithItems(id: string): Promise<Invoice | null> {
     supabase.from("invoice_items").select("*").eq("invoice_id", id),
   ]);
   if (e1 || e2 || !inv) return null;
-  return rowToInvoice(inv as InvoiceRow, (items ?? []) as ItemRow[]);
+  const base = rowToInvoice(inv as InvoiceRow, (items ?? []) as ItemRow[]);
+  return enrichInvoiceDocumentLinks(base);
 }
 
 async function nextInvoiceNumber(documentType: DocumentType): Promise<string> {
@@ -882,7 +930,7 @@ export const invoices = {
         seller_address: profile.companyAddress ?? null,
         seller_logo_url: profile.logoUrl ?? null,
         brand_color: profile.brandColor || DEFAULT_BRAND,
-      } as never)
+      })
       .select("*")
       .single();
     if (error || !invRow) throw error ?? new Error("Failed to create invoice");
@@ -1086,6 +1134,76 @@ export const invoices = {
 
   async cancel(id: string) {
     await invoices.setStatus(id, "cancelled");
+  },
+
+  async convertQuotationToInvoice(quotationId: string): Promise<QuotationConversionResult> {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) throw new Error("Not signed in");
+
+    const profile = await loadProfile(u.user);
+    if (!profile) throw new Error("Profile not ready");
+    if (profile.isDisabled) {
+      throw new QuotationConversionError(
+        "account_disabled",
+        "This account has been disabled.",
+      );
+    }
+
+    const quotation = await fetchInvoiceWithItems(quotationId);
+    if (!quotation || quotation.documentType !== "quotation") {
+      throw new QuotationConversionError("not_a_quotation", "This document is not a quotation.");
+    }
+    if (quotation.documentStatus === "cancelled") {
+      throw new QuotationConversionError("quotation_cancelled", "This quotation is cancelled.");
+    }
+
+    if (!quotation.convertedDocumentId) {
+      await assertCanCreateInvoice(u.user.id, profile.plan);
+    }
+
+    const { data, error } = await supabase.rpc("convert_quotation_to_invoice", {
+      p_quotation_id: quotationId,
+    });
+
+    if (error) {
+      const msg = error.message ?? "";
+      if (msg.includes("FREE_PLAN") || msg.includes("free_plan")) {
+        throw new QuotationConversionError("free_plan_invoice_limit", FREE_PLAN_LIMIT_MESSAGE);
+      }
+      if (msg.includes("quotation_cancelled")) {
+        throw new QuotationConversionError("quotation_cancelled", "This quotation is cancelled.");
+      }
+      if (msg.includes("not_a_quotation")) {
+        throw new QuotationConversionError("not_a_quotation", "This document is not a quotation.");
+      }
+      if (msg.includes("forbidden") || msg.includes("quotation_not_found")) {
+        throw new QuotationConversionError("forbidden", "You do not have access to this quotation.");
+      }
+      if (msg.includes("account_disabled")) {
+        throw new QuotationConversionError(
+          "account_disabled",
+          "This account has been disabled.",
+        );
+      }
+      throw new QuotationConversionError(
+        "conversion_failed",
+        "Could not create the invoice. Please try again.",
+      );
+    }
+
+    const row = data?.[0];
+    if (!row?.invoice_id || !row.invoice_number) {
+      throw new QuotationConversionError(
+        "conversion_failed",
+        "Could not create the invoice. Please try again.",
+      );
+    }
+
+    return {
+      invoiceId: row.invoice_id,
+      invoiceNumber: row.invoice_number,
+      alreadyExisted: !!row.already_existed,
+    };
   },
 
   async duplicate(id: string): Promise<Invoice | null> {

@@ -113,6 +113,21 @@ export function trackInvoiceCreated(
   }
 }
 
+export function trackQuotationConvertedToInvoice(targetDocumentStatus: "draft" | "issued"): void {
+  if (!isBrowser() || !analyticsEnabled()) return;
+  try {
+    const params: Record<string, string> = {
+      source_document_type: "quotation",
+      target_document_type: "tax_invoice",
+      target_document_status: targetDocumentStatus,
+    };
+    pushDataLayer({ event: "quotation_converted_to_invoice", ...params });
+    gtagEvent("quotation_converted_to_invoice", params);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function trackInvoicePaid(
   invoiceId?: string,
   value?: number,
