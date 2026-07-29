@@ -23,6 +23,8 @@ import {
   formatInvoiceAmountWithCurrency,
   showReferenceField,
 } from "@/lib/invoice-display";
+import { clientIdentityLines } from "@/lib/invoice/document-identity";
+import { dueDateFieldLabel } from "@/lib/invoice/document-labels";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
@@ -362,16 +364,30 @@ function InvoiceDetails() {
                   : "grid-cols-1"
               }`}
             >
-              {d.showClientInfo && (
-                <Detail
-                  icon={Mail}
-                  label={tc("labels.billedTo")}
-                  value={inv.clientCompany || inv.clientName}
-                  sub={inv.clientEmail}
-                />
-              )}
+              {d.showClientInfo && (() => {
+                const lines = clientIdentityLines(inv);
+                return (
+                  <Detail
+                    icon={Mail}
+                    label={tc("labels.billedTo")}
+                    value={lines[0]?.text ?? inv.clientName}
+                    sub={
+                      lines.length > 1
+                        ? lines
+                            .slice(1)
+                            .map((l) => l.text)
+                            .join(" · ")
+                        : undefined
+                    }
+                  />
+                );
+              })()}
               {d.showDueDate && (
-                <Detail icon={Calendar} label={tc("labels.dueDate")} value={inv.dueDate} />
+                <Detail
+                  icon={Calendar}
+                  label={dueDateFieldLabel(inv.documentType)}
+                  value={inv.dueDate}
+                />
               )}
             </div>
           )}

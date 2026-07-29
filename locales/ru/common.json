@@ -121,12 +121,17 @@
     "iban": "IBAN",
     "swift": "SWIFT",
     "bankCurrency": "Валюта банка",
+    "paymentDetails": "Платёжные данные",
+    "bankTransferDetails": "Реквизиты банковского перевода",
+    "cryptoPaymentDetails": "Данные криптоплатежа",
+    "cashPayment": "Оплата наличными",
     "selectCurrency": "Выберите валюту",
     "fromDate": "С даты",
     "toDate": "По дату"
   },
   "footer": {
-    "copyright": "© {{year}} VegaPal. Безопасные платежи и надёжные сделки."
+    "copyright": "© {{year}} VegaPal. Безопасные платежи и надёжные сделки.",
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
   },
   "errors": {
     "pageNotFound": "Страница не найдена",

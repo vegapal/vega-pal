@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -132,6 +133,19 @@ export function DocumentDetailsStep({ state, onChange, headingRef }: Props) {
             onChange={(e) => onChange({ dueDate: e.target.value })}
           />
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 px-4 py-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">{t("wizard.details.showDueDateOnDocument")}</p>
+          <p className="text-xs text-muted-foreground">{t("wizard.details.showDueDateOnDocumentHint")}</p>
+        </div>
+        <Switch
+          id="wizard-show-due-date"
+          checked={state.showDueDateOnDocument}
+          onCheckedChange={(checked) => onChange({ showDueDateOnDocument: checked })}
+          aria-label={t("wizard.details.showDueDateOnDocument")}
+        />
       </div>
 
       <div className="border-t border-border pt-6">

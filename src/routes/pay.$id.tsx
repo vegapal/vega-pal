@@ -7,6 +7,8 @@ import {
   formatInvoiceAmountWithCurrency,
   showReferenceField,
 } from "@/lib/invoice-display";
+import { clientIdentityLines, sellerIdentityLines } from "@/lib/invoice/document-identity";
+import { dueDateFieldLabel } from "@/lib/invoice/document-labels";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { StatusPill } from "@/components/StatusBadge";
@@ -111,13 +113,18 @@ function PublicInvoice() {
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="font-semibold truncate">{inv.sellerBusiness || inv.sellerName}</p>
-              <p className="text-sm text-muted-foreground truncate">{inv.sellerEmail}</p>
-              {inv.sellerAddress && (
-                <p className="text-xs text-muted-foreground whitespace-pre-line mt-1 line-clamp-2">
-                  {inv.sellerAddress}
+              {sellerIdentityLines(inv).map((line, i) => (
+                <p
+                  key={i}
+                  className={
+                    i === 0
+                      ? "font-semibold truncate"
+                      : "text-sm text-muted-foreground truncate"
+                  }
+                >
+                  {line.text}
                 </p>
-              )}
+              ))}
             </div>
             <div className="w-full sm:w-auto sm:ml-auto shrink-0">
               <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => downloadInvoicePdf(inv)}>
@@ -143,15 +150,17 @@ function PublicInvoice() {
             </h1>
 
             {d.showClientInfo && (
-              <p className="mt-3 text-muted-foreground">
-                Billed to{" "}
-                <span className="text-foreground font-medium">
-                  {inv.clientCompany || inv.clientName}
-                </span>
-                {inv.clientEmail && (
-                  <span className="block text-sm mt-0.5">{inv.clientEmail}</span>
-                )}
-              </p>
+              <div className="mt-3 text-sm">
+                <p className="text-muted-foreground">Billed to</p>
+                {clientIdentityLines(inv).map((line, i) => (
+                  <p
+                    key={i}
+                    className={i === 0 ? "text-foreground font-medium" : "text-muted-foreground"}
+                  >
+                    {line.text}
+                  </p>
+                ))}
+              </div>
             )}
 
             {hasReferences && (
@@ -208,7 +217,7 @@ function PublicInvoice() {
                   {d.showDueDate && (
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                        Due
+                        {dueDateFieldLabel(inv.documentType)}
                       </p>
                       <p className="mt-1 font-medium">{inv.dueDate}</p>
                     </div>

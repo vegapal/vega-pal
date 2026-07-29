@@ -166,7 +166,9 @@
       "subjectProforma": "Proforma subject",
       "subjectProformaPlaceholder": "Expected website development costs",
       "subjectTaxInvoice": "Invoice description",
-      "subjectTaxInvoicePlaceholder": "Website development services"
+      "subjectTaxInvoicePlaceholder": "Website development services",
+      "showDueDateOnDocument": "Show due date on document",
+      "showDueDateOnDocumentHint": "When off, the due or valid-until date stays saved but is hidden on the preview, PDF, and public page."
     },
     "optional": {
       "heading": "Optional fields",

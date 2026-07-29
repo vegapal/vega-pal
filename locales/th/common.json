@@ -121,12 +121,17 @@
     "iban": "IBAN",
     "swift": "SWIFT",
     "bankCurrency": "สกุลเงินบัญชี",
+    "paymentDetails": "รายละเอียดการชำระเงิน",
+    "bankTransferDetails": "รายละเอียดการโอนผ่านธนาคาร",
+    "cryptoPaymentDetails": "รายละเอียดการชำระด้วยคริปโต",
+    "cashPayment": "การชำระเงินสด",
     "selectCurrency": "เลือกสกุลเงิน",
     "fromDate": "ตั้งแต่วันที่",
     "toDate": "ถึงวันที่"
   },
   "footer": {
-    "copyright": "© {{year}} VegaPal การชำระเงินที่ปลอดภัย ธุรกรรมที่เชื่อถือได้"
+    "copyright": "© {{year}} VegaPal การชำระเงินที่ปลอดภัย ธุรกรรมที่เชื่อถือได้",
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
   },
   "errors": {
     "pageNotFound": "ไม่พบหน้านี้",

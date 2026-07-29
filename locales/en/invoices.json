@@ -166,7 +166,9 @@
       "dueDate": "Due date",
       "quoteDate": "Quote date",
       "validUntil": "Valid until",
-      "deliveryDate": "Expected delivery"
+      "deliveryDate": "Expected delivery",
+      "showDueDateOnDocument": "Show due date on document",
+      "showDueDateOnDocumentHint": "When off, the due or valid-until date stays saved but is hidden on the preview, PDF, and public page."
     },
     "optional": {
       "heading": "Optional fields",

@@ -105,6 +105,7 @@ function stateFromExisting(existing: Invoice): InvoiceWizardState {
     legacyDiscountAmount: existing.discount,
     legacyTaxAmount: existing.tax,
     showClientOnDocument: existing.displayOptions.showClientInfo ?? true,
+    showDueDateOnDocument: existing.displayOptions.showDueDate ?? true,
     showDiscountOnDocument: existing.displayOptions.showDiscount ?? true,
     showTaxOnDocument: existing.displayOptions.showTax ?? true,
     paymentMethod: existing.paymentMethods.method,

@@ -30,6 +30,7 @@ export type InvoiceWizardState = {
   clientTaxId: string;
   showExtraClient: boolean;
   showClientOnDocument: boolean;
+  showDueDateOnDocument: boolean;
   title: string;
   invoiceCurrency: InvoiceCurrency;
   issueDate: string;
@@ -81,6 +82,7 @@ export function createInitialWizardState(): InvoiceWizardState {
     clientTaxId: "",
     showExtraClient: false,
     showClientOnDocument: true,
+    showDueDateOnDocument: true,
     title: "",
     invoiceCurrency: DEFAULT_INVOICE_CURRENCY,
     issueDate,
@@ -140,6 +142,7 @@ export function financialFieldsForSave(state: InvoiceWizardState) {
 export function displayOptionsFromWizard(state: InvoiceWizardState): DisplayOptions {
   const d: DisplayOptions = { ...DEFAULT_DISPLAY_OPTIONS };
   d.showClientInfo = state.showClientOnDocument;
+  d.showDueDate = state.showDueDateOnDocument;
   d.showPoNumber = state.activeOptionalFields.includes("poNumber") && !!state.poNumber.trim();
   d.showReferenceNumber =
     state.activeOptionalFields.includes("referenceNumber") && !!state.referenceNumber.trim();

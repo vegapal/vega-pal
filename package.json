@@ -26,6 +26,7 @@
     "test:invoice-numbering": "node scripts/test-invoice-numbering.mjs",
     "test:invoice-wizard": "node scripts/test-invoice-wizard.mjs",
     "test:invoice-financial": "node scripts/test-invoice-financial.mjs",
+    "test:invoice-pdf": "node scripts/test-invoice-pdf.mjs",
     "test:locale-documents": "node scripts/merge-locale-documents.mjs && node scripts/test-invoice-wizard.mjs",
     "test:sidebar-account": "node scripts/test-sidebar-account.mjs",
     "test:quotation-conversion": "node scripts/test-quotation-conversion.mjs"

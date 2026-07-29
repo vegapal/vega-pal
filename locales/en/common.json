@@ -141,12 +141,17 @@
     "iban": "IBAN",
     "swift": "SWIFT",
     "bankCurrency": "Bank currency",
+    "paymentDetails": "Payment details",
+    "bankTransferDetails": "Bank transfer details",
+    "cryptoPaymentDetails": "Crypto payment details",
+    "cashPayment": "Cash payment",
     "selectCurrency": "Select currency",
     "fromDate": "From Date",
     "toDate": "To Date"
   },
   "footer": {
-    "copyright": "© {{year}} VegaPal. Secure Payments & Trusted Deals."
+    "copyright": "© {{year}} VegaPal. Secure Payments & Trusted Deals.",
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
   },
   "errors": {
     "pageNotFound": "Page not found",

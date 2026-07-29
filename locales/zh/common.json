@@ -121,12 +121,17 @@
     "iban": "IBAN",
     "swift": "SWIFT",
     "bankCurrency": "银行货币",
+    "paymentDetails": "付款详情",
+    "bankTransferDetails": "银行转账详情",
+    "cryptoPaymentDetails": "加密货币付款详情",
+    "cashPayment": "现金付款",
     "selectCurrency": "选择货币",
     "fromDate": "开始日期",
     "toDate": "结束日期"
   },
   "footer": {
-    "copyright": "© {{year}} VegaPal。安全付款，值得信赖的交易。"
+    "copyright": "© {{year}} VegaPal。安全付款，值得信赖的交易。",
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
   },
   "errors": {
     "pageNotFound": "页面未找到",

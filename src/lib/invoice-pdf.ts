@@ -1,347 +1,347 @@
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { qrCodeToDataUrl } from "@/lib/qrcode-lazy";
 import type { Invoice } from "./vegapal-store";
 import {
+  formatInvoiceAmount,
   formatInvoiceAmountWithCurrency,
   isBankPaymentVisible,
   isCashPaymentVisible,
   isCryptoPaymentVisible,
   showReferenceField,
 } from "./invoice-display";
+import { clientIdentityLines, sellerIdentityLines } from "@/lib/invoice/document-identity";
+import {
+  compactStatusLabel,
+  documentTypeHeading,
+  dueDateFieldLabel,
+  finalTotalLabel,
+} from "@/lib/invoice/document-labels";
+import { documentTotalsView } from "@/lib/invoice/document-totals-display";
 
 const MARGIN = 40;
-const FOOTER_RESERVE = 36;
-const LINE = 14;
-const CARD_PAD = 18;
-const CARD_ROW_GAP = 16;
-const CARD_TITLE_H = 40;
+const FOOTER_H = 32;
+const ROW_GAP = 8;
+const SECTION_GAP = 16;
 
-type RGB = [number, number, number];
+const BLACK: [number, number, number] = [20, 20, 22];
+const MUTED: [number, number, number] = [100, 105, 112];
+const BORDER: [number, number, number] = [220, 223, 228];
+const HEAD_FILL: [number, number, number] = [245, 246, 248];
 
-function hexToRgb(hex: string): RGB {
-  const h = hex.replace("#", "");
-  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-  const n = parseInt(v, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+type DocWithTable = jsPDF & { lastAutoTable?: { finalY: number } };
+
+function pageHeight(doc: jsPDF) {
+  return doc.internal.pageSize.getHeight();
 }
 
-function pageBottom(doc: jsPDF) {
-  return doc.internal.pageSize.getHeight() - FOOTER_RESERVE;
+function pageWidth(doc: jsPDF) {
+  return doc.internal.pageSize.getWidth();
+}
+
+function contentBottom(doc: jsPDF) {
+  return pageHeight(doc) - FOOTER_H - 8;
 }
 
 function amt(n: number, currency: string) {
   return formatInvoiceAmountWithCurrency(n, currency);
 }
 
-type DocWithTable = jsPDF & { lastAutoTable?: { finalY: number } };
-
 export async function generateInvoicePDF(inv: Invoice) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const W = doc.internal.pageSize.getWidth();
-  const H = doc.internal.pageSize.getHeight();
-  const brand = hexToRgb(inv.brandColor || "#16C784");
-  const navy: RGB = [11, 18, 32];
+  const W = pageWidth(doc);
+  const H = pageHeight(doc);
   const currency = inv.invoiceCurrency;
   const d = inv.displayOptions;
+  const totals = documentTotalsView(inv);
+  const typeHeading = documentTypeHeading(inv.documentType);
 
-  let y = 0;
+  let y = MARGIN;
 
-  const drawFooter = () => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(140);
-    doc.text(
-      "Powered by VegaPal — Secure Payments & Trusted Deals",
-      W / 2,
-      H - 22,
-      { align: "center" },
-    );
-  };
+  const drawPageFooters = () => {
+    const total = doc.getNumberOfPages();
+    for (let i = 1; i <= total; i++) {
+      doc.setPage(i);
+      const footerY = H - 18;
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.5);
+      doc.line(MARGIN, H - FOOTER_H, W - MARGIN, H - FOOTER_H);
 
-  const drawPageChrome = () => {
-    doc.setFillColor(...navy);
-    doc.rect(0, 0, W, 6, "F");
-    doc.setFillColor(...brand);
-    doc.rect(0, 6, W, 2, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...MUTED);
+      doc.text("Created with VegaPal · vega-pal.com", MARGIN, footerY);
+
+      if (total > 1) {
+        doc.text(`Page ${i} of ${total}`, W - MARGIN, footerY, { align: "right" });
+      }
+    }
   };
 
   const ensureSpace = (needed: number) => {
-    if (y + needed > pageBottom(doc)) {
-      drawFooter();
+    if (y + needed > contentBottom(doc)) {
       doc.addPage();
-      drawPageChrome();
       y = MARGIN;
     }
   };
 
-  const drawLabel = (text: string, x: number, yy: number) => {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(130);
-    doc.text(text.toUpperCase(), x, yy);
-  };
-
-  const drawWrapped = (text: string, x: number, yy: number, maxW: number, size = 10) => {
+  const drawBodyText = (text: string, x: number, yy: number, maxW: number, size = 10) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(size);
-    doc.setTextColor(50);
+    doc.setTextColor(...BLACK);
     const lines = doc.splitTextToSize(text, maxW);
     doc.text(lines, x, yy);
-    return yy + lines.length * (size + 4);
+    return yy + lines.length * (size + 3);
   };
-
-  const drawPaymentField = (
-    label: string,
-    value: string,
-    x: number,
-    yy: number,
-    opts?: { bold?: boolean; valueSize?: number },
-  ) => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(110);
-    doc.text(label, x, yy);
-    doc.setFont("helvetica", opts?.bold ? "bold" : "normal");
-    doc.setFontSize(opts?.valueSize ?? (opts?.bold ? 12 : 10));
-    doc.setTextColor(opts?.bold ? 20 : 45);
-    doc.text(value, x, yy + 13);
-    return yy + 13 + CARD_ROW_GAP;
-  };
-
-  const drawPaymentCardTitle = (title: string, cardY: number, cardW: number) => {
-    doc.setFillColor(...brand);
-    doc.roundedRect(MARGIN, cardY, cardW, CARD_TITLE_H, 6, 6, "F");
-    doc.rect(MARGIN, cardY + CARD_TITLE_H / 2, cardW, CARD_TITLE_H / 2, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(255);
-    doc.text(title, MARGIN + CARD_PAD, cardY + 25);
-  };
-
-  const invoiceTotalLabel = amt(inv.total, currency);
-  const FIELD_BLOCK = 13 + CARD_ROW_GAP;
 
   const measureWrapped = (text: string, maxW: number, size = 9) => {
     doc.setFontSize(size);
-    return doc.splitTextToSize(text, maxW).length * (size + 4);
+    return doc.splitTextToSize(text, maxW).length * (size + 3);
   };
 
-  const measureAmountHeader = (paymentCurrency?: string) => {
-    let h = FIELD_BLOCK;
-    const payCur = paymentCurrency?.trim();
-    if (payCur && payCur.toUpperCase() !== currency.toUpperCase()) {
-      h += FIELD_BLOCK * 2;
-    }
-    return h;
+  const drawKvRow = (label: string, value: string, x: number, yy: number) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text(label, x, yy);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...BLACK);
+    doc.text(value, x, yy + 12);
+    return yy + 12 + ROW_GAP + 4;
   };
 
-  const drawAmountHeader = (x: number, yy: number, paymentCurrency?: string, network?: string) => {
-    let cy = yy;
-    cy = drawPaymentField("Amount to pay", invoiceTotalLabel, x, cy, {
-      bold: true,
-      valueSize: 13,
-    });
-
-    const payCur = paymentCurrency?.trim();
-    if (payCur && payCur.toUpperCase() !== currency.toUpperCase()) {
-      cy = drawPaymentField("Invoice total", invoiceTotalLabel, x, cy);
-      const methodLabel = network ? `${payCur} via ${network}` : payCur;
-      cy = drawPaymentField("Payment method", methodLabel, x, cy);
-    }
-
-    return cy;
-  };
-
-  // ── Header band ──────────────────────────────────────────────────────────
-  const headerH = 100;
-  doc.setFillColor(...navy);
-  doc.rect(0, 0, W, headerH, "F");
-  doc.setFillColor(...brand);
-  doc.rect(0, headerH, W, 4, "F");
-
-  let headerLeftX = MARGIN;
-
-  if (d.showVegapalLogo) {
-    doc.setFillColor(...brand);
-    doc.roundedRect(MARGIN, 28, 28, 28, 4, 4, "F");
-    doc.setTextColor(255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("V", MARGIN + 9, 48);
-    doc.setFontSize(16);
-    doc.text("VegaPal", MARGIN + 38, 48);
-    headerLeftX = MARGIN + 38;
-  }
+  // ── Header ───────────────────────────────────────────────────────────────
+  const headerTop = y;
+  let leftX = MARGIN;
+  const rightX = W - MARGIN;
 
   if (d.showSellerInfo) {
-    const sellerX = d.showVegapalLogo ? MARGIN + 120 : MARGIN;
     if (inv.sellerLogoUrl) {
       try {
-        doc.addImage(inv.sellerLogoUrl, "PNG", sellerX, 26, 44, 44);
-        headerLeftX = sellerX + 54;
+        doc.addImage(inv.sellerLogoUrl, "PNG", MARGIN, y, 40, 40);
+        leftX = MARGIN + 48;
       } catch {
-        headerLeftX = sellerX;
+        leftX = MARGIN;
       }
-    } else {
-      headerLeftX = sellerX;
     }
-    doc.setTextColor(255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text(inv.sellerBusiness || inv.sellerName, headerLeftX, 42);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(200, 210, 225);
-    doc.text(inv.sellerEmail, headerLeftX, 58);
-    if (inv.sellerAddress) {
-      const addrLines = doc.splitTextToSize(inv.sellerAddress, 220);
-      doc.text(addrLines.slice(0, 2), headerLeftX, 72);
+
+    const sellerLines = sellerIdentityLines(inv);
+    let sy = y + (inv.sellerLogoUrl ? 4 : 0);
+    for (let i = 0; i < sellerLines.length; i++) {
+      const line = sellerLines[i];
+      doc.setFont("helvetica", i === 0 ? "bold" : "normal");
+      doc.setFontSize(i === 0 ? 12 : 9);
+      doc.setTextColor(...(line.muted ? MUTED : BLACK));
+      doc.text(line.text, leftX, sy);
+      sy += i === 0 ? 16 : 13;
     }
+    y = Math.max(y + 44, sy);
   }
 
-  doc.setTextColor(255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.text("INVOICE", W - MARGIN, 42, { align: "right" });
+  doc.setFontSize(11);
+  doc.setTextColor(...BLACK);
+  doc.text(typeHeading, rightX, headerTop + 12, { align: "right" });
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.setTextColor(200, 210, 225);
-  doc.text(inv.number, W - MARGIN, 58, { align: "right" });
-  doc.text(`Issued: ${inv.issueDate}`, W - MARGIN, 72, { align: "right" });
-  if (d.showStatus) {
-    doc.text(`Status: ${inv.status.toUpperCase()}`, W - MARGIN, 86, { align: "right" });
+  doc.setTextColor(...BLACK);
+  doc.text(inv.number, rightX, headerTop + 28, { align: "right" });
+
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  doc.text(`Issue date: ${inv.issueDate}`, rightX, headerTop + 42, { align: "right" });
+
+  let metaY = headerTop + 56;
+  if (d.showDueDate && inv.dueDate) {
+    doc.text(`${dueDateFieldLabel(inv.documentType)}: ${inv.dueDate}`, rightX, metaY, {
+      align: "right",
+    });
+    metaY += 14;
   }
 
-  y = headerH + 28;
+  if (d.showStatus) {
+    const status = compactStatusLabel({
+      documentType: inv.documentType,
+      documentStatus: inv.documentStatus,
+      paymentStatus: inv.paymentStatus,
+    });
+    if (status) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...BLACK);
+      doc.text(status, rightX, metaY, { align: "right" });
+    }
+  }
 
-  // ── References ───────────────────────────────────────────────────────────
-  const refs: string[] = [];
-  if (showReferenceField(d, "showPoNumber", inv.poNumber)) refs.push(`PO: ${inv.poNumber}`);
+  y = Math.max(y, metaY) + SECTION_GAP;
+  doc.setDrawColor(...BORDER);
+  doc.line(MARGIN, y, W - MARGIN, y);
+  y += SECTION_GAP;
+
+  // ── Bill to / Document details ───────────────────────────────────────────
+  const colW = (W - MARGIN * 2 - 24) / 2;
+  const leftCol = MARGIN;
+  const rightCol = MARGIN + colW + 24;
+  const infoStartY = y;
+  let leftBottom = infoStartY;
+  let rightBottom = infoStartY;
+
+  const detailRows: [string, string][] = [];
+  detailRows.push(["Issue date", inv.issueDate]);
+  if (d.showDueDate && inv.dueDate) {
+    detailRows.push([dueDateFieldLabel(inv.documentType), inv.dueDate]);
+  }
+  if (showReferenceField(d, "showPoNumber", inv.poNumber)) {
+    detailRows.push(["PO number", inv.poNumber!]);
+  }
   if (showReferenceField(d, "showReferenceNumber", inv.referenceNumber)) {
-    refs.push(`Ref: ${inv.referenceNumber}`);
+    detailRows.push(["Reference number", inv.referenceNumber!]);
   }
   if (showReferenceField(d, "showProjectCode", inv.projectCode)) {
-    refs.push(`Project: ${inv.projectCode}`);
-  }
-  if (refs.length > 0) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(refs.join("   ·   "), MARGIN, y);
-    y += 20;
+    detailRows.push(["Project code", inv.projectCode!]);
   }
 
-  // ── Client & due date row ────────────────────────────────────────────────
-  const colMid = W / 2;
-  if (d.showClientInfo || d.showDueDate) {
-    if (d.showClientInfo) {
-      drawLabel("Billed to", MARGIN, y);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(20);
-      doc.text(inv.clientCompany || inv.clientName, MARGIN, y + LINE);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(80);
-      let cy = y + LINE + 14;
-      if (inv.clientCompany) {
-        doc.text(inv.clientName, MARGIN, cy);
-        cy += 14;
-      }
-      doc.text(inv.clientEmail, MARGIN, cy);
+  if (d.showClientInfo) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text("BILL TO", leftCol, infoStartY);
+    const clientLines = clientIdentityLines(inv);
+    let cy = infoStartY + 12;
+    for (let i = 0; i < clientLines.length; i++) {
+      const line = clientLines[i];
+      doc.setFont("helvetica", i === 0 ? "bold" : "normal");
+      doc.setFontSize(i === 0 ? 11 : 9);
+      doc.setTextColor(...(line.muted ? MUTED : BLACK));
+      doc.text(line.text, leftCol, cy);
+      cy += i === 0 ? 16 : 13;
     }
-    if (d.showDueDate) {
-      drawLabel("Due date", colMid + 20, y);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(20);
-      doc.text(inv.dueDate, colMid + 20, y + LINE);
-    }
-    y += 56;
+    leftBottom = cy;
   }
 
-  // ── Title ────────────────────────────────────────────────────────────────
-  ensureSpace(40);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.setTextColor(20);
-  doc.text(inv.title, MARGIN, y);
-  y += 24;
+  if (detailRows.length > 0) {
+    const detailsX = d.showClientInfo ? rightCol : leftCol;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text("DOCUMENT DETAILS", detailsX, infoStartY);
+    let dy = infoStartY + 12;
+    for (const [label, value] of detailRows) {
+      dy = drawKvRow(label, value, detailsX, dy);
+    }
+    rightBottom = dy;
+  }
+
+  y = Math.max(leftBottom, rightBottom) + SECTION_GAP;
+
+  // ── Subject ──────────────────────────────────────────────────────────────
+  if (inv.title?.trim()) {
+    ensureSpace(36);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(...BLACK);
+    const titleLines = doc.splitTextToSize(inv.title.trim(), W - MARGIN * 2);
+    doc.text(titleLines, MARGIN, y);
+    y += titleLines.length * 16 + 8;
+  }
 
   // ── Line items ───────────────────────────────────────────────────────────
+  const unitHead = `Unit price (${currency})`;
+  const totalHead = `Line total (${currency})`;
+
   autoTable(doc, {
     startY: y,
-    head: [["Description", "Qty", "Unit price", "Line total"]],
+    head: [["Description", "Qty", unitHead, totalHead]],
     body: inv.items.map((i) => [
       i.description,
       String(i.quantity),
-      amt(i.unitPrice, currency),
-      amt(i.total, currency),
+      formatInvoiceAmount(i.unitPrice, currency),
+      formatInvoiceAmount(i.total, currency),
     ]),
     theme: "plain",
+    showHead: "everyPage",
+    rowPageBreak: "avoid",
     styles: {
       fontSize: 9,
-      cellPadding: 7,
-      textColor: [45, 45, 50],
-      lineColor: [230, 233, 238],
-      lineWidth: 0.5,
+      cellPadding: 6,
+      textColor: BLACK,
+      lineColor: BORDER,
+      lineWidth: 0.4,
+      font: "helvetica",
     },
     headStyles: {
-      fillColor: navy,
-      textColor: [255, 255, 255],
+      fillColor: HEAD_FILL,
+      textColor: BLACK,
       fontStyle: "bold",
       halign: "left",
     },
     columnStyles: {
       0: { cellWidth: "auto" },
-      1: { halign: "right", cellWidth: 44 },
-      2: { halign: "right", cellWidth: 88 },
-      3: { halign: "right", cellWidth: 88 },
+      1: { halign: "right", cellWidth: 40 },
+      2: { halign: "right", cellWidth: 82 },
+      3: { halign: "right", cellWidth: 82 },
     },
-    margin: { left: MARGIN, right: MARGIN },
-    didDrawPage: () => drawFooter(),
+    margin: { left: MARGIN, right: MARGIN, bottom: FOOTER_H + 12 },
   });
 
-  y = ((doc as DocWithTable).lastAutoTable?.finalY ?? y) + 18;
+  y = ((doc as DocWithTable).lastAutoTable?.finalY ?? y) + 14;
 
   // ── Totals ───────────────────────────────────────────────────────────────
-  ensureSpace(90);
-  const totalsX = W - MARGIN - 180;
+  ensureSpace(100);
+  const totalsX = W - MARGIN - 200;
   const totalsXR = W - MARGIN;
 
-  const totalRow = (label: string, value: string) => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(90);
+  const totalRow = (label: string, value: string, bold = false) => {
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(bold ? 11 : 9);
+    doc.setTextColor(...(bold ? BLACK : MUTED));
     doc.text(label, totalsX, y);
+    doc.setTextColor(...BLACK);
     doc.text(value, totalsXR, y, { align: "right" });
-    y += 16;
+    y += bold ? 20 : 15;
   };
 
-  totalRow("Subtotal", amt(inv.subtotal, currency));
-  if (d.showDiscount && inv.discount > 0) {
-    totalRow("Discount", `- ${amt(inv.discount, currency)}`);
+  totalRow("Subtotal", amt(totals.subtotal, currency));
+  if (totals.discountLabel && totals.discountAmount > 0) {
+    totalRow(totals.discountLabel, `(${amt(totals.discountAmount, currency)})`);
   }
-  if (d.showTax && inv.tax > 0) {
-    totalRow("Tax", amt(inv.tax, currency));
+  if (totals.taxLabel && totals.taxAmount > 0) {
+    totalRow(totals.taxLabel, amt(totals.taxAmount, currency));
   }
 
-  y += 10;
-  doc.setDrawColor(220);
+  y += 4;
+  doc.setDrawColor(...BORDER);
   doc.line(totalsX, y, totalsXR, y);
-  y += 20;
+  y += 16;
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(20);
-  doc.text("Total due", totalsX, y);
-  doc.setTextColor(...brand);
-  doc.text(amt(inv.total, currency), totalsXR, y, { align: "right" });
-  y += 28;
-  doc.setTextColor(20);
+  const finalLabel = finalTotalLabel(inv.documentType, inv.paymentStatus);
+  totalRow(finalLabel, amt(inv.total, currency), true);
+  y += 8;
 
-  // ── Payment sections ─────────────────────────────────────────────────────
+  // ── Notes & terms ────────────────────────────────────────────────────────
+  if (d.showNotes && inv.description?.trim()) {
+    ensureSpace(40);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...BLACK);
+    doc.text("Notes", MARGIN, y);
+    y += 14;
+    y = drawBodyText(inv.description.trim(), MARGIN, y, W - MARGIN * 2, 9) + 12;
+  }
+
+  if (d.showTerms && inv.termsAndConditions?.trim()) {
+    ensureSpace(40);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...BLACK);
+    doc.text("Terms & conditions", MARGIN, y);
+    y += 14;
+    y = drawBodyText(inv.termsAndConditions.trim(), MARGIN, y, W - MARGIN * 2, 9) + 12;
+  }
+
+  // ── Payment details ──────────────────────────────────────────────────────
   if (d.showPaymentInstructions) {
     const showCrypto = isCryptoPaymentVisible(inv);
     const showBank = isBankPaymentVisible(inv);
@@ -351,188 +351,139 @@ export async function generateInvoicePDF(inv: Invoice) {
     const cash = inv.paymentMethods.cash;
 
     if (showCrypto || showBank || showCash) {
-      ensureSpace(24);
+      const contentW = W - MARGIN * 2;
+      const measureBlock = (): number => {
+        let h = 14 + SECTION_GAP;
+        const blockTitle = 12 + 8;
+        const row = 22;
+
+        if (showCrypto) {
+          h += blockTitle;
+          h += row * 3;
+          if (crypto.walletAddress) h += measureWrapped(crypto.walletAddress, contentW - 100, 9);
+          h += SECTION_GAP;
+        }
+        if (showBank) {
+          h += blockTitle;
+          const bankRows = [
+            bank.bankName,
+            bank.accountName,
+            bank.accountNumber,
+            bank.iban,
+            bank.swift,
+            bank.currency,
+          ].filter((v) => v?.trim()).length;
+          h += row * (bankRows + 2);
+          if (bank.instructions?.trim()) {
+            h += 14 + measureWrapped(bank.instructions, contentW, 9);
+          }
+          h += SECTION_GAP;
+        }
+        if (showCash) {
+          h += blockTitle + row;
+          if (cash.instructions?.trim()) {
+            h += 14 + measureWrapped(cash.instructions, contentW, 9);
+          }
+          if (cash.location?.trim()) {
+            h += 14 + measureWrapped(cash.location, contentW, 9);
+          }
+        }
+        return h;
+      };
+
+      const blockH = measureBlock();
+      ensureSpace(blockH);
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.setTextColor(20);
-      doc.text("Payment instructions", MARGIN, y);
-      y += 20;
-    }
+      doc.setTextColor(...BLACK);
+      doc.text("Payment details", MARGIN, y);
+      y += 18;
 
-    if (showCrypto) {
-      const cardW = W - MARGIN * 2;
-      const contentX = MARGIN + CARD_PAD;
-      const contentW = cardW - CARD_PAD * 2 - 100;
-
-      let bodyH = measureAmountHeader(crypto.currency);
-      bodyH += FIELD_BLOCK * 2;
-      bodyH += 13;
-      if (crypto.walletAddress) {
-        bodyH += measureWrapped(crypto.walletAddress, contentW, 9) + CARD_ROW_GAP;
-      }
-      const boxH = Math.max(
-        CARD_TITLE_H + CARD_PAD + bodyH + CARD_PAD,
-        CARD_TITLE_H + CARD_PAD + 100 + CARD_PAD,
-      );
-
-      ensureSpace(boxH + 20);
-      const cardY = y;
-
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(230, 233, 238);
-      doc.roundedRect(MARGIN, cardY, cardW, boxH, 8, 8, "FD");
-      drawPaymentCardTitle("Crypto payment", cardY, cardW);
-
-      let contentY = cardY + CARD_TITLE_H + CARD_PAD;
-      contentY = drawAmountHeader(contentX, contentY, crypto.currency, crypto.network);
-      contentY = drawPaymentField("Payment currency", crypto.currency, contentX, contentY);
-      contentY = drawPaymentField("Network", crypto.network, contentX, contentY);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(110);
-      doc.text("Wallet address", contentX, contentY);
-      contentY += 13;
-      if (crypto.walletAddress) {
-        doc.setFont("courier", "normal");
+      const drawMethodTitle = (title: string) => {
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
-        doc.setTextColor(30);
-        const addrLines = doc.splitTextToSize(crypto.walletAddress, contentW);
-        doc.text(addrLines, contentX, contentY);
+        doc.setTextColor(...BLACK);
+        doc.text(title, MARGIN, y);
+        y += 14;
+      };
+
+      const drawSimpleRows = (rows: [string, string][]) => {
+        for (const [label, value] of rows) {
+          if (!value?.trim()) continue;
+          y = drawKvRow(label, value.trim(), MARGIN, y);
+        }
+      };
+
+      if (showCrypto) {
+        drawMethodTitle("Crypto payment details");
+        drawSimpleRows([
+          ["Asset", crypto.currency],
+          ["Network", crypto.network],
+          ["Amount due", amt(inv.total, currency)],
+          ["Payment reference", inv.number],
+        ]);
+        if (crypto.walletAddress?.trim()) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(...MUTED);
+          doc.text("Wallet address", MARGIN, y);
+          y += 12;
+          y =
+            drawBodyText(crypto.walletAddress.trim(), MARGIN, y, contentW - 100, 9) + 6;
+          try {
+            const qr = await qrCodeToDataUrl(crypto.walletAddress, { margin: 0, width: 160 });
+            doc.addImage(qr, "PNG", W - MARGIN - 88, y - 40, 80, 80);
+          } catch {
+            /* ignore */
+          }
+        }
+        y += SECTION_GAP;
       }
 
-      if (crypto.walletAddress) {
-        try {
-          const qr = await qrCodeToDataUrl(crypto.walletAddress, { margin: 0, width: 200 });
-          doc.addImage(
-            qr,
-            "PNG",
-            W - MARGIN - CARD_PAD - 92,
-            cardY + CARD_TITLE_H + CARD_PAD,
-            92,
-            92,
-          );
-        } catch {
-          /* ignore */
+      if (showBank) {
+        drawMethodTitle("Bank transfer details");
+        drawSimpleRows([
+          ["Bank name", bank.bankName ?? ""],
+          ["Account name", bank.accountName ?? ""],
+          ["Account number", bank.accountNumber ?? ""],
+          ["IBAN", bank.iban ?? ""],
+          ["SWIFT/BIC", bank.swift ?? ""],
+          ["Bank currency", bank.currency ?? ""],
+          ["Payment reference", inv.number],
+        ]);
+        if (bank.instructions?.trim()) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(...BLACK);
+          doc.text("Additional instructions", MARGIN, y);
+          y += 12;
+          y = drawBodyText(bank.instructions.trim(), MARGIN, y, contentW, 9) + 8;
+        }
+        y += SECTION_GAP;
+      }
+
+      if (showCash) {
+        drawMethodTitle("Cash payment");
+        drawSimpleRows([["Amount due", amt(inv.total, currency)]]);
+        if (cash.instructions?.trim()) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text("Instructions", MARGIN, y);
+          y += 12;
+          y = drawBodyText(cash.instructions.trim(), MARGIN, y, contentW, 9) + 8;
+        }
+        if (cash.location?.trim()) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text("Payment location", MARGIN, y);
+          y += 12;
+          y = drawBodyText(cash.location.trim(), MARGIN, y, contentW, 9) + 8;
         }
       }
-
-      y = cardY + boxH + 20;
-    }
-
-    if (showBank) {
-      const bankLines: [string, string][] = [];
-      if (bank.bankName?.trim()) bankLines.push(["Bank name", bank.bankName]);
-      if (bank.accountName?.trim()) bankLines.push(["Account name", bank.accountName]);
-      if (bank.accountNumber?.trim()) bankLines.push(["Account number", bank.accountNumber]);
-      if (bank.iban?.trim()) bankLines.push(["IBAN", bank.iban]);
-      if (bank.swift?.trim()) bankLines.push(["SWIFT", bank.swift]);
-      if (bank.currency?.trim()) bankLines.push(["Bank currency", bank.currency]);
-
-      const cardW = W - MARGIN * 2;
-      const contentX = MARGIN + CARD_PAD;
-      const bankPayCur = bank.currency?.trim();
-      const bankMethod =
-        bankPayCur && bankPayCur.toUpperCase() !== currency.toUpperCase()
-          ? "Bank transfer"
-          : undefined;
-
-      let bodyH = measureAmountHeader(bankPayCur);
-      bodyH += bankLines.length * FIELD_BLOCK;
-      if (bank.instructions?.trim()) {
-        bodyH += 24 + measureWrapped(bank.instructions, cardW - CARD_PAD * 2, 9);
-      }
-      const boxH = CARD_TITLE_H + CARD_PAD + bodyH + CARD_PAD;
-
-      ensureSpace(boxH + 20);
-      const cardY = y;
-
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(230, 233, 238);
-      doc.roundedRect(MARGIN, cardY, cardW, boxH, 8, 8, "FD");
-      drawPaymentCardTitle("Bank transfer", cardY, cardW);
-
-      let by = cardY + CARD_TITLE_H + CARD_PAD;
-      by = drawAmountHeader(contentX, by, bankPayCur, bankMethod);
-
-      for (const [label, value] of bankLines) {
-        by = drawPaymentField(label, value, contentX, by);
-      }
-
-      if (bank.instructions?.trim()) {
-        by += 4;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(110);
-        doc.text("Instructions", contentX, by);
-        by += 14;
-        drawWrapped(bank.instructions, contentX, by, cardW - CARD_PAD * 2, 9);
-      }
-
-      y = cardY + boxH + 20;
-    }
-
-    if (showCash) {
-      const cardW = W - MARGIN * 2;
-      const contentX = MARGIN + CARD_PAD;
-
-      let bodyH = measureAmountHeader();
-      if (cash.instructions?.trim()) {
-        bodyH += 24 + measureWrapped(cash.instructions, cardW - CARD_PAD * 2, 9);
-      }
-      if (cash.location?.trim()) {
-        bodyH += 24 + measureWrapped(cash.location, cardW - CARD_PAD * 2, 9);
-      }
-      const boxH = CARD_TITLE_H + CARD_PAD + bodyH + CARD_PAD;
-
-      ensureSpace(boxH + 20);
-      const cardY = y;
-
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(230, 233, 238);
-      doc.roundedRect(MARGIN, cardY, cardW, boxH, 8, 8, "FD");
-      drawPaymentCardTitle("Cash payment", cardY, cardW);
-
-      let cy = cardY + CARD_TITLE_H + CARD_PAD;
-      cy = drawAmountHeader(contentX, cy);
-
-      if (cash.instructions?.trim()) {
-        cy += 4;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(110);
-        doc.text("Instructions", contentX, cy);
-        cy += 14;
-        cy = drawWrapped(cash.instructions, contentX, cy, cardW - CARD_PAD * 2, 9);
-        cy += 8;
-      }
-      if (cash.location?.trim()) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(110);
-        doc.text("Payment location", contentX, cy);
-        cy += 14;
-        drawWrapped(cash.location, contentX, cy, cardW - CARD_PAD * 2, 9);
-      }
-
-      y = cardY + boxH + 20;
     }
   }
 
-  // ── Notes & terms ────────────────────────────────────────────────────────
-  if (d.showNotes && inv.description?.trim()) {
-    ensureSpace(50);
-    drawLabel("Notes", MARGIN, y);
-    y += 12;
-    y = drawWrapped(inv.description, MARGIN, y, W - MARGIN * 2) + 12;
-  }
-
-  if (d.showTerms && inv.termsAndConditions?.trim()) {
-    ensureSpace(50);
-    drawLabel("Terms & conditions", MARGIN, y);
-    y += 12;
-    y = drawWrapped(inv.termsAndConditions, MARGIN, y, W - MARGIN * 2) + 12;
-  }
-
-  drawFooter();
+  drawPageFooters();
   doc.save(`${inv.number}.pdf`);
 }
