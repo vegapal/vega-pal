@@ -16,7 +16,7 @@ import {
   type LayoutRecord,
   type LayoutRect,
 } from "@/lib/pdf/layout-debug";
-import { renderInvoiceLayoutEngine } from "@/lib/pdf/invoice-layout-engine";
+import { renderInvoiceLayoutEngine, measurePaymentSectionBodyHeight } from "@/lib/pdf/invoice-layout-engine";
 import type { Invoice } from "./vegapal-store";
 
 /** @deprecated Use layout engine margins */
@@ -30,8 +30,8 @@ export const PDF_CONTENT_WIDTH = CONTENT_WIDTH;
 export const PDF_TABLE_WIDTH = CONTENT_WIDTH;
 export const PDF_TABLE_RIGHT = PDF_LEFT + PDF_TABLE_WIDTH;
 export const PDF_FOOTER_RESERVE = PAGE_HEIGHT - footerTop();
-export const PDF_LEFT_COLUMN_WIDTH = CONTENT_WIDTH * 0.62;
-export const PDF_RIGHT_COLUMN_WIDTH = CONTENT_WIDTH * 0.34;
+export const PDF_LEFT_COLUMN_WIDTH = CONTENT_WIDTH * 0.65;
+export const PDF_RIGHT_COLUMN_WIDTH = CONTENT_WIDTH * 0.35;
 export const PDF_COLUMN_GAP = CONTENT_WIDTH - PDF_LEFT_COLUMN_WIDTH - PDF_RIGHT_COLUMN_WIDTH;
 
 export type { LayoutRect };
@@ -48,6 +48,8 @@ export function verifyPdfLayout(layout: LayoutRect[], layoutRecords?: LayoutReco
   }
 }
 
+export { measurePaymentSectionBodyHeight };
+
 export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildResult> {
   const { doc, layoutRecords } = await renderInvoiceLayoutEngine(inv, { collectLayout: true });
   const layout = legacyLayoutFromRecords(layoutRecords);
@@ -56,6 +58,12 @@ export async function buildInvoicePdfDocument(inv: Invoice): Promise<PdfBuildRes
 }
 
 export async function generateInvoicePDF(inv: Invoice) {
+  const { isHtmlInvoicePdfEnabled } = await import("@/lib/pdf/html-invoice-pdf-flag");
+  if (isHtmlInvoicePdfEnabled() && typeof window !== "undefined") {
+    const { downloadInvoicePdf } = await import("@/lib/pdf/download-invoice-pdf");
+    await downloadInvoicePdf(inv);
+    return;
+  }
   const { doc } = await buildInvoicePdfDocument(inv);
   doc.save(`${inv.number}.pdf`);
 }

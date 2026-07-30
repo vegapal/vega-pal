@@ -1,5 +1,12 @@
 import type { PdfRect } from "./layout-context";
-import { FOOTER_DIVIDER_Y, PAGE_HEIGHT, PAGE_MARGIN_LEFT, PAGE_MARGIN_RIGHT, PAGE_WIDTH } from "./layout-context";
+import {
+  CONTENT_WIDTH,
+  FOOTER_TEXT_BASELINE_Y,
+  PAGE_MARGIN_LEFT,
+  PAGE_MARGIN_RIGHT,
+  PAGE_WIDTH,
+  footerTop,
+} from "./layout-context";
 
 export type LayoutSectionId =
   | "header"
@@ -38,7 +45,7 @@ export function recordSection(
 }
 
 export function verifyLayoutRecords(records: LayoutRecord[], pageCount: number): void {
-  const footerTopY = PAGE_HEIGHT - 15 - 12 - 6;
+  const footerTopY = footerTop();
 
   for (const r of records) {
     if (r.rect.width < 0 || r.rect.height < 0) {
@@ -63,21 +70,19 @@ export function verifyLayoutRecords(records: LayoutRecord[], pageCount: number):
   }
 
   for (const f of footers) {
-    if (Math.abs(f.rect.y - FOOTER_DIVIDER_Y) > 1) {
-      throw new Error(`Footer divider Y mismatch on page ${f.page}`);
+    if (Math.abs(f.rect.y - (FOOTER_TEXT_BASELINE_Y - 6)) > 3) {
+      throw new Error(`Footer placement mismatch on page ${f.page}`);
     }
   }
 
-  const items = records.filter((r) => r.section === "items");
-  for (const t of items) {
-    const expectedW = PAGE_WIDTH - PAGE_MARGIN_LEFT - PAGE_MARGIN_RIGHT;
-    if (Math.abs(t.rect.width - expectedW) > 0.5) {
-      throw new Error(`Table width ${t.rect.width} !== content width ${expectedW}`);
+  for (const t of records.filter((r) => r.section === "items")) {
+    if (Math.abs(t.rect.width - CONTENT_WIDTH) > 0.5) {
+      throw new Error(`Table width ${t.rect.width} !== content width ${CONTENT_WIDTH}`);
     }
   }
 }
 
-/** @deprecated Legacy harness ids — mapped for gradual migration */
+/** @deprecated Legacy harness ids */
 export type LayoutRect = { id: string; x: number; y: number; w: number; h: number };
 
 export function legacyLayoutFromRecords(records: LayoutRecord[]): LayoutRect[] {

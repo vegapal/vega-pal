@@ -17,8 +17,8 @@ import { Check, ShieldCheck, Sparkles, Download, Ban } from "lucide-react";
 import type { Invoice } from "@/lib/vegapal-store";
 
 async function downloadInvoicePdf(inv: Invoice) {
-  const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
-  await generateInvoicePDF(inv);
+  const { downloadInvoicePdf } = await import("@/lib/pdf/download-invoice-pdf");
+  await downloadInvoicePdf(inv);
 }
 
 const PaymentMethodCards = lazy(() =>

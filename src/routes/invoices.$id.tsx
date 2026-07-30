@@ -47,8 +47,8 @@ import { useSubmitGuard } from "@/hooks/use-submit-guard";
 import { toast } from "sonner";
 
 async function downloadInvoicePdf(inv: import("@/lib/vegapal-store").Invoice) {
-  const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
-  await generateInvoicePDF(inv);
+  const { downloadInvoicePdf } = await import("@/lib/pdf/download-invoice-pdf");
+  await downloadInvoicePdf(inv);
 }
 
 const PaymentMethodCards = lazy(() =>

@@ -63,6 +63,12 @@ export default {
         return await applySecurityHeaders(response);
       }
 
+      if (url.pathname.startsWith("/api/invoices/pdf")) {
+        const { handleInvoicePdfApiRequest } = await import("@/lib/pdf/invoice-pdf-api.server");
+        const response = await handleInvoicePdfApiRequest(request);
+        return await applySecurityHeaders(response);
+      }
+
       if (url.pathname.startsWith("/api/auth")) {
         const { handleAuthApiRequest } = await import("@/lib/auth/auth-api.server");
         const response = await handleAuthApiRequest(request);

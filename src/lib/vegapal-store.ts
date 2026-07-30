@@ -296,7 +296,7 @@ async function assertCanCreateInvoice(userId: string, plan: UserPlan): Promise<v
   }
 }
 
-type InvoiceRow = {
+export type InvoiceRow = {
   id: string;
   number: string;
   client_name: string;
@@ -337,7 +337,7 @@ type InvoiceRow = {
   source_document_id?: string | null;
   converted_document_id?: string | null;
 };
-type ItemRow = {
+export type ItemRow = {
   invoice_id: string;
   position: number;
   description: string;
@@ -457,6 +457,11 @@ function rowToInvoice(r: InvoiceRow, items: ItemRow[]): Invoice {
     sourceDocumentId: r.source_document_id ?? undefined,
     convertedDocumentId: r.converted_document_id ?? undefined,
   };
+}
+
+/** Map database rows to domain invoice (server PDF API, tests). */
+export function mapDatabaseInvoiceRow(r: InvoiceRow, items: ItemRow[]): Invoice {
+  return rowToInvoice(r, items);
 }
 
 async function enrichInvoiceDocumentLinks(inv: Invoice): Promise<Invoice> {

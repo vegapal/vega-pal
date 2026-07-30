@@ -1,20 +1,19 @@
 import type { jsPDF } from "jspdf";
 
+/** Blueprint V3 — A4 portrait */
 export const PAGE_WIDTH = 210;
 export const PAGE_HEIGHT = 297;
-export const PAGE_MARGIN_LEFT = 16;
-export const PAGE_MARGIN_RIGHT = 16;
-export const PAGE_MARGIN_TOP = 16;
-export const PAGE_MARGIN_BOTTOM = 15;
-export const FOOTER_HEIGHT = 12;
-export const FOOTER_GAP = 6;
+export const PAGE_MARGIN_LEFT = 18;
+export const PAGE_MARGIN_RIGHT = 18;
+export const PAGE_MARGIN_TOP = 18;
+export const PAGE_MARGIN_BOTTOM = 16;
+export const CONTENT_WIDTH = 174;
+export const FOOTER_RESERVE_MM = 20;
 
-export const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN_LEFT - PAGE_MARGIN_RIGHT;
-export const FOOTER_DIVIDER_Y = PAGE_HEIGHT - PAGE_MARGIN_BOTTOM - FOOTER_HEIGHT;
-export const FOOTER_TEXT_BASELINE_Y = PAGE_HEIGHT - PAGE_MARGIN_BOTTOM - 3;
+export const FOOTER_TEXT_BASELINE_Y = PAGE_HEIGHT - PAGE_MARGIN_BOTTOM - 4;
 
 export function footerTop(pageHeight = PAGE_HEIGHT): number {
-  return pageHeight - PAGE_MARGIN_BOTTOM - FOOTER_HEIGHT - FOOTER_GAP;
+  return pageHeight - PAGE_MARGIN_BOTTOM - FOOTER_RESERVE_MM;
 }
 
 export type PdfRect = {
@@ -35,6 +34,9 @@ export type PdfPageContext = {
   contentWidth: number;
   cursorY: number;
   pageNumber: number;
+  /** Y after grand-total block (before trailing gap to next section). */
+  totalsContentBottom?: number;
+  totalsBlockStartY?: number;
 };
 
 export function createPageContext(doc: jsPDF): PdfPageContext {
@@ -61,8 +63,7 @@ export function canFit(ctx: PdfPageContext, height: number): boolean {
 }
 
 export function syncPageFromDoc(ctx: PdfPageContext): void {
-  const page = ctx.doc.getNumberOfPages();
-  ctx.pageNumber = page;
+  ctx.pageNumber = ctx.doc.getNumberOfPages();
 }
 
 export function startNewPage(ctx: PdfPageContext): void {
@@ -75,6 +76,10 @@ export function ensureSectionSpace(ctx: PdfPageContext, requiredHeight: number):
   if (!canFit(ctx, requiredHeight)) {
     startNewPage(ctx);
   }
+}
+
+export function advanceCursor(ctx: PdfPageContext, gapMm: number): void {
+  ctx.cursorY += gapMm;
 }
 
 /** Reserve below autoTable body so rows never enter footer band. */

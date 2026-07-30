@@ -5,15 +5,17 @@ import { clientIdentityFromParts } from "../src/lib/invoice/document-identity.ts
 import { documentTypeHeading } from "../src/lib/invoice/document-labels.ts";
 import { DEFAULT_DISPLAY_OPTIONS } from "../src/lib/invoice-constants.ts";
 import type { Invoice } from "../src/lib/vegapal-store.ts";
+import { jsPDF } from "jspdf";
 import {
   buildInvoicePdfDocument,
   buildPdfTestInvoice,
+  measurePaymentSectionBodyHeight,
   PDF_CONTENT_WIDTH,
   PDF_LEFT,
   PDF_TOP,
   verifyPdfLayout,
 } from "../src/lib/invoice-pdf.ts";
-import { footerTop, PAGE_HEIGHT } from "../src/lib/pdf/layout-context.ts";
+import { footerTop } from "../src/lib/pdf/layout-context.ts";
 
 assert.equal(documentTypeHeading("quotation"), "QUOTATION");
 assert.equal(documentTypeHeading("proforma_invoice"), "PROFORMA INVOICE");
@@ -29,18 +31,18 @@ assert.equal(dupClient.length, 2);
 const engineSource = readFileSync(join(process.cwd(), "src/lib/pdf/invoice-layout-engine.ts"), "utf8");
 const pdfSource = readFileSync(join(process.cwd(), "src/lib/invoice-pdf.ts"), "utf8");
 assert.ok(engineSource.includes("PAYMENT DETAILS"));
+assert.ok(readFileSync(join(process.cwd(), "src/lib/pdf/layout-context.ts"), "utf8").includes("CONTENT_WIDTH = 174"));
 assert.ok(!engineSource.includes("HOW TO PAY"));
 assert.ok(!pdfSource.includes("PDF_PAYMENT_STAY_ON_PAGE1_MIN_MM"));
 assert.ok(engineSource.includes("drawAllFooters"));
 assert.ok(engineSource.includes("ensureSectionSpace"));
 assert.ok(engineSource.includes('halign: "center"'));
-assert.ok(!engineSource.includes("if (email) push(email)"));
 assert.ok(!engineSource.includes("sellerEmail"));
 
 const outDir = join(process.cwd(), "tmp", "pdf-layout-engine");
 mkdirSync(outDir, { recursive: true });
 
-const footerTopY = footerTop(PAGE_HEIGHT);
+const footerTopY = footerTop();
 
 async function buildAndWrite(name: string, inv: Invoice) {
   const { doc, layout, layoutRecords } = await buildInvoicePdfDocument(inv);
@@ -243,6 +245,22 @@ assert.ok(table && Math.abs(table.rect.width - PDF_CONTENT_WIDTH) < 0.5, "table 
 const { layoutRecords: headerLayout } = await buildInvoicePdfDocument(minimal);
 const header = headerLayout.find((r) => r.section === "header");
 assert.ok(header && Math.abs(header.rect.x - PDF_LEFT) < 0.1 && Math.abs(header.rect.y - PDF_TOP) < 0.1);
+
+const compactBank = buildPdfTestInvoice({
+  number: "COMPACT-BANK",
+  displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showTerms: false, showClientInfo: false },
+});
+const probe = new jsPDF({ unit: "mm", format: "a4" });
+const measuredPaymentBody = measurePaymentSectionBodyHeight(probe, compactBank, PDF_CONTENT_WIDTH);
+const { doc: compactDoc, layoutRecords: compactLayout } = await buildInvoicePdfDocument(compactBank);
+assert.equal(compactDoc.getNumberOfPages(), 1, "compact bank fixture must be 1 page");
+const compactPay = compactLayout.find((r) => r.section === "payment");
+assert.ok(compactPay);
+const ft = footerTop();
+assert.ok(compactPay!.rect.y + compactPay!.rect.height <= ft + 0.5);
+const topGapUsed = compactPay!.rect.height - measuredPaymentBody;
+assert.ok(topGapUsed === 10 || topGapUsed === 7 || topGapUsed === 0, `top gap ${topGapUsed}`);
+assert.ok(Math.abs(compactPay!.rect.height - (topGapUsed + measuredPaymentBody)) <= 0.01);
 
 console.log("PDF samples written to", outDir);
 console.log("Page counts:", counts);

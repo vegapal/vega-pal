@@ -150,6 +150,9 @@ export function OptionalFieldsPicker({ state, onChange }: Props) {
                   placeholder={t(field.placeholderKey)}
                 />
               )}
+              {field.key === "terms" ? (
+                <p className="text-xs text-muted-foreground">{t("wizard.optional.termsDocumentHint")}</p>
+              ) : null}
             </div>
           ))}
         </div>
