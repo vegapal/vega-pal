@@ -77,16 +77,21 @@
   --vega-blue: #1677E8;
   --vega-electric: #2F9BFF;
   --vega-cyan: #30D5F3;
-  --vega-ice: #F4F8FC;
-  --vega-border: #DFE7F0;
+  --vega-canvas: #F7F9FC;
+  --vega-ice: #F7F9FC;
+  --vega-mist: #F1F6FB;
+  --vega-border: #DDE6F0;
   --vega-ink: #081426;
   --vega-slate: #5E6B7C;
+  --vega-on-dark: #FFFFFF;
+  --vega-on-dark-secondary: #C8D5E5;
+  --vega-on-dark-muted: #93A7BD;
 
   --navy: #0B203A;
   --navy-foreground: #FFFFFF;
   --ink: #081426;
   --slate: #5E6B7C;
-  --ice: #F4F8FC;
+  --ice: #F7F9FC;
 
   --background: #FFFFFF;
   --foreground: #081426;
@@ -99,11 +104,13 @@
 
   --primary: #1677E8;
   --primary-foreground: #FFFFFF;
+  --primary-hover: #1268CF;
+  --primary-active: #105BB5;
 
-  --secondary: #F4F8FC;
+  --secondary: #F7F9FC;
   --secondary-foreground: #081426;
 
-  --muted: #F4F8FC;
+  --muted: #F1F6FB;
   --muted-foreground: #5E6B7C;
 
   --accent: #EAF3FE;
@@ -118,19 +125,21 @@
   --warning: #F59E0B;
   --warning-foreground: #081426;
 
-  --border: #DFE7F0;
-  --input: #DFE7F0;
+  --border: #DDE6F0;
+  --input: #DDE6F0;
   --ring: #1677E8;
 
   --gradient-brand: linear-gradient(135deg, #1677E8 0%, #2F9BFF 55%, #30D5F3 100%);
+  /* Calm midnight panels — subtle blue light, no loud glow */
   --gradient-hero:
-    radial-gradient(ellipse 75% 55% at 70% 0%, rgb(47 155 255 / 0.22), transparent 62%),
-    radial-gradient(ellipse 50% 40% at 10% 80%, rgb(48 213 243 / 0.12), transparent 55%),
-    linear-gradient(165deg, #061426 0%, #0B203A 55%, #061426 100%);
+    radial-gradient(circle at 25% 35%, rgba(22, 119, 232, 0.16), transparent 42%),
+    linear-gradient(145deg, #071827 0%, #0A2038 55%, #071827 100%);
+  --gradient-auth:
+    radial-gradient(circle at 25% 35%, rgba(22, 119, 232, 0.16), transparent 42%),
+    linear-gradient(145deg, #071827 0%, #0A2038 55%, #071827 100%);
   --gradient-mesh:
-    radial-gradient(circle at 18% 20%, rgb(22 119 232 / 0.2), transparent 42%),
-    radial-gradient(circle at 82% 55%, rgb(48 213 243 / 0.12), transparent 48%);
-  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #F4F8FC 100%);
+    radial-gradient(circle at 22% 30%, rgba(22, 119, 232, 0.1), transparent 45%);
+  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #F7F9FC 100%);
 }
 
 .dark {
@@ -170,24 +179,36 @@
     font-feature-settings: "cv11", "ss01", "ss03", "tnum";
     overflow-x: hidden;
   }
+  /* Inherit surface text color — never force ink on dark branded panels */
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     letter-spacing: -0.025em;
-    color: var(--color-ink);
-  }
-  .dark h1, .dark h2, .dark h3, .dark h4 {
-    color: var(--color-foreground);
   }
 }
 
 @utility bg-hero {
   background: var(--gradient-hero);
 }
+@utility bg-auth-panel {
+  background: var(--gradient-auth);
+}
 @utility bg-mesh {
   background: var(--gradient-mesh);
 }
+@utility bg-canvas {
+  background-color: var(--vega-canvas);
+}
 @utility bg-brand-gradient {
   background: var(--gradient-brand);
+}
+@utility text-on-dark {
+  color: var(--vega-on-dark);
+}
+@utility text-on-dark-secondary {
+  color: var(--vega-on-dark-secondary);
+}
+@utility text-on-dark-muted {
+  color: var(--vega-on-dark-muted);
 }
 @utility shadow-elevated {
   box-shadow: var(--shadow-elevated);

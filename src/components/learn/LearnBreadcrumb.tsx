@@ -14,7 +14,7 @@ type LearnBreadcrumbProps = {
 
 export function LearnBreadcrumb({ items }: LearnBreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
+    <nav aria-label="Breadcrumb" className="text-sm text-on-dark-muted">
       <ol className="flex flex-wrap items-center gap-1">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
@@ -22,19 +22,19 @@ export function LearnBreadcrumb({ items }: LearnBreadcrumbProps) {
             <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
               {index > 0 ? <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden /> : null}
               {isLast || !item.href ? (
-                <span className={isLast ? "text-foreground font-medium" : undefined} aria-current={isLast ? "page" : undefined}>
+                <span className={isLast ? "text-on-dark font-medium" : undefined} aria-current={isLast ? "page" : undefined}>
                   {item.label}
                 </span>
               ) : item.href === "/" ? (
-                <Link to="/" className="hover:text-primary hover:underline">
+                <Link to="/" className="hover:text-on-dark hover:underline">
                   {item.label}
                 </Link>
               ) : item.href.startsWith("/learn") ? (
-                <Link to={item.href as LearnRoutePath} className="hover:text-primary hover:underline">
+                <Link to={item.href as LearnRoutePath} className="hover:text-on-dark hover:underline">
                   {item.label}
                 </Link>
               ) : (
-                <a href={item.href} className="hover:text-primary hover:underline">
+                <a href={item.href} className="hover:text-on-dark hover:underline">
                   {item.label}
                 </a>
               )}

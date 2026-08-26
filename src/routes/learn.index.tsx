@@ -54,14 +54,14 @@ function LearnHubPage() {
         <div className="absolute inset-0 bg-mesh opacity-60" />
         <LandingHeader />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-28 sm:pt-36 lg:pt-40">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-navy-foreground max-w-4xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-on-dark max-w-4xl">
             Learn VegaPal
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-navy-foreground/80 max-w-3xl leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg text-on-dark-secondary max-w-3xl leading-relaxed">
             Professional guides for invoices, billing, USDT payments, crypto payments, bank transfers and secure
             business invoicing.
           </p>
-          <p className="mt-4 text-base sm:text-lg text-navy-foreground/70 max-w-3xl leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg text-on-dark-muted max-w-3xl leading-relaxed">
             Whether you are a freelancer, startup or enterprise, VegaPal helps you create invoices in seconds and
             receive payments securely.
           </p>

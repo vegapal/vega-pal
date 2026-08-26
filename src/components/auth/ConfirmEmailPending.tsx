@@ -25,7 +25,7 @@ export function ConfirmEmailPending({ email }: { email?: string | null }) {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-ice flex items-center justify-center px-4 py-10">
       <div className="max-w-md w-full rounded-2xl border border-border bg-card p-8 shadow-soft">
         <div className="mb-6 text-center">
           <Link to="/" aria-label="VegaPal home">

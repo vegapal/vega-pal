@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
-import { LayoutDashboard, Users, LogOut, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, CircleAlert } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { ConfirmEmailPending } from "@/components/auth/ConfirmEmailPending";
@@ -41,7 +41,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   if (loading || gate === "loading") {
     return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center text-sm text-muted-foreground">
+      <div className="min-h-screen bg-ice flex items-center justify-center text-sm text-muted-foreground">
         Loading admin…
       </div>
     );
@@ -53,10 +53,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   if (gate === "denied") {
     return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-ice flex items-center justify-center px-4">
         <div className="max-w-md w-full rounded-2xl border border-border bg-card p-8 text-center shadow-soft">
           <div className="mx-auto h-12 w-12 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
-            <ShieldAlert className="h-6 w-6" aria-hidden />
+            <CircleAlert className="h-6 w-6" aria-hidden />
           </div>
           <h1 className="mt-4 text-xl font-bold tracking-tight">Access denied</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -79,8 +79,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
     item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`);
 
   return (
-    <div className="min-h-screen bg-ice/50 flex">
-      <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-background sticky top-0 h-screen">
+    <div className="min-h-screen bg-ice flex">
+      <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-card sticky top-0 h-screen">
         <div className="px-5 py-5">
           <Link to="/admin" className="inline-flex">
             <Logo size="default" />

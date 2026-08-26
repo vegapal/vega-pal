@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { StatusPill } from "@/components/StatusBadge";
 import { InvoicePdfActions } from "@/components/invoice/InvoicePdfActions";
-import { Check, ShieldCheck, Ban } from "lucide-react";
+import { Check, Ban } from "lucide-react";
 
 import type { Invoice } from "@/lib/vegapal-store";
 
@@ -75,8 +75,8 @@ function PublicInvoice() {
     1 + (d.showDueDate ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-ice/70 overflow-x-hidden">
-      <header className="border-b border-border bg-background/95 backdrop-blur">
+    <div className="min-h-screen bg-ice overflow-x-hidden">
+      <header className="border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3 min-w-0">
           {d.showVegapalLogo ? (
             <Link to="/" className="inline-flex">
@@ -86,7 +86,7 @@ function PublicInvoice() {
             <span className="text-sm font-semibold text-foreground">Invoice payment</span>
           )}
           <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 text-primary" /> Secure payment page
+            Secure payment page
           </div>
         </div>
       </header>
@@ -293,8 +293,7 @@ function PublicInvoice() {
             </div>
 
             {payable && d.showPaymentInstructions && (
-              <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 text-primary" />
+              <div className="mt-4 text-xs text-muted-foreground">
                 Use the payment options on the right to complete this invoice.
               </div>
             )}

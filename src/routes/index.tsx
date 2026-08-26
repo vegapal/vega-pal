@@ -21,8 +21,8 @@ import {
   absoluteUrl,
 } from "@/lib/seo/site";
 import {
-  ShieldCheck, Zap, Globe2, ArrowRight, Check, FileText, BarChart3,
-  Sparkles, Banknote, Mail, Headphones,
+  Wallet, Zap, Globe2, ArrowRight, Check, FileText, BarChart3,
+  Sparkles, Banknote, Mail, Headphones, BadgeCheck,
 } from "lucide-react";
 import { useSession } from "@/lib/vegapal-store";
 import type { UserPlan } from "@/lib/admin/plans";
@@ -149,7 +149,7 @@ export const Route = createFileRoute("/")({
 
 const FEATURE_ITEMS = [
   { icon: Zap, key: "fastPayments" },
-  { icon: ShieldCheck, key: "directWallet" },
+  { icon: Wallet, key: "directWallet" },
   { icon: Globe2, key: "multiplePayments" },
   { icon: FileText, key: "professionalInvoices" },
   { icon: BarChart3, key: "dashboard" },
@@ -239,14 +239,14 @@ function Landing() {
 
       {/* HERO */}
       <section className="relative bg-hero overflow-hidden">
-        <div className="absolute inset-0 bg-mesh opacity-60" />
+        <div className="absolute inset-0 bg-mesh opacity-80" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-28 sm:pt-36 pb-16 sm:pb-24 lg:pt-44 lg:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          <div className="text-navy-foreground min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur px-3 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-navy-foreground/85 mb-5 sm:mb-6">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur px-3 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-on-dark-secondary mb-5 sm:mb-6">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
               {t("hero.badge")}
             </div>
-            <h1 className="text-[1.85rem] leading-[1.12] sm:text-4xl lg:text-[3.5rem] font-bold tracking-tight text-balance text-navy-foreground">
+            <h1 className="text-[1.85rem] leading-[1.12] sm:text-4xl lg:text-[3.5rem] font-bold tracking-tight text-balance text-on-dark">
               <span className="block">{t("hero.headlineLine1")}</span>
               <span className="block mt-2 lg:mt-3">
                 {t("hero.headlineLine2Prefix")}{" "}
@@ -255,7 +255,7 @@ function Landing() {
               </span>
               <span className="block mt-2 lg:mt-3">{t("hero.headlineLine3")}</span>
             </h1>
-            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-navy-foreground/72 max-w-xl leading-relaxed">
+            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-on-dark-secondary max-w-xl leading-relaxed">
               {t("hero.description")}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
@@ -268,17 +268,17 @@ function Landing() {
                 <a href="#demo-invoice">{t("hero.viewDemoInvoice")}</a>
               </Button>
             </div>
-            <ul className="mt-8 sm:mt-10 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-3 text-sm text-navy-foreground/70">
+            <ul className="mt-8 sm:mt-10 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-3 text-sm text-on-dark-secondary">
               <li className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary shrink-0" />
                 {t("hero.features.pdfInvoices")}
               </li>
-              <li className="flex items-center gap-2 font-semibold text-navy-foreground">
+              <li className="flex items-center gap-2 font-semibold text-on-dark">
                 <Banknote className="h-4 w-4 text-primary shrink-0" />
                 {t("hero.features.paymentMethods")}
               </li>
               <li className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+                <BadgeCheck className="h-4 w-4 text-primary shrink-0" />
                 {t("hero.features.verifiedPages")}
               </li>
             </ul>
@@ -286,8 +286,8 @@ function Landing() {
 
           {/* Mock invoice card */}
           <div id="demo-invoice" className="relative scroll-mt-24 sm:scroll-mt-28 w-full min-w-0 max-w-full">
-            <div className="absolute -inset-4 bg-primary/20 blur-3xl rounded-full pointer-events-none" />
-            <div className="relative rounded-2xl bg-background shadow-elevated border border-border overflow-hidden w-full">
+            <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
+            <div className="relative rounded-2xl bg-card shadow-elevated border border-border overflow-hidden w-full">
               <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-destructive/70" />
@@ -367,26 +367,26 @@ function Landing() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="py-24">
+      <section id="features" className="py-24 bg-canvas">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold text-primary uppercase tracking-wider">{t("features.eyebrow")}</p>
-            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-balance">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-balance text-ink">
               {t("features.title")}
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-lg text-slate">
               {t("features.subtitle")}
             </p>
           </div>
 
           <div className="mt-14 grid md:grid-cols-3 gap-6">
             {FEATURE_ITEMS.map((f) => (
-              <div key={f.key} className="rounded-2xl border border-border bg-card p-6 hover:shadow-elevated transition-shadow">
+              <div key={f.key} className="rounded-2xl border border-border bg-card p-6 shadow-soft hover:shadow-elevated transition-shadow">
                 <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-5">
                   <f.icon className="h-5 w-5" />
                 </div>
-                <h3 className="font-semibold text-lg">{t(`features.items.${f.key}.title`)}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{t(`features.items.${f.key}.desc`)}</p>
+                <h3 className="font-semibold text-lg text-ink">{t(`features.items.${f.key}.title`)}</h3>
+                <p className="mt-2 text-sm text-slate leading-relaxed">{t(`features.items.${f.key}.desc`)}</p>
               </div>
             ))}
           </div>
@@ -394,17 +394,17 @@ function Landing() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="py-24 bg-muted/40 border-y border-border">
+      <section id="how" className="py-24 bg-background border-y border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-primary uppercase tracking-wider">{t("howItWorks.eyebrow")}</p>
-            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{t("howItWorks.title")}</h2>
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink">{t("howItWorks.title")}</h2>
           </div>
           <div className="mt-14 grid md:grid-cols-3 gap-6">
             {HOW_IT_WORKS_STEPS.map((s) => (
-              <div key={s.n} className="rounded-2xl bg-background border border-border p-7">
+              <div key={s.n} className="rounded-2xl bg-canvas border border-border p-7 shadow-soft">
                 <span className="text-primary font-mono text-sm font-semibold">{s.n}</span>
-                <h3 className="mt-3 text-xl font-semibold">{t(`howItWorks.steps.${s.key}`)}</h3>
+                <h3 className="mt-3 text-xl font-semibold text-ink">{t(`howItWorks.steps.${s.key}`)}</h3>
               </div>
             ))}
           </div>
@@ -412,12 +412,12 @@ function Landing() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-24">
+      <section id="pricing" className="py-24 bg-canvas">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-primary uppercase tracking-wider">{t("pricing.eyebrow")}</p>
-            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{t("pricing.title")}</h2>
-            <p className="mt-4 text-muted-foreground">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink">{t("pricing.title")}</h2>
+            <p className="mt-4 text-slate">
               {t("pricing.subtitle")}
             </p>
           </div>
@@ -459,16 +459,16 @@ function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="pb-24">
+      <section className="pb-24 bg-canvas">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="rounded-3xl bg-hero relative overflow-hidden p-6 sm:p-10 lg:p-16 text-navy-foreground">
-            <div className="absolute inset-0 bg-mesh opacity-60" />
+          <div className="rounded-3xl bg-hero relative overflow-hidden p-6 sm:p-10 lg:p-16">
+            <div className="absolute inset-0 bg-mesh opacity-80" />
             <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-8">
               <div className="min-w-0">
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight max-w-xl text-balance">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight max-w-xl text-balance text-on-dark">
                   {t("cta.title")}
                 </h2>
-                <p className="mt-3 text-navy-foreground/70 max-w-lg">
+                <p className="mt-3 text-on-dark-secondary max-w-lg">
                   {t("cta.subtitle")}
                 </p>
               </div>
@@ -484,15 +484,15 @@ function Landing() {
 
       {/* CONTACT */}
       <section id="contact" className="relative py-24 bg-hero overflow-hidden scroll-mt-28">
-        <div className="absolute inset-0 bg-mesh opacity-60" />
+        <div className="absolute inset-0 bg-mesh opacity-80" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-primary uppercase tracking-wider">{t("contact.eyebrow")}</p>
-            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-navy-foreground">{t("contact.title")}</h2>
-            <p className="mt-4 text-lg text-navy-foreground/70">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-on-dark">{t("contact.title")}</h2>
+            <p className="mt-4 text-lg text-on-dark-secondary">
               {t("contact.subtitle")}
             </p>
-            <p className="mt-3 text-sm text-navy-foreground/60 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-3 text-sm text-on-dark-muted max-w-2xl mx-auto leading-relaxed">
               {VEGAPAL_SUPPORT_TRUST}
             </p>
           </div>
@@ -500,12 +500,12 @@ function Landing() {
           <div className="mt-14 grid md:grid-cols-3 gap-6">
             <a
               href={VEGAPAL_SUPPORT_EMAIL_HREF}
-              className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 transition-all duration-300 hover:bg-white/10 hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45)]"
+              className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 transition-colors hover:bg-white/[0.08]"
             >
               <div className="h-11 w-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center mb-5">
                 <Mail className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold text-lg text-navy-foreground">{t("contact.email.title")}</h3>
+              <h3 className="font-semibold text-lg text-on-dark">{t("contact.email.title")}</h3>
               <p className="mt-2 text-sm text-primary group-hover:underline">{VEGAPAL_SUPPORT_EMAIL}</p>
             </a>
 
@@ -513,12 +513,12 @@ function Landing() {
               href={VEGAPAL_SUPPORT_TELEGRAM_HREF}
               target="_blank"
               rel="noopener noreferrer"
-              className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 transition-all duration-300 hover:bg-white/10 hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45)]"
+              className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 transition-colors hover:bg-white/[0.08]"
             >
               <div className="h-11 w-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center mb-5">
                 <TelegramIcon className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold text-lg text-navy-foreground">{t("contact.telegram.title")}</h3>
+              <h3 className="font-semibold text-lg text-on-dark">{t("contact.telegram.title")}</h3>
               <p className="mt-2 text-sm text-primary group-hover:underline">{VEGAPAL_SUPPORT_TELEGRAM_HANDLE}</p>
             </a>
 
@@ -526,8 +526,8 @@ function Landing() {
               <div className="h-11 w-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center mb-5">
                 <Headphones className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold text-lg text-navy-foreground">{t("contact.liveSupport.title")}</h3>
-              <p className="mt-2 text-sm text-navy-foreground/70">{VEGAPAL_SUPPORT_AVAILABILITY}</p>
+              <h3 className="font-semibold text-lg text-on-dark">{t("contact.liveSupport.title")}</h3>
+              <p className="mt-2 text-sm text-on-dark-secondary">{VEGAPAL_SUPPORT_AVAILABILITY}</p>
             </div>
           </div>
         </div>

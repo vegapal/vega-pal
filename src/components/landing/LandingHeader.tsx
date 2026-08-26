@@ -11,7 +11,7 @@ const LanguageSwitcher = lazy(() =>
   import("@/components/LanguageSwitcher").then((m) => ({ default: m.LanguageSwitcher })),
 );
 
-const landingNavLinkClass = "hover:text-navy-foreground transition-colors";
+const landingNavLinkClass = "hover:text-on-dark transition-colors";
 
 export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20 overflow-hidden" }: { className?: string }) {
   const { t: tc } = useTranslation("common");
@@ -33,7 +33,7 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20 overf
             <Logo light size="hero" className="origin-left scale-[0.88] sm:scale-100" />
           </Link>
         <nav
-          className="hidden md:flex items-center gap-6 lg:gap-8 text-sm text-navy-foreground/70"
+          className="hidden md:flex items-center gap-6 lg:gap-8 text-sm text-on-dark-secondary"
           aria-label="Main navigation"
         >
           {PUBLIC_NAV_LINKS.map((link) =>
@@ -72,7 +72,7 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20 overf
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-navy-foreground/70 transition-colors hover:text-navy-foreground hover:bg-white/5"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-on-dark-secondary transition-colors hover:text-on-dark hover:bg-white/5"
                   aria-label={tc("nav.openMenu")}
                 >
                   <Menu className="h-5 w-5" />
@@ -80,9 +80,9 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20 overf
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="border-white/10 bg-navy text-navy-foreground w-[min(100vw-2rem,20rem)] flex flex-col"
+                className="border-white/10 bg-[#071827] text-on-dark w-[min(100vw-2rem,20rem)] flex flex-col"
               >
-                <nav className="mt-10 flex flex-col gap-5 text-base text-navy-foreground/70">
+                <nav className="mt-10 flex flex-col gap-5 text-base text-on-dark-secondary">
                   {PUBLIC_NAV_LINKS.map((link) =>
                     "to" in link ? (
                       <Link

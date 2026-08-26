@@ -41,9 +41,9 @@ export function LearnArticleShell({
         <LandingHeader />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-28 sm:pt-36 pb-12 sm:pb-16 lg:pt-40">
           <LearnBreadcrumb items={breadcrumbItems} />
-          <h1 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-navy-foreground max-w-4xl">{title}</h1>
+          <h1 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-on-dark max-w-4xl">{title}</h1>
           {intro ? (
-            <div className="mt-4 text-base sm:text-lg text-navy-foreground/70 leading-relaxed max-w-3xl">{intro}</div>
+            <div className="mt-4 text-base sm:text-lg text-on-dark-secondary leading-relaxed max-w-3xl">{intro}</div>
           ) : null}
         </div>
       </section>

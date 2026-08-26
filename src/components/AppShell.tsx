@@ -10,7 +10,7 @@ import {
   FilePlus2,
   Settings,
   FileText,
-  ShieldCheck,
+  UserCog,
   User,
   Wallet,
 } from "lucide-react";
@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     },
     { to: "/settings", label: t("nav.settings"), icon: Settings, exact: true },
     ...(isAdmin
-      ? [{ to: "/admin" as const, label: t("nav.adminPanel"), icon: ShieldCheck, exact: false }]
+      ? [{ to: "/admin" as const, label: t("nav.adminPanel"), icon: UserCog, exact: false }]
       : []),
   ];
 
@@ -75,9 +75,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     }`;
 
   return (
-    <div className="min-h-screen bg-ice/60">
+    <div className="min-h-screen bg-ice">
       <aside
-        className="hidden lg:flex fixed inset-y-0 start-0 z-30 w-64 flex-col border-e border-border bg-background h-[100dvh] max-h-[100dvh] overflow-hidden"
+        className="hidden lg:flex fixed inset-y-0 start-0 z-30 w-64 flex-col border-e border-border bg-card h-[100dvh] max-h-[100dvh] overflow-hidden"
         aria-label={t("nav.sidebar")}
       >
         <div className="shrink-0 px-5 py-5">
@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
                 aria-label={t("nav.adminPanel")}
               >
-                <ShieldCheck className="h-4 w-4" />
+                <UserCog className="h-4 w-4" />
               </Link>
             ) : null}
             <button
