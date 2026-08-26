@@ -28,12 +28,12 @@ export function MobileInvoicePreview({ state, user }: Props) {
           {t("wizard.preview.openMobile")}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
+      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl px-4">
         <SheetHeader className="text-left">
           <SheetTitle>{t("create.preview.livePreview")}</SheetTitle>
         </SheetHeader>
-        <div className="mt-4 pb-6">
-          <InvoiceDocumentPreview state={state} user={user} />
+        <div className="mt-4 pb-6 w-full min-w-0 overflow-x-hidden">
+          <InvoiceDocumentPreview state={state} user={user} maxWidthPx={430} />
         </div>
       </SheetContent>
     </Sheet>
