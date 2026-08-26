@@ -11,7 +11,9 @@ export type AuditAction =
   | "subscription_extended"
   | "subscription_cancel_at_period_end"
   | "subscription_canceled_immediately"
-  | "subscription_moved_to_free";
+  | "subscription_moved_to_free"
+  | "subscription_payment_approved"
+  | "subscription_payment_rejected";
 
 export async function writeAdminAuditLog(
   supabaseAdmin: SupabaseClient<Database>,

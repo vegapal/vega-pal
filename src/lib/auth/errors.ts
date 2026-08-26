@@ -54,8 +54,12 @@ const SUPABASE_AUTH_MESSAGES: Record<string, string> = {
   flow_state_expired: "This link has expired. Please request a new one.",
   otp_expired: "This link has expired. Please request a new one.",
   account_disabled: "This account has been disabled. Contact support if you need help.",
+  captcha_verification_failed: "Captcha verification failed. Please try again.",
+  service_unavailable: "Authentication is temporarily unavailable. Please try again later.",
+  supabase_unreachable: "Authentication is temporarily unavailable. Please try again later.",
+  network_error: "Network error. Check your connection and try again.",
   free_plan_invoice_limit:
-    "You have reached the Free plan limit of 5 invoices this month. Upgrade to Pro to create unlimited invoices.",
+    "You have reached the Free plan limit of 3 documents this month. Upgrade to Pro to create unlimited invoices.",
   request_timeout: "The request timed out. Check your connection and try again.",
 };
 
@@ -103,7 +107,7 @@ function mapSupabaseAuthMessage(message: string): string {
   if (lower.includes("code verifier")) {
     return "This reset link must be opened in the same browser where you requested it. Please request a new password reset link.";
   }
-  if (lower.includes("free_plan_invoice_limit") || lower.includes("free plan limit of 5")) {
+  if (lower.includes("free_plan_invoice_limit") || lower.includes("free plan limit of 3")) {
     return SUPABASE_AUTH_MESSAGES.free_plan_invoice_limit;
   }
   if (lower.includes("no password recovery token")) {
@@ -122,24 +126,29 @@ function mapSupabaseAuthMessage(message: string): string {
 export function formatAuthError(err: unknown): string {
   if (!err) return FALLBACK;
 
+  if (err instanceof AuthApiError && err.code) {
+    const fromCode = mapSupabaseAuthCode(err.code);
+    if (fromCode) return fromCode;
+  }
+
+  if (typeof err === "object" && err !== null) {
+    const authErr = err as AuthError;
+    if (typeof authErr.code === "string") {
+      const fromCode = mapSupabaseAuthCode(authErr.code);
+      if (fromCode) return fromCode;
+    }
+  }
+
   const direct = toDisplayString(err);
   if (direct && direct !== FALLBACK) {
     return mapSupabaseAuthMessage(direct);
   }
 
   if (typeof err === "object" && err !== null) {
-    if (err instanceof AuthApiError && err.code) {
-      const fromCode = mapSupabaseAuthCode(err.code);
-      if (fromCode) return fromCode;
-    }
     if (err instanceof InvoiceNumberAllocationError) {
       return err.message;
     }
     const authErr = err as AuthError;
-    if (typeof authErr.code === "string") {
-      const fromCode = mapSupabaseAuthCode(authErr.code);
-      if (fromCode) return fromCode;
-    }
     if (typeof authErr.message === "string" && authErr.message.trim()) {
       return mapSupabaseAuthMessage(authErr.message.trim());
     }

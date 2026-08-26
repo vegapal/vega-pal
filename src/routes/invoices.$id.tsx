@@ -1,5 +1,9 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { trackInvoicePaid, trackQuotationConvertedToInvoice } from "@/lib/analytics/events";
+import {
+  trackInvoicePaid,
+  trackPublicLinkCopied,
+  trackQuotationConvertedToInvoice,
+} from "@/lib/analytics/events";
 import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppShell } from "@/components/AppShell";
@@ -102,6 +106,7 @@ function InvoiceDetails() {
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(publicUrl);
+    trackPublicLinkCopied();
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };

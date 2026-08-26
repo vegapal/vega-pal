@@ -7,10 +7,12 @@ import {
   triggerBlobDownload,
 } from "@/lib/pdf/pdf-filename";
 import { logUserActivity } from "@/lib/activity/log-user-activity";
+import { trackPdfDownloaded } from "@/lib/analytics/events";
 
 export async function downloadInvoicePdf(inv: Invoice): Promise<void> {
   const { blob, filename } = await createInvoicePdfFile(inv);
   triggerBlobDownload(blob, filename);
+  trackPdfDownloaded();
   void logUserActivity("pdf_downloaded", {
     description: `Downloaded PDF ${inv.number}`,
     metadata: { invoice_id: inv.id, invoice_type: inv.documentType },

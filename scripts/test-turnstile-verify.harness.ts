@@ -37,7 +37,7 @@ async function testMissingTokenReturns403OnProductionHost() {
   const response = await handleAuthApiRequest(request);
   const json = (await response.json()) as { error?: string };
   assert.equal(response.status, 403);
-  assert.equal(json.error, "captcha_verification_failed");
+  assert.equal(json.error, "Captcha verification failed. Please try again.");
   assert.equal(siteverifyCalls, 0, "missing token must not call siteverify");
   restoreFetch();
 }
@@ -83,7 +83,7 @@ async function testFailedSiteverifyCallsOnceAndReturns403() {
   const response = await handleAuthApiRequest(request);
   const json = (await response.json()) as { error?: string };
   assert.equal(response.status, 403);
-  assert.equal(json.error, "captcha_verification_failed");
+  assert.equal(json.error, "Captcha verification failed. Please try again.");
   assert.equal(siteverifyCalls, 1, "siteverify must run exactly once");
   restoreFetch();
 }
