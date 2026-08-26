@@ -18,6 +18,7 @@ import { Route as LearnRouteImport } from './routes/learn'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as SeoSlugRouteImport } from './routes/$seoSlug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
@@ -39,6 +40,7 @@ import { Route as LearnBusinessRouteImport } from './routes/learn.business'
 import { Route as InvoicesNewRouteImport } from './routes/invoices.new'
 import { Route as InvoicesIdRouteImport } from './routes/invoices.$id'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin.users.index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin.users.$userId'
 
@@ -85,6 +87,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeoSlugRoute = SeoSlugRouteImport.update({
+  id: '/$seoSlug',
+  path: '/$seoSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -192,6 +199,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -205,6 +217,7 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$seoSlug': typeof SeoSlugRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -214,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/invoices/$id': typeof InvoicesIdRoute
   '/invoices/new': typeof InvoicesNewRoute
@@ -239,12 +253,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$seoSlug': typeof SeoSlugRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/invoices/$id': typeof InvoicesIdRoute
   '/invoices/new': typeof InvoicesNewRoute
   '/learn/business': typeof LearnBusinessRoute
@@ -270,6 +286,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$seoSlug': typeof SeoSlugRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -279,6 +296,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/invoices/$id': typeof InvoicesIdRoute
   '/invoices/new': typeof InvoicesNewRoute
@@ -306,6 +324,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$seoSlug'
     | '/admin'
     | '/dashboard'
     | '/forgot-password'
@@ -315,6 +334,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/settings'
+    | '/admin/payments'
     | '/admin/users'
     | '/invoices/$id'
     | '/invoices/new'
@@ -340,12 +360,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$seoSlug'
     | '/dashboard'
     | '/forgot-password'
     | '/login'
     | '/pricing'
     | '/register'
     | '/reset-password'
+    | '/admin/payments'
     | '/invoices/$id'
     | '/invoices/new'
     | '/learn/business'
@@ -370,6 +392,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$seoSlug'
     | '/admin'
     | '/dashboard'
     | '/forgot-password'
@@ -379,6 +402,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/settings'
+    | '/admin/payments'
     | '/admin/users'
     | '/invoices/$id'
     | '/invoices/new'
@@ -405,6 +429,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SeoSlugRoute: typeof SeoSlugRoute
   AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -483,6 +508,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$seoSlug': {
+      id: '/$seoSlug'
+      path: '/$seoSlug'
+      fullPath: '/$seoSlug'
+      preLoaderRoute: typeof SeoSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -632,6 +664,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users/': {
       id: '/admin/users/'
       path: '/'
@@ -664,11 +703,13 @@ const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
 )
 
 interface AdminRouteChildren {
+  AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminUsersRoute: typeof AdminUsersRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminPaymentsRoute: AdminPaymentsRoute,
   AdminUsersRoute: AdminUsersRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
 }
@@ -723,6 +764,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SeoSlugRoute: SeoSlugRoute,
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
