@@ -79,15 +79,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
     item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`);
 
   return (
-    <div className="min-h-screen bg-muted/30 flex">
+    <div className="min-h-screen bg-ice/50 flex">
       <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-background sticky top-0 h-screen">
-        <div className="p-6">
-          <Link to="/admin">
-            <Logo />
+        <div className="px-5 py-5">
+          <Link to="/admin" className="inline-flex">
+            <Logo size="default" />
           </Link>
           <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-primary">Admin</p>
         </div>
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 px-3 space-y-0.5">
           {nav.map((item) => {
             const active = isActive(item);
             return (
@@ -95,9 +95,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 key={item.to}
                 to={item.to}
                 {...(item.to === "/admin/users" ? { search: { deleted: false } } : {})}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary/10 text-primary shadow-soft"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >

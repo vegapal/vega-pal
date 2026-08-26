@@ -153,7 +153,7 @@ export type { InvoicePlanUsage };
 
 const DEFAULT_WALLET = "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE";
 const DEFAULT_NETWORK = "TRC20";
-const DEFAULT_BRAND = "#16C784";
+const DEFAULT_BRAND = "#1677E8";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);

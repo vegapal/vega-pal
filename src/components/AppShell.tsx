@@ -68,21 +68,21 @@ export function AppShell({ children }: { children: ReactNode }) {
     n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(`${n.to}/`);
 
   const linkClass = (active: boolean) =>
-    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 motion-reduce:transition-none ${
+    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150 motion-reduce:transition-none ${
       active
-        ? "bg-primary/8 text-primary"
-        : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+        ? "bg-primary/10 text-primary shadow-soft"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground"
     }`;
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-ice/60">
       <aside
         className="hidden lg:flex fixed inset-y-0 start-0 z-30 w-64 flex-col border-e border-border bg-background h-[100dvh] max-h-[100dvh] overflow-hidden"
         aria-label={t("nav.sidebar")}
       >
-        <div className="shrink-0 p-5 pb-4">
-          <Link to="/dashboard">
-            <Logo />
+        <div className="shrink-0 px-5 py-5">
+          <Link to="/dashboard" className="inline-flex">
+            <Logo size="default" />
           </Link>
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 space-y-0.5">
@@ -107,9 +107,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen flex-col min-w-0 lg:ps-64">
-        <header className="lg:hidden h-16 border-b border-border bg-background flex items-center justify-between px-4 sticky top-0 z-30">
-          <Link to="/dashboard">
-            <Logo />
+        <header className="lg:hidden h-14 border-b border-border bg-background/95 backdrop-blur flex items-center justify-between px-4 sticky top-0 z-30">
+          <Link to="/dashboard" className="inline-flex">
+            <Logo markOnly size="sm" />
           </Link>
           <div className="flex items-center gap-2">
             {isAdmin ? (

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { StatusPill } from "@/components/StatusBadge";
 import { InvoicePdfActions } from "@/components/invoice/InvoicePdfActions";
-import { Check, ShieldCheck, Sparkles, Ban } from "lucide-react";
+import { Check, ShieldCheck, Ban } from "lucide-react";
 
 import type { Invoice } from "@/lib/vegapal-store";
 
@@ -75,12 +75,12 @@ function PublicInvoice() {
     1 + (d.showDueDate ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3 min-w-0">
+    <div className="min-h-screen bg-ice/70 overflow-x-hidden">
+      <header className="border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3 min-w-0">
           {d.showVegapalLogo ? (
-            <Link to="/">
-              <Logo />
+            <Link to="/" className="inline-flex">
+              <Logo size="default" />
             </Link>
           ) : (
             <span className="text-sm font-semibold text-foreground">Invoice payment</span>
@@ -103,7 +103,7 @@ function PublicInvoice() {
             ) : (
               <div
                 className="h-12 w-12 rounded-lg flex items-center justify-center text-white font-bold shrink-0"
-                style={{ background: inv.brandColor || "#16C784" }}
+                style={{ background: inv.brandColor || "#1677E8" }}
               >
                 {(inv.sellerBusiness || inv.sellerName).charAt(0)}
               </div>
@@ -334,12 +334,14 @@ function PublicInvoice() {
             )}
 
             {d.showVegapalLogo && (
-              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                Powered by{" "}
-                <Link to="/" className="font-semibold text-foreground hover:underline">
-                  VegaPal
-                </Link>
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
+                <Logo markOnly size="sm" className="!h-5 !w-5 opacity-90" />
+                <span>
+                  Powered by{" "}
+                  <Link to="/" className="font-semibold text-foreground hover:underline">
+                    VegaPal
+                  </Link>
+                </span>
               </div>
             )}
           </aside>

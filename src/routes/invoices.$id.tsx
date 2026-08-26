@@ -297,7 +297,7 @@ function InvoiceDetails() {
               ) : (
                 <div
                   className="h-12 w-12 rounded-lg flex items-center justify-center text-white font-bold shrink-0"
-                  style={{ background: inv.brandColor || "#16C784" }}
+                  style={{ background: inv.brandColor || "#1677E8" }}
                 >
                   {(inv.sellerBusiness || inv.sellerName).charAt(0)}
                 </div>

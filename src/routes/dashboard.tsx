@@ -94,9 +94,8 @@ type StatCard = {
   renderValue?: () => ReactNode;
 };
 
-const STAT_CARD_CLASS = "rounded-2xl border border-border bg-card p-6 text-left w-full";
-
-const CLICKABLE_STAT_CARD_CLASS = `${STAT_CARD_CLASS} cursor-pointer transition hover:shadow-md hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`;
+const STAT_CARD_CLASS = "rounded-2xl border border-border bg-card p-5 sm:p-6 text-left w-full shadow-soft";
+const CLICKABLE_STAT_CARD_CLASS = `${STAT_CARD_CLASS} cursor-pointer transition-colors hover:border-primary/30 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40`;
 
 function StatCardBody({
   icon: Icon,
@@ -120,7 +119,7 @@ function StatCardBody({
       {renderValue ? (
         renderValue()
       ) : (
-        <p className="mt-1 text-2xl font-bold tracking-tight">{value}</p>
+        <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums">{value}</p>
       )}
     </>
   );

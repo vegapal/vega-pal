@@ -199,40 +199,42 @@ export function AuthLayout({
   const { t } = useTranslation("auth");
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="hidden lg:flex bg-hero relative overflow-hidden p-12 flex-col justify-between text-navy-foreground">
-        <div className="absolute inset-0 bg-mesh opacity-60" />
+    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
+      <div className="hidden lg:flex bg-hero relative overflow-hidden p-10 xl:p-12 flex-col justify-between text-navy-foreground">
+        <div className="absolute inset-0 bg-mesh opacity-70" />
         <div className="relative">
-          <Link to="/">
+          <Link to="/" className="inline-flex">
             <Logo light size="auth" />
           </Link>
         </div>
-        <div className="relative max-w-md">
-          <ShieldCheck className="h-10 w-10 text-primary mb-6" />
-          <h2 className="text-3xl font-bold tracking-tight text-balance">
+        <div className="relative max-w-md space-y-4">
+          <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-3xl xl:text-[2.15rem] font-bold tracking-tight text-balance leading-tight">
             {t("panel.headlineLine1")}
             <br />
             {t("panel.headlineLine2")}
           </h2>
-          <p className="mt-3 text-navy-foreground/70">{t("panel.description")}</p>
+          <p className="text-[15px] leading-relaxed text-navy-foreground/70">{t("panel.description")}</p>
         </div>
         <div className="relative text-sm text-navy-foreground/50">
           {t("panel.copyright", { year: new Date().getFullYear() })}
         </div>
       </div>
-      <div className="flex items-center justify-center p-4 sm:p-6 lg:p-12 bg-background relative min-w-0">
-        <div className="absolute top-4 right-4">
+      <div className="flex items-center justify-center p-5 sm:p-8 lg:p-12 relative min-w-0">
+        <div className="absolute top-4 end-4">
           <LanguageSwitcher />
         </div>
-        <div className="w-full max-w-sm min-w-0 px-1">
-          <div className="lg:hidden mb-8">
-            <Link to="/">
-              <Logo />
+        <div className="w-full max-w-[24rem] min-w-0">
+          <div className="lg:hidden mb-7">
+            <Link to="/" className="inline-flex">
+              <Logo size="lg" />
             </Link>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
-          <p className="mt-2 text-muted-foreground">{subtitle}</p>
-          <div className="mt-8">{children}</div>
+          <h1 className="text-[1.75rem] sm:text-[2rem] font-bold tracking-tight text-ink">{title}</h1>
+          <p className="mt-2 text-[15px] text-muted-foreground leading-relaxed">{subtitle}</p>
+          <div className="mt-7">{children}</div>
         </div>
       </div>
     </div>

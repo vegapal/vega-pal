@@ -29,9 +29,9 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20 overf
   return (
     <header className={className}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:pl-10 lg:pr-6 h-16 sm:h-20 flex items-center justify-between gap-2">
-        <Link to="/" className="shrink-0">
-          <Logo light size="hero" className="origin-left scale-[0.85] sm:scale-100" />
-        </Link>
+          <Link to="/" className="shrink-0 inline-flex">
+            <Logo light size="hero" className="origin-left scale-[0.88] sm:scale-100" />
+          </Link>
         <nav
           className="hidden md:flex items-center gap-6 lg:gap-8 text-sm text-navy-foreground/70"
           aria-label="Main navigation"

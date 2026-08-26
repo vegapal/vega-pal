@@ -16,10 +16,10 @@ export function PublicSiteFooter({ copyright }: PublicSiteFooterProps) {
   const copyrightLine = copyright ?? `© ${year} VegaPal. Secure Payments & Trusted Deals.`;
 
   return (
-    <footer className="border-t border-border py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 space-y-5">
+    <footer className="border-t border-border bg-background py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 text-center lg:text-left">
-          <Logo size="default" />
+          <Logo size="lg" />
           <nav
             className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm"
             aria-label="Support contact"

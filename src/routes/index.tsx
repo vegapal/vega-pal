@@ -80,7 +80,7 @@ function PricingCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border bg-card p-8 flex flex-col relative",
+        "rounded-2xl border bg-card p-8 flex flex-col relative shadow-soft",
         popular ? "border-2 border-primary shadow-elevated" : "border-border",
       )}
     >
@@ -247,7 +247,7 @@ function Landing() {
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
               {t("hero.badge")}
             </div>
-            <h1 className="text-[1.75rem] leading-[1.15] sm:text-4xl lg:text-[3.35rem] font-bold tracking-tight text-balance text-navy-foreground">
+            <h1 className="text-[1.85rem] leading-[1.12] sm:text-4xl lg:text-[3.5rem] font-bold tracking-tight text-balance text-navy-foreground">
               <span className="block">{t("hero.headlineLine1")}</span>
               <span className="block mt-2 lg:mt-3">
                 {t("hero.headlineLine2Prefix")}{" "}
@@ -256,7 +256,7 @@ function Landing() {
               </span>
               <span className="block mt-2 lg:mt-3">{t("hero.headlineLine3")}</span>
             </h1>
-            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-navy-foreground/70 max-w-xl leading-relaxed">
+            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-navy-foreground/72 max-w-xl leading-relaxed">
               {t("hero.description")}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
