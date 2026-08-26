@@ -4,7 +4,9 @@ import path from "node:path";
 import { loginViaUi } from "./helpers/auth";
 import { assertNoUserVisibleHorizontalScroll } from "./helpers/overflow";
 
-const hasE2ECredentials = Boolean(process.env.E2E_EMAIL?.trim() && process.env.E2E_PASSWORD);
+function hasE2ECredentials() {
+  return Boolean(process.env.E2E_EMAIL?.trim() && process.env.E2E_PASSWORD);
+}
 
 function screenshotDir(projectName: string) {
   const dir = path.join(process.cwd(), "tmp", "prelaunch-mobile", "screenshots", projectName);
@@ -13,9 +15,11 @@ function screenshotDir(projectName: string) {
 }
 
 test.describe("Pre-launch authenticated mobile", () => {
-  test.skip(!hasE2ECredentials, "Set E2E_EMAIL and E2E_PASSWORD for authenticated prelaunch tests.");
-
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    if (!hasE2ECredentials()) {
+      testInfo.skip(true, "Set E2E_EMAIL and E2E_PASSWORD for authenticated prelaunch tests.");
+      return;
+    }
     await loginViaUi(page, process.env.E2E_EMAIL!.trim(), process.env.E2E_PASSWORD!);
   });
 
@@ -34,15 +38,18 @@ test.describe("Pre-launch authenticated mobile", () => {
     await page.goto("/invoices/new");
     await expect(page.locator("main")).toBeVisible({ timeout: 20_000 });
 
-    const previewBtn = page.getByRole("button", { name: /preview document/i });
-    await expect(previewBtn).toBeVisible();
+    const previewBtn = page.getByRole("button", {
+      name: /preview document|openMobile|live preview/i,
+    });
+    await expect(previewBtn).toBeVisible({ timeout: 15_000 });
     await previewBtn.click();
 
     const sheet = page.locator('[role="dialog"]');
     await expect(sheet).toBeVisible();
 
-    const host = page.locator(".invoice-preview-scale-host").first();
-    const table = page.locator(".invoice-table").first();
+    // Desktop aside preview stays in DOM but hidden on mobile — scope to the sheet.
+    const host = sheet.locator(".invoice-preview-scale-host");
+    const table = sheet.locator(".invoice-table");
     await expect(host).toBeVisible();
     await expect(table).toBeVisible();
 

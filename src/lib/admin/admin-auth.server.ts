@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { requireSupabaseServerEnv } from "@/lib/auth/supabase-env.server";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -21,15 +22,26 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+function createUserScopedClient(accessToken: string) {
+  const { url, publishableKey } = requireSupabaseServerEnv();
+  return createClient<Database>(url, publishableKey, {
+    global: {
+      fetch: createSupabaseFetch(publishableKey),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 export type AdminAuthContext = {
   userId: string;
 };
 
 export async function requireAdminFromRequest(request: Request): Promise<AdminAuthContext> {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  let serverEnv: ReturnType<typeof requireSupabaseServerEnv>;
+  try {
+    serverEnv = requireSupabaseServerEnv();
+  } catch {
     throw new Response(JSON.stringify({ error: "Server configuration error" }), {
       status: 500,
       headers: { "content-type": "application/json" },
@@ -52,9 +64,9 @@ export async function requireAdminFromRequest(request: Request): Promise<AdminAu
     });
   }
 
-  const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  const supabase = createClient<Database>(serverEnv.url, serverEnv.publishableKey, {
     global: {
-      fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
+      fetch: createSupabaseFetch(serverEnv.publishableKey),
       headers: { Authorization: `Bearer ${token}` },
     },
     auth: { persistSession: false, autoRefreshToken: false },
@@ -69,9 +81,9 @@ export async function requireAdminFromRequest(request: Request): Promise<AdminAu
   }
 
   const userId = data.claims.sub;
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const userClient = createUserScopedClient(token);
 
-  const { data: profile, error: profileError } = await supabaseAdmin
+  const { data: profile, error: profileError } = await userClient
     .from("profiles")
     .select("role, is_disabled")
     .eq("id", userId)

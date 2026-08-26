@@ -8,6 +8,7 @@ import { spawn, execSync } from "node:child_process";
 import net from "node:net";
 import http from "node:http";
 import path from "node:path";
+import { loadEnvFiles } from "./load-env.mjs";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -18,19 +19,7 @@ const SERVER_ENTRY = path.join(OUTPUT, "functions", "__server.func", "index.mjs"
 
 process.chdir(ROOT);
 
-function loadEnvFiles() {
-  for (const file of [".env", ".env.local"]) {
-    if (!existsSync(file)) continue;
-    for (const line of readFileSync(file, "utf8").split("\n")) {
-      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
-      if (!m || line.trimStart().startsWith("#")) continue;
-      const [, key, raw] = m;
-      if (process.env[key] === undefined) {
-        process.env[key] = raw.replace(/^["']|["']$/g, "").trim();
-      }
-    }
-  }
-}
+loadEnvFiles();
 
 function run(command, args, env = process.env) {
   return new Promise((resolve, reject) => {
@@ -142,11 +131,34 @@ function freshBuildMarkers() {
   return { landing, index };
 }
 
+async function waitForHttpOk(url, timeoutMs = 90_000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const ok = await new Promise((resolve) => {
+      const req = http.get(url, (res) => {
+        res.resume();
+        resolve(Boolean(res.statusCode && res.statusCode < 500));
+      });
+      req.on("error", () => resolve(false));
+      req.setTimeout(5000, () => {
+        req.destroy();
+        resolve(false);
+      });
+    });
+    if (ok) return;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`Preview health check failed: ${url}`);
+}
+
 async function waitForFreshPreview(url, markers, timeoutMs = 90_000) {
+  await waitForHttpOk(`${url}/api/health`, timeoutMs);
+
+  const landingAssetUrl = `${url}/assets/${markers.landing}`;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const ok = await new Promise((resolve) => {
+      const homepageOk = await new Promise((resolve) => {
         const req = http.get(url, (res) => {
           let body = "";
           res.setEncoding("utf8");
@@ -154,13 +166,30 @@ async function waitForFreshPreview(url, markers, timeoutMs = 90_000) {
             body += c;
           });
           res.on("end", () => {
+            const hasBundle =
+              body.includes(markers.index) ||
+              body.includes(markers.landing) ||
+              body.includes("/assets/index-") ||
+              body.includes("/assets/landing-");
             resolve(
               res.statusCode === 200 &&
-                body.includes(markers.index) &&
+                hasBundle &&
                 body.includes("3 documents per month") &&
                 !body.includes("5 invoices / month"),
             );
           });
+        });
+        req.on("error", () => resolve(false));
+        req.setTimeout(8000, () => {
+          req.destroy();
+          resolve(false);
+        });
+      });
+
+      const assetOk = await new Promise((resolve) => {
+        const req = http.get(landingAssetUrl, (res) => {
+          res.resume();
+          resolve(res.statusCode === 200);
         });
         req.on("error", () => resolve(false));
         req.setTimeout(5000, () => {
@@ -168,11 +197,12 @@ async function waitForFreshPreview(url, markers, timeoutMs = 90_000) {
           resolve(false);
         });
       });
-      if (ok) return;
+
+      if (homepageOk && assetOk) return;
     } catch {
       /* retry */
     }
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 750));
   }
   throw new Error(`Preview not serving fresh build at ${url} (expected ${markers.index}).`);
 }

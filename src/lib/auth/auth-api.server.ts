@@ -55,6 +55,17 @@ function createAuthClient() {
   });
 }
 
+function createUserScopedClient(accessToken: string) {
+  const { url, publishableKey } = requireSupabaseServerEnv();
+  return createClient<Database>(url, publishableKey, {
+    global: {
+      fetch: createSupabaseFetch(publishableKey),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 function logAuthStep(step: string, extra?: Record<string, unknown>): void {
   // Safe operational diagnostics only — never log tokens, passwords, or keys.
   console.info(
@@ -272,6 +283,7 @@ async function handleLogin(request: Request): Promise<Response> {
     logAuthStep("supabase_signin_ok");
 
     const user = data.user;
+    const session = data.session;
     if (user && !isEmailConfirmed(user)) {
       await supabase.auth.signOut();
       logAuthStep("email_not_confirmed");
@@ -281,8 +293,12 @@ async function handleLogin(request: Request): Promise<Response> {
     if (user) {
       logAuthStep("profile_lookup_start");
       try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: profile, error: profileError } = await supabaseAdmin
+        if (!session?.access_token) {
+          await supabase.auth.signOut();
+          return authApiError(401, "Incorrect email or password.", "invalid_credentials");
+        }
+        const userClient = createUserScopedClient(session.access_token);
+        const { data: profile, error: profileError } = await userClient
           .from("profiles")
           .select("is_disabled")
           .eq("id", user.id)
@@ -321,7 +337,6 @@ async function handleLogin(request: Request): Promise<Response> {
       }
     }
 
-    const session = data.session;
     if (!session) {
       logAuthStep("missing_session");
       return authApiError(401, "Incorrect email or password.", "invalid_credentials");
@@ -404,8 +419,7 @@ async function handleSession(request: Request): Promise<Response> {
     }
 
     const userId = data.claims.sub;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, email, name, plan, is_disabled")
       .eq("id", userId)

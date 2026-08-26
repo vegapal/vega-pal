@@ -28,6 +28,8 @@ test.describe("Pre-launch public mobile", () => {
     await expect(pricing.locator("p").filter({ hasText: "$29" }).first()).toBeVisible();
     await pricing.getByRole("tab", { name: /6 months/i }).click();
     await expect(pricing.getByText("$59", { exact: false }).first()).toBeVisible();
+    await expect(pricing.getByText("$174", { exact: false }).first()).toBeVisible();
+    await expect(pricing.getByText("Save $115", { exact: false }).first()).toBeVisible();
     await expect(pricing.getByRole("heading", { name: /^business$/i })).toHaveCount(0);
 
     await page.screenshot({ path: path.join(shots, "pricing.png"), fullPage: false });
