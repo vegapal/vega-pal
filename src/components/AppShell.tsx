@@ -107,8 +107,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen flex-col min-w-0 lg:ps-64">
-        <header className="lg:hidden h-14 border-b border-border bg-card/95 backdrop-blur flex items-center justify-between px-4 sticky top-0 z-30">
-          <Link to="/dashboard" className="inline-flex">
+        <header className="lg:hidden h-14 border-b border-border bg-card/95 backdrop-blur flex items-center justify-between px-4 sticky top-0 z-30 overflow-visible">
+          <Link to="/dashboard" className="inline-flex items-center overflow-visible py-1">
             <Logo markOnly size="sm" />
           </Link>
           <div className="flex items-center gap-2">

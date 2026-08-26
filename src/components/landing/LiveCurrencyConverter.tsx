@@ -216,19 +216,19 @@ export function LiveCurrencyConverter() {
   return (
     <div
       id="converter"
-      className="relative border-t border-white/5 bg-navy/40 backdrop-blur py-14 lg:py-20 scroll-mt-28"
+      className="relative py-14 lg:py-20 scroll-mt-28"
     >
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <div className="mb-10 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-navy-foreground">
+        <div className="mb-8 sm:mb-10 text-center">
+          <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-ink">
             {t("converter.title")}
           </h2>
-          <p className="mt-2 text-sm lg:text-base text-navy-foreground/65">
+          <p className="mt-2 text-sm lg:text-base text-slate">
             {t("converter.subtitle")}
           </p>
         </div>
 
-        <div className="rounded-[20px] bg-white p-4 sm:p-6 lg:p-10 shadow-[0_24px_80px_rgba(15,23,42,0.12)] min-w-0 overflow-hidden">
+        <div className="rounded-2xl bg-white border border-border p-4 sm:p-6 lg:p-10 shadow-elevated min-w-0 overflow-hidden">
           <div className="flex flex-col gap-8 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-start md:gap-5 lg:gap-8">
             <div className="space-y-4">
               <p className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground">

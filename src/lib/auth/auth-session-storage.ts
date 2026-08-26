@@ -1,12 +1,22 @@
-/** Auth session storage with Remember me support. */
+/**
+ * Auth session persistence for VegaPal.
+ *
+ * Remember me ON  → localStorage (survives tab + browser close)
+ * Remember me OFF → sessionStorage (cleared when the browser session ends)
+ *
+ * Critical rules:
+ * - Never delete a valid localStorage session during boot/getItem
+ * - Always recover from the other backend if the preferred one is empty
+ * - Sign out clears both backends
+ */
 
-export const REMEMBER_ME_STORAGE_KEY = "vegapal_remember_me";
+export const REMEMBER_ME_KEY = "vegapal_remember_me";
 
 export function getRememberMePreference(): boolean {
   if (typeof window === "undefined") return true;
   try {
-    const raw = window.localStorage.getItem(REMEMBER_ME_STORAGE_KEY);
-    if (raw === null) return true; // default checked
+    const raw = window.localStorage.getItem(REMEMBER_ME_KEY);
+    if (raw === null) return true;
     return raw !== "0" && raw !== "false";
   } catch {
     return true;
@@ -16,26 +26,26 @@ export function getRememberMePreference(): boolean {
 export function setRememberMePreference(remember: boolean): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(REMEMBER_ME_STORAGE_KEY, remember ? "1" : "0");
+    window.localStorage.setItem(REMEMBER_ME_KEY, remember ? "1" : "0");
   } catch {
-    /* ignore quota / private mode */
+    /* private mode / quota */
   }
 }
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-const memoryStore = new Map<string, string>();
+const memory = new Map<string, string>();
 const memoryStorage: StorageLike = {
-  getItem: (key) => memoryStore.get(key) ?? null,
-  setItem: (key, value) => {
-    memoryStore.set(key, value);
+  getItem: (k) => memory.get(k) ?? null,
+  setItem: (k, v) => {
+    memory.set(k, v);
   },
-  removeItem: (key) => {
-    memoryStore.delete(key);
+  removeItem: (k) => {
+    memory.delete(k);
   },
 };
 
-function readRaw(storage: Storage, key: string): string | null {
+function safeGet(storage: Storage, key: string): string | null {
   try {
     return storage.getItem(key);
   } catch {
@@ -43,11 +53,16 @@ function readRaw(storage: Storage, key: string): string | null {
   }
 }
 
-function writeRaw(storage: Storage, key: string, value: string): void {
-  storage.setItem(key, value);
+function safeSet(storage: Storage, key: string, value: string): boolean {
+  try {
+    storage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-function removeRaw(storage: Storage, key: string): void {
+function safeRemove(storage: Storage, key: string): void {
   try {
     storage.removeItem(key);
   } catch {
@@ -55,110 +70,108 @@ function removeRaw(storage: Storage, key: string): void {
   }
 }
 
-/**
- * Move an auth session payload into the storage backend that matches the
- * current Remember me preference. Safe to call after login / preference flips.
- */
-export function migrateAuthSessionToPreferredStorage(storageKey?: string): void {
-  if (typeof window === "undefined") return;
-  const discovered = new Set<string>();
-  const collect = (storage: Storage) => {
+function isAuthStorageKey(key: string): boolean {
+  return (
+    key.includes("auth-token") ||
+    key.includes("supabase.auth") ||
+    (key.startsWith("sb-") && key.includes("-auth-"))
+  );
+}
+
+function listAuthKeys(): string[] {
+  if (typeof window === "undefined") return [];
+  const keys = new Set<string>();
+  const scan = (storage: Storage) => {
     try {
       for (let i = 0; i < storage.length; i++) {
         const key = storage.key(i);
-        if (!key) continue;
-        if (
-          key.includes("auth-token") ||
-          key.includes("supabase.auth") ||
-          key.startsWith("sb-")
-        ) {
-          discovered.add(key);
-        }
+        if (key && isAuthStorageKey(key)) keys.add(key);
       }
     } catch {
       /* ignore */
     }
   };
-  collect(window.localStorage);
-  collect(window.sessionStorage);
-  if (storageKey) discovered.add(storageKey);
+  scan(window.localStorage);
+  scan(window.sessionStorage);
+  return [...keys];
+}
 
+/**
+ * After login / preference change: ensure the Supabase session payload
+ * lives only in the backend that matches Remember me.
+ */
+export function persistAuthSessionToPreferredStorage(): void {
+  if (typeof window === "undefined") return;
   const remember = getRememberMePreference();
-  for (const key of discovered) {
-    const fromLocal = readRaw(window.localStorage, key);
-    const fromSession = readRaw(window.sessionStorage, key);
-    const value = remember ? fromLocal ?? fromSession : fromSession ?? fromLocal;
+  for (const key of listAuthKeys()) {
+    const localValue = safeGet(window.localStorage, key);
+    const sessionValue = safeGet(window.sessionStorage, key);
+    const value = remember ? localValue ?? sessionValue : sessionValue ?? localValue;
     if (value == null) continue;
-    try {
-      if (remember) {
-        writeRaw(window.localStorage, key, value);
-        removeRaw(window.sessionStorage, key);
-      } else {
-        writeRaw(window.sessionStorage, key, value);
-        removeRaw(window.localStorage, key);
-      }
-    } catch {
-      /* ignore quota / private mode */
+    if (remember) {
+      safeSet(window.localStorage, key, value);
+      safeRemove(window.sessionStorage, key);
+    } else {
+      safeSet(window.sessionStorage, key, value);
+      safeRemove(window.localStorage, key);
     }
   }
 }
 
+/** @deprecated use persistAuthSessionToPreferredStorage */
+export const migrateAuthSessionToPreferredStorage = persistAuthSessionToPreferredStorage;
+
 /**
- * Supabase auth storage:
- * - Remember me on → localStorage (survives browser restart)
- * - Remember me off → sessionStorage (cleared when browser closes)
- * - getItem never destroys the other backend merely because it is empty
- * - removeItem clears both so Sign out never leaves a stale session
+ * Supabase-compatible storage adapter.
+ * Writes go to the preferred backend; reads recover from either.
  */
 export const authSessionStorage: StorageLike = {
   getItem(key) {
     if (typeof window === "undefined") return memoryStorage.getItem(key);
 
     const remember = getRememberMePreference();
-    try {
-      const preferred = remember ? window.localStorage : window.sessionStorage;
-      const fallback = remember ? window.sessionStorage : window.localStorage;
-      const preferredValue = readRaw(preferred, key);
-      if (preferredValue != null) return preferredValue;
+    const preferred = remember ? window.localStorage : window.sessionStorage;
+    const other = remember ? window.sessionStorage : window.localStorage;
 
-      const fallbackValue = readRaw(fallback, key);
-      if (fallbackValue != null) {
-        // Recover + migrate so the next restart uses the correct backend.
-        try {
-          writeRaw(preferred, key, fallbackValue);
-          removeRaw(fallback, key);
-        } catch {
-          /* still return the recovered value */
-        }
-        return fallbackValue;
+    const preferredValue = safeGet(preferred, key);
+    if (preferredValue != null) return preferredValue;
+
+    const otherValue = safeGet(other, key);
+    if (otherValue != null) {
+      // Recover without destroying the source if the write fails.
+      if (safeSet(preferred, key, otherValue)) {
+        safeRemove(other, key);
       }
-    } catch {
-      return memoryStorage.getItem(key);
+      return otherValue;
     }
     return null;
   },
+
   setItem(key, value) {
-    const remember = getRememberMePreference();
-    if (typeof window !== "undefined") {
-      try {
-        if (remember) {
-          writeRaw(window.localStorage, key, value);
-          removeRaw(window.sessionStorage, key);
-        } else {
-          writeRaw(window.sessionStorage, key, value);
-          removeRaw(window.localStorage, key);
-        }
-        return;
-      } catch {
-        /* fall through to memory */
-      }
+    if (typeof window === "undefined") {
+      memoryStorage.setItem(key, value);
+      return;
     }
-    memoryStorage.setItem(key, value);
+    const remember = getRememberMePreference();
+    if (remember) {
+      if (!safeSet(window.localStorage, key, value)) {
+        memoryStorage.setItem(key, value);
+        return;
+      }
+      safeRemove(window.sessionStorage, key);
+      return;
+    }
+    if (!safeSet(window.sessionStorage, key, value)) {
+      memoryStorage.setItem(key, value);
+      return;
+    }
+    safeRemove(window.localStorage, key);
   },
+
   removeItem(key) {
     if (typeof window !== "undefined") {
-      removeRaw(window.localStorage, key);
-      removeRaw(window.sessionStorage, key);
+      safeRemove(window.localStorage, key);
+      safeRemove(window.sessionStorage, key);
     }
     memoryStorage.removeItem(key);
   },

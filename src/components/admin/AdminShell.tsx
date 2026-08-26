@@ -120,10 +120,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex-1 min-w-0">
-        <header className="lg:hidden sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
-          <Link to="/admin" className="inline-flex items-center gap-2">
+        <header className="lg:hidden sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur px-4 py-2.5 flex items-center justify-between gap-3 overflow-visible min-h-14">
+          <Link to="/admin" className="inline-flex items-center gap-2 overflow-visible">
             <Logo markOnly size="sm" />
-            <span className="font-semibold text-sm">Admin</span>
+            <span className="font-semibold text-sm text-ink">Admin</span>
           </Link>
           <div className="flex items-center gap-2">
             <Button asChild size="sm" variant={pathname.startsWith("/admin/users") ? "secondary" : "ghost"}>

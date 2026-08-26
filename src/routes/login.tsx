@@ -80,6 +80,27 @@ function LoginPage() {
     try {
       turnstile.requireToken();
       setRememberMePreference(rememberMe);
+      // If remembering, wipe any stale sessionStorage auth so the session cannot
+      // end up only in a store that dies when the browser closes.
+      if (rememberMe && typeof window !== "undefined") {
+        try {
+          const doomed: string[] = [];
+          for (let i = 0; i < window.sessionStorage.length; i++) {
+            const key = window.sessionStorage.key(i);
+            if (
+              key &&
+              (key.includes("auth-token") ||
+                key.includes("supabase.auth") ||
+                (key.startsWith("sb-") && key.includes("-auth-")))
+            ) {
+              doomed.push(key);
+            }
+          }
+          for (const key of doomed) window.sessionStorage.removeItem(key);
+        } catch {
+          /* ignore */
+        }
+      }
       await auth.signIn(normalizedEmail, parsed.data.password, turnstile.enabled ? turnstile.token : undefined);
       trackLogin("email");
       void import("@/lib/activity/log-user-activity").then(({ logUserActivity }) =>
@@ -201,7 +222,7 @@ export function AuthLayout({
     <div className="min-h-screen grid lg:grid-cols-2 bg-canvas">
       <div className="hidden lg:flex bg-auth-panel relative overflow-hidden p-10 xl:p-12 flex-col justify-between">
         <div className="relative">
-          <Link to="/" className="inline-flex">
+          <Link to="/" className="inline-flex items-center overflow-visible py-1">
             <Logo light size="auth" />
           </Link>
         </div>
@@ -224,8 +245,8 @@ export function AuthLayout({
           <LanguageSwitcher />
         </div>
         <div className="w-full max-w-[24rem] min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-7 shadow-soft">
-          <div className="lg:hidden mb-6">
-            <Link to="/" className="inline-flex">
+          <div className="lg:hidden mb-6 overflow-visible">
+            <Link to="/" className="inline-flex items-center max-w-[12rem] overflow-visible py-1">
               <Logo size="default" />
             </Link>
           </div>

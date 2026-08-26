@@ -39,17 +39,7 @@ const SubscriptionPaymentModal = lazy(() =>
   })),
 );
 
-const DemoPaymentQr = lazy(() =>
-  import("@/components/landing/PaymentQr").then((m) => ({
-    default: function DeferredDemoQr({ value }: { value: string }) {
-      return <m.PaymentQr value={value} defer />;
-    },
-  })),
-);
-
 type SubscriptionPlan = import("@/components/landing/SubscriptionPaymentModal").SubscriptionPlan;
-
-const DEMO_WALLET = "TUckRdnGxRY7VehPLfu5RLz6QspQ8T4Sj5";
 
 function PricingCard({
   name,
@@ -239,36 +229,36 @@ function Landing() {
 
       {/* HERO */}
       <section className="relative bg-hero overflow-hidden">
-        <div className="absolute inset-0 bg-mesh opacity-80" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-28 sm:pt-36 pb-16 sm:pb-24 lg:pt-44 lg:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="absolute inset-0 bg-mesh opacity-70" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-24 sm:pt-28 pb-14 sm:pb-20 lg:pt-32 lg:pb-24 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur px-3 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-on-dark-secondary mb-5 sm:mb-6">
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur px-3 py-1.5 text-xs sm:text-sm font-semibold text-on-dark-secondary mb-5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
               {t("hero.badge")}
             </div>
-            <h1 className="text-[1.85rem] leading-[1.12] sm:text-4xl lg:text-[3.5rem] font-bold tracking-tight text-balance text-on-dark">
+            <h1 className="text-[1.65rem] leading-[1.15] sm:text-3xl lg:text-[2.75rem] font-bold tracking-tight text-balance text-on-dark">
               <span className="block">{t("hero.headlineLine1")}</span>
-              <span className="block mt-2 lg:mt-3">
+              <span className="block mt-1.5 lg:mt-2">
                 {t("hero.headlineLine2Prefix")}{" "}
-                <span className="text-primary text-[1.05em] sm:text-[1.1em]">{t("hero.headlineLine2Highlight")}</span>{" "}
+                <span className="text-primary">{t("hero.headlineLine2Highlight")}</span>{" "}
                 {t("hero.headlineLine2Suffix")}
               </span>
-              <span className="block mt-2 lg:mt-3">{t("hero.headlineLine3")}</span>
+              <span className="block mt-1.5 lg:mt-2">{t("hero.headlineLine3")}</span>
             </h1>
-            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-on-dark-secondary max-w-xl leading-relaxed">
+            <p className="mt-4 sm:mt-5 text-[0.95rem] sm:text-base text-on-dark-secondary max-w-lg leading-relaxed">
               {t("hero.description")}
             </p>
-            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
-              <Button asChild variant="hero" size="xl" className="w-full sm:w-auto">
+            <div className="mt-6 sm:mt-7 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
+              <Button asChild variant="hero" size="lg" className="w-full sm:w-auto">
                 <Link to="/register" preload="intent">
                   {t("hero.createFirstInvoice")} <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="ghostLight" size="xl" className="w-full sm:w-auto">
+              <Button asChild variant="ghostLight" size="lg" className="w-full sm:w-auto">
                 <a href="#demo-invoice">{t("hero.viewDemoInvoice")}</a>
               </Button>
             </div>
-            <ul className="mt-8 sm:mt-10 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-3 text-sm text-on-dark-secondary">
+            <ul className="mt-7 sm:mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2 text-sm text-on-dark-secondary">
               <li className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary shrink-0" />
                 {t("hero.features.pdfInvoices")}
@@ -284,80 +274,89 @@ function Landing() {
             </ul>
           </div>
 
-          {/* Mock invoice card */}
+          {/* Premium product mockup: invoice + pay page */}
           <div id="demo-invoice" className="relative scroll-mt-24 sm:scroll-mt-28 w-full min-w-0 max-w-full">
-            <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
-            <div className="relative rounded-2xl bg-card shadow-elevated border border-border overflow-hidden w-full">
-              <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-destructive/70" />
-                  <div className="h-2 w-2 rounded-full bg-warning/70" />
-                  <div className="h-2 w-2 rounded-full bg-success/70" />
-                </div>
-                <span className="text-xs text-muted-foreground font-mono">INV-0042</span>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-5">
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("hero.demo.billedTo")}</p>
-                    <p className="font-semibold">{t("hero.demo.clientName")}</p>
-                    <p className="text-sm text-muted-foreground break-all">{t("hero.demo.clientEmail")}</p>
+            <div className="absolute -inset-6 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
+            <div className="relative grid gap-3 sm:gap-4">
+              {/* Invoice document card */}
+              <div className="rounded-2xl bg-white text-ink shadow-elevated border border-white/40 overflow-hidden">
+                <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/80 bg-[#F8FAFC]">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="h-8 w-8 rounded-lg bg-[#082D4F] text-white text-xs font-bold inline-flex items-center justify-center shrink-0">
+                      V
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{t("hero.demo.clientName")}</p>
+                      <p className="text-[11px] text-slate font-mono">INV-0042</p>
+                    </div>
                   </div>
-                  <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-success/15 text-success text-xs sm:text-sm font-semibold ring-1 ring-success/25 self-start shrink-0">
-                    <Check className="h-4 w-4" strokeWidth={2.5} />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10 text-success text-[11px] font-semibold ring-1 ring-success/20 shrink-0">
+                    <Check className="h-3 w-3" strokeWidth={2.5} />
                     {t("hero.demo.paid")}
                   </span>
                 </div>
-                <p className="text-sm text-[#111827] font-semibold mb-2">
-                  {t("hero.demo.title")}
-                </p>
-                <p className="text-[1.75rem] sm:text-[2.75rem] lg:text-5xl font-bold tracking-tight tabular-nums leading-none break-all sm:break-normal">
-                  200,000.00{" "}
-                  <span className="text-lg sm:text-xl lg:text-2xl text-muted-foreground font-semibold">USDT</span>
-                </p>
-                <div className="mt-6 rounded-xl bg-muted/50 border border-border p-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
-                    {t("hero.demo.cryptoPayment")}
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Suspense
-                      fallback={
-                        <div
-                          className="h-[132px] w-[132px] rounded-xl bg-muted animate-pulse shrink-0"
-                          aria-hidden
-                        />
-                      }
-                    >
-                      <DemoPaymentQr value={DEMO_WALLET} />
-                    </Suspense>
-                    <div className="flex-1 min-w-0 space-y-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground">{tc("labels.network")}</p>
-                        <p className="text-sm font-medium">{t("hero.demo.networkTron")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{tc("labels.walletAddress")}</p>
-                        <p className="text-sm font-mono break-all leading-snug">{DEMO_WALLET}</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                      >
-                        {tc("buttons.copyWallet")}
-                      </button>
+                <div className="p-4 sm:p-5 space-y-4">
+                  <div className="flex justify-between gap-4 text-sm">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-slate">{t("hero.demo.billedTo")}</p>
+                      <p className="font-medium mt-0.5">{t("hero.demo.clientName")}</p>
+                      <p className="text-xs text-slate break-all">{t("hero.demo.clientEmail")}</p>
+                    </div>
+                    <div className="text-end shrink-0">
+                      <p className="text-[11px] uppercase tracking-wider text-slate">{t("hero.demo.title")}</p>
+                      <p className="mt-1 text-xl sm:text-2xl font-bold tabular-nums tracking-tight">
+                        12,500 <span className="text-sm font-semibold text-slate">AED</span>
+                      </p>
                     </div>
                   </div>
+                  <div className="rounded-xl border border-border bg-[#F8FAFC] divide-y divide-border text-sm">
+                    <div className="flex justify-between gap-3 px-3 py-2.5">
+                      <span className="text-slate truncate">Consulting services</span>
+                      <span className="font-medium tabular-nums shrink-0">8,000.00</span>
+                    </div>
+                    <div className="flex justify-between gap-3 px-3 py-2.5">
+                      <span className="text-slate truncate">Platform setup</span>
+                      <span className="font-medium tabular-nums shrink-0">4,500.00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment page strip */}
+              <div className="rounded-2xl bg-white/95 border border-white/50 shadow-soft p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate">
+                    {t("hero.demo.cryptoPayment")}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-ink">Bank · Crypto · Cash</p>
+                  <p className="mt-1 text-xs text-slate leading-relaxed">
+                    Shareable payment page with clear instructions.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="rounded-lg bg-[#E8F2FC] text-[#0D4F7C] text-xs font-semibold px-2.5 py-1.5">
+                    AED
+                  </span>
+                  <span className="rounded-lg bg-[#E8F2FC] text-[#0D4F7C] text-xs font-semibold px-2.5 py-1.5">
+                    USDT
+                  </span>
+                  <Button asChild size="sm" className="rounded-lg">
+                    <Link to="/register">{t("hero.createFirstInvoice")}</Link>
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
 
+      {/* Converter — light section so the card does not merge into the navy hero */}
+      <section className="bg-soft-section border-y border-border">
         <Suspense
           fallback={
             <div
               id="converter"
-              className="border-t border-white/5 bg-navy/40 py-14 lg:py-20 min-h-[320px] animate-pulse"
+              className="py-14 lg:py-20 min-h-[320px] animate-pulse"
               aria-hidden
             />
           }

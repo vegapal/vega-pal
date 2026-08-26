@@ -13,7 +13,7 @@ const LanguageSwitcher = lazy(() =>
 
 const landingNavLinkClass = "hover:text-on-dark transition-colors";
 
-export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20 overflow-hidden" }: { className?: string }) {
+export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: { className?: string }) {
   const { t: tc } = useTranslation("common");
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -28,12 +28,15 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20 overf
 
   return (
     <header className={className}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:pl-10 lg:pr-6 h-16 sm:h-20 flex items-center justify-between gap-2">
-          <Link to="/" className="shrink-0 inline-flex">
-            <Logo light size="hero" className="origin-left scale-[0.88] sm:scale-100" />
-          </Link>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:pl-10 lg:pr-6 h-14 sm:h-16 lg:h-[4.25rem] flex items-center justify-between gap-3 overflow-visible">
+        <Link
+          to="/"
+          className="shrink-0 inline-flex items-center max-w-[min(100%,11.5rem)] sm:max-w-[14rem] overflow-visible py-1"
+        >
+          <Logo light size="hero" />
+        </Link>
         <nav
-          className="hidden md:flex items-center gap-6 lg:gap-8 text-sm text-on-dark-secondary"
+          className="hidden md:flex items-center gap-5 lg:gap-7 text-sm text-on-dark-secondary"
           aria-label="Main navigation"
         >
           {PUBLIC_NAV_LINKS.map((link) =>

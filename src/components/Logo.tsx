@@ -5,20 +5,21 @@ import {
   type LogoVariant,
 } from "@/lib/brand";
 
+/** Balanced heights — desktop stays elegant; mobile never overflows header bars. */
 const LOGO_HEIGHT: Record<LogoSize, string> = {
-  sm: "h-7",
-  default: "h-8",
-  lg: "h-10",
-  auth: "h-11",
-  hero: "h-12 sm:h-14",
+  sm: "h-6",
+  default: "h-7",
+  lg: "h-8",
+  auth: "h-9",
+  hero: "h-7 sm:h-8 lg:h-9",
 };
 
 const MARK_BOX: Record<LogoSize, string> = {
-  sm: "h-7 w-7",
-  default: "h-8 w-8",
-  lg: "h-10 w-10",
-  auth: "h-11 w-11",
-  hero: "h-12 w-12 sm:h-14 sm:w-14",
+  sm: "h-6 w-6",
+  default: "h-7 w-7",
+  lg: "h-8 w-8",
+  auth: "h-9 w-9",
+  hero: "h-7 w-7 sm:h-8 sm:w-8",
 };
 
 export function Logo({
@@ -44,17 +45,24 @@ export function Logo({
   const heightClass = markOnly ? MARK_BOX[size] : LOGO_HEIGHT[size];
 
   return (
-    <img
-      src={src}
-      alt="VegaPal"
+    <span
       className={cn(
-        "inline-block w-auto max-w-full object-contain object-left select-none",
-        heightClass,
-        markOnly && "aspect-square",
+        "inline-flex items-center justify-start max-w-full overflow-visible",
+        markOnly ? "shrink-0" : "min-w-0",
         className,
       )}
-      draggable={false}
-      decoding="async"
-    />
+    >
+      <img
+        src={src}
+        alt="VegaPal"
+        className={cn(
+          "block w-auto max-w-full max-h-full object-contain object-left select-none",
+          heightClass,
+          markOnly && "aspect-square",
+        )}
+        draggable={false}
+        decoding="async"
+      />
+    </span>
   );
 }

@@ -555,16 +555,14 @@ export function useSession() {
     cachedPendingEmailConfirmation,
   );
   const [authEmail, setAuthEmail] = useState<string | null>(cachedAuthEmail);
+  // Always start loading so route guards wait for storage restore.
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    // Prefer getSession (reads custom storage). Do NOT call getUser() when
+    // there is no session — that races with GoTrue recovery and can look logged-out.
     const { data: sessionData } = await supabase.auth.getSession();
-    let supaUser = sessionData.session?.user ?? null;
-
-    if (!supaUser) {
-      const { data } = await supabase.auth.getUser();
-      supaUser = data.user;
-    }
+    const supaUser = sessionData.session?.user ?? null;
 
     if (!supaUser) {
       cachedProfile = null;
@@ -616,38 +614,54 @@ export function useSession() {
     sessionListeners.add(cb);
 
     let cancelled = false;
-    let settled = false;
-    const finish = async () => {
-      if (cancelled || settled) return;
-      settled = true;
+    let restored = false;
+
+    const restore = async () => {
+      if (cancelled) return;
+      // Re-home any session that landed in the wrong backend (e.g. preference flip).
+      try {
+        const { persistAuthSessionToPreferredStorage } = await import(
+          "@/lib/auth/auth-session-storage"
+        );
+        persistAuthSessionToPreferredStorage();
+      } catch {
+        /* ignore */
+      }
       await refresh();
+      restored = true;
     };
 
     void (async () => {
       if (typeof window !== "undefined" && window.location.pathname === "/reset-password") {
-        await finish();
+        await restore();
         return;
       }
       await completeAuthFromUrl();
-      if (!cancelled) await finish();
+      // Wait for GoTrue's storage recovery before concluding "logged out".
+      await supabase.auth.getSession();
+      if (!cancelled && !restored) await restore();
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (cancelled) return;
+      if (event === "INITIAL_SESSION") {
+        // Always apply INITIAL_SESSION — even if an early restore already ran —
+        // so a late recovery cannot be ignored after a false-negative null session.
+        void restore();
+        return;
+      }
       if (
-        event === "INITIAL_SESSION" ||
-        event === "SIGNED_IN" ||
-        event === "SIGNED_OUT" ||
-        event === "TOKEN_REFRESHED" ||
-        event === "USER_UPDATED" ||
-        event === "PASSWORD_RECOVERY"
+        restored &&
+        (event === "SIGNED_IN" ||
+          event === "SIGNED_OUT" ||
+          event === "TOKEN_REFRESHED" ||
+          event === "USER_UPDATED" ||
+          event === "PASSWORD_RECOVERY")
       ) {
-        if (event === "INITIAL_SESSION") {
-          void finish();
-        } else if (settled) {
-          void refresh();
-        }
+        void refresh();
       }
     });
+
     return () => {
       cancelled = true;
       sessionListeners.delete(cb);
@@ -707,9 +721,11 @@ export const auth = {
     });
     if (sessionError) throw sessionError;
 
-    // Ensure tokens land in localStorage (remember on) or sessionStorage (remember off).
-    const { migrateAuthSessionToPreferredStorage } = await import("@/lib/auth/auth-session-storage");
-    migrateAuthSessionToPreferredStorage();
+    // Force the session into localStorage (remember on) or sessionStorage (off).
+    const { persistAuthSessionToPreferredStorage } = await import(
+      "@/lib/auth/auth-session-storage"
+    );
+    persistAuthSessionToPreferredStorage();
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
