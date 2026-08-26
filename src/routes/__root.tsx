@@ -122,8 +122,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         crossOrigin: "anonymous",
       },
       { rel: "dns-prefetch", href: "https://challenges.cloudflare.com" },
-      { rel: "canonical", href: absoluteUrl("/") },
     ];
+    // Canonical URLs are emitted per route (see src/lib/seo/page-head.ts) so public
+    // pages do not ship a second, conflicting canonical pointing at the homepage.
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
     if (supabaseUrl) {

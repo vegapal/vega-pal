@@ -37,6 +37,14 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
+// Cheap pre-check so the IndexNow handler is only imported for its own routes.
+function isIndexNowPath(pathname: string): boolean {
+  if (pathname === "/api/indexnow/notify") return true;
+  if (!pathname.endsWith(".txt") || pathname === "/robots.txt") return false;
+  const key = typeof process !== "undefined" ? process.env?.INDEXNOW_KEY : undefined;
+  return Boolean(key) && pathname === `/${key}.txt`;
+}
+
 async function applySecurityHeaders(response: Response): Promise<Response> {
   const headers = new Headers(response.headers);
   applySecurityHeadersTo(headers);
@@ -54,6 +62,15 @@ export default {
       if (url.pathname === "/api/health") {
         const { handleHealthCheckRequest } = await import("@/lib/health/health-check.server");
         const response = await handleHealthCheckRequest();
+        return await applySecurityHeaders(response);
+      }
+
+      if (
+        url.pathname.startsWith("/api/billing") ||
+        url.pathname.startsWith("/api/admin/subscription-payments")
+      ) {
+        const { handleBillingApiRequest } = await import("@/lib/billing/billing-api.server");
+        const response = await handleBillingApiRequest(request);
         return await applySecurityHeaders(response);
       }
 
@@ -75,6 +92,12 @@ export default {
         const { handleInvoicePdfApiRequest } = await import("@/lib/pdf/invoice-pdf-api.server");
         const response = await handleInvoicePdfApiRequest(request);
         return await applySecurityHeaders(response);
+      }
+
+      if (isIndexNowPath(url.pathname)) {
+        const { handleIndexNowRequest } = await import("@/lib/seo/indexnow-routes.server");
+        const response = await handleIndexNowRequest(request, url);
+        if (response) return await applySecurityHeaders(response);
       }
 
       if (url.pathname.startsWith("/api/auth")) {
