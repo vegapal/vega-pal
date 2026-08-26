@@ -31,7 +31,7 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:pl-10 lg:pr-6 h-14 sm:h-16 lg:h-[4.25rem] flex items-center justify-between gap-3 overflow-visible">
         <Link
           to="/"
-          className="shrink-0 inline-flex items-center max-w-[min(100%,11.5rem)] sm:max-w-[14rem] overflow-visible py-1"
+          className="shrink-0 inline-flex items-center max-w-[8.25rem] sm:max-w-[14rem] overflow-visible py-1"
         >
           <Logo light size="hero" />
         </Link>

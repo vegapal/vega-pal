@@ -5,13 +5,16 @@ import {
   type LogoVariant,
 } from "@/lib/brand";
 
-/** Balanced heights — desktop stays elegant; mobile never overflows header bars. */
-const LOGO_HEIGHT: Record<LogoSize, string> = {
-  sm: "h-6",
-  default: "h-7",
-  lg: "h-8",
-  auth: "h-9",
-  hero: "h-7 sm:h-8 lg:h-9",
+/**
+ * Full logo target widths (height auto via object-contain).
+ * Mobile headers: ~118–132px. Desktop stays slightly larger but not oversized.
+ */
+const LOGO_WIDTH: Record<LogoSize, string> = {
+  sm: "w-[7.25rem] sm:w-[7.75rem]", // ~116–124px
+  default: "w-[7.75rem] sm:w-[8.25rem]", // ~124–132px
+  lg: "w-[8.5rem] sm:w-[9.5rem]",
+  auth: "w-[9rem] sm:w-[10rem]",
+  hero: "w-[7.5rem] sm:w-[8.5rem] lg:w-[9.5rem]",
 };
 
 const MARK_BOX: Record<LogoSize, string> = {
@@ -30,7 +33,7 @@ export function Logo({
 }: {
   light?: boolean;
   size?: LogoSize;
-  /** Standalone V mark for compact / mobile placements. */
+  /** Standalone V mark — only for genuinely compact/icon contexts. */
   markOnly?: boolean;
   className?: string;
 }) {
@@ -42,13 +45,12 @@ export function Logo({
       ? "white"
       : "primary";
   const src = resolveBrandLogoSrc(variant);
-  const heightClass = markOnly ? MARK_BOX[size] : LOGO_HEIGHT[size];
 
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-start max-w-full overflow-visible",
-        markOnly ? "shrink-0" : "min-w-0",
+        "inline-flex items-center justify-start overflow-visible",
+        markOnly ? "shrink-0" : "min-w-0 max-w-full",
         className,
       )}
     >
@@ -56,8 +58,8 @@ export function Logo({
         src={src}
         alt="VegaPal"
         className={cn(
-          "block w-auto max-w-full max-h-full object-contain object-left select-none",
-          heightClass,
+          "block h-auto max-h-none object-contain object-left select-none",
+          markOnly ? MARK_BOX[size] : LOGO_WIDTH[size],
           markOnly && "aspect-square",
         )}
         draggable={false}

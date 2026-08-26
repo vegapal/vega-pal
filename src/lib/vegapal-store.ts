@@ -616,14 +616,19 @@ export function useSession() {
     let cancelled = false;
     let restored = false;
 
-    const restore = async () => {
+    const restore = async (source: string) => {
       if (cancelled) return;
-      // Re-home any session that landed in the wrong backend (e.g. preference flip).
       try {
-        const { persistAuthSessionToPreferredStorage } = await import(
-          "@/lib/auth/auth-session-storage"
-        );
+        const {
+          enforceEphemeralSessionPolicy,
+          persistAuthSessionToPreferredStorage,
+          getAuthPersistenceSnapshot,
+        } = await import("@/lib/auth/auth-session-storage");
+        const { logAuthDebug } = await import("@/lib/auth/debug");
+        // Remember-me OFF + closed browser → wipe stale localStorage auth.
+        enforceEphemeralSessionPolicy();
         persistAuthSessionToPreferredStorage();
+        logAuthDebug(`restore.${source}`, getAuthPersistenceSnapshot());
       } catch {
         /* ignore */
       }
@@ -633,13 +638,29 @@ export function useSession() {
 
     void (async () => {
       if (typeof window !== "undefined" && window.location.pathname === "/reset-password") {
-        await restore();
+        await restore("reset-password");
         return;
       }
       await completeAuthFromUrl();
-      // Wait for GoTrue's storage recovery before concluding "logged out".
-      await supabase.auth.getSession();
-      if (!cancelled && !restored) await restore();
+      // Do not conclude logged-out until INITIAL_SESSION has had a chance to fire.
+      // getSession alone can race GoTrue recovery and false-negative.
+      await new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        const timeout = window.setTimeout(finish, 1500);
+        const { data: bootSub } = supabase.auth.onAuthStateChange((event) => {
+          if (event === "INITIAL_SESSION") {
+            window.clearTimeout(timeout);
+            bootSub.subscription.unsubscribe();
+            finish();
+          }
+        });
+      });
+      if (!cancelled && !restored) await restore("boot");
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -647,7 +668,7 @@ export function useSession() {
       if (event === "INITIAL_SESSION") {
         // Always apply INITIAL_SESSION — even if an early restore already ran —
         // so a late recovery cannot be ignored after a false-negative null session.
-        void restore();
+        void restore("INITIAL_SESSION");
         return;
       }
       if (
@@ -721,11 +742,20 @@ export const auth = {
     });
     if (sessionError) throw sessionError;
 
-    // Force the session into localStorage (remember on) or sessionStorage (off).
-    const { persistAuthSessionToPreferredStorage } = await import(
-      "@/lib/auth/auth-session-storage"
-    );
+    // Auth always lands in localStorage. Remember-me OFF uses an ephemeral marker.
+    const {
+      persistAuthSessionToPreferredStorage,
+      assertRememberMePersisted,
+      getRememberMePreference,
+    } = await import("@/lib/auth/auth-session-storage");
     persistAuthSessionToPreferredStorage();
+    if (getRememberMePreference() && !assertRememberMePersisted()) {
+      const persistError = new Error(
+        "Session could not be saved to localStorage. Check browser storage permissions.",
+      ) as Error & { code?: string };
+      persistError.code = "session_persist_failed";
+      throw persistError;
+    }
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
@@ -762,6 +792,12 @@ export const auth = {
       // Best-effort; always clear local session.
     }
     await supabase.auth.signOut();
+    try {
+      const { clearAllAuthStorage } = await import("@/lib/auth/auth-session-storage");
+      clearAllAuthStorage();
+    } catch {
+      /* ignore */
+    }
     cachedProfile = null;
     cachedPendingEmailConfirmation = false;
     cachedAuthEmail = null;

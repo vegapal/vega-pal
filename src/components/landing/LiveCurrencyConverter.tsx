@@ -14,19 +14,48 @@ import {
   getExchangeRates,
 } from "@/lib/exchange-rates";
 
-const CURRENCY_META: Record<CurrencyCode, { icon: string }> = {
-  USD: { icon: "🇺🇸" },
-  AED: { icon: "🇦🇪" },
-  EUR: { icon: "🇪🇺" },
-  SAR: { icon: "🇸🇦" },
-  CNY: { icon: "🇨🇳" },
-  RUB: { icon: "🇷🇺" },
-  INR: { icon: "🇮🇳" },
-  USDT: { icon: "🟢" },
-  USDC: { icon: "🔵" },
-  BTC: { icon: "🟠" },
-  ETH: { icon: "⚫" },
+const CRYPTO_ICON_SRC: Partial<Record<CurrencyCode, string>> = {
+  USDT: "/assets/currencies/usdt.svg",
+  USDC: "/assets/currencies/usdc.svg",
+  BTC: "/assets/currencies/btc.svg",
+  ETH: "/assets/currencies/eth.svg",
 };
+
+const FIAT_FLAG: Partial<Record<CurrencyCode, string>> = {
+  USD: "🇺🇸",
+  AED: "🇦🇪",
+  EUR: "🇪🇺",
+  SAR: "🇸🇦",
+  CNY: "🇨🇳",
+  RUB: "🇷🇺",
+  INR: "🇮🇳",
+};
+
+function CurrencyIcon({ code, compact = false }: { code: CurrencyCode; compact?: boolean }) {
+  const box = compact ? "h-6 w-6" : "h-7 w-7";
+  const src = CRYPTO_ICON_SRC[code];
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        width={28}
+        height={28}
+        className={cn(box, "shrink-0 rounded-full object-contain")}
+        decoding="async"
+        aria-hidden
+      />
+    );
+  }
+  return (
+    <span
+      className={cn(box, "inline-flex shrink-0 items-center justify-center text-[1.1rem] leading-none")}
+      aria-hidden
+    >
+      {FIAT_FLAG[code] ?? "💱"}
+    </span>
+  );
+}
 
 const amountFieldClass =
   "w-full min-w-0 max-w-full rounded-[20px] bg-slate-50/80 px-4 sm:px-5 py-3.5 sm:py-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight tabular-nums text-foreground shadow-[0_2px_16px_rgba(15,23,42,0.06)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/15 focus:shadow-[0_4px_24px_rgba(15,23,42,0.08)] placeholder:text-muted-foreground/40";
@@ -49,7 +78,6 @@ function CurrencyPicker({
 }) {
   const { t } = useTranslation("landing");
   const [open, setOpen] = useState(false);
-  const selected = CURRENCY_META[value];
   const selectedName = t(`converter.currencies.${value}`);
 
   return (
@@ -57,14 +85,12 @@ function CurrencyPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-3 rounded-[20px] bg-slate-50/80 px-4 py-3.5 text-left shadow-[0_2px_16px_rgba(15,23,42,0.06)] transition-all duration-300 hover:shadow-[0_4px_24px_rgba(15,23,42,0.1)] focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="flex w-full items-center gap-2.5 sm:gap-3 rounded-[18px] sm:rounded-[20px] bg-slate-50/80 px-3.5 sm:px-4 py-2.5 sm:py-3.5 text-left shadow-[0_2px_16px_rgba(15,23,42,0.06)] transition-all duration-300 hover:shadow-[0_4px_24px_rgba(15,23,42,0.1)] focus:outline-none focus:ring-2 focus:ring-primary/15"
         >
-          <span className="text-2xl leading-none" aria-hidden>
-            {selected.icon}
-          </span>
+          <CurrencyIcon code={value} />
           <span className="min-w-0 flex-1">
-            <span className="block text-base font-semibold text-foreground">{value}</span>
-            <span className="block truncate text-sm text-muted-foreground">{selectedName}</span>
+            <span className="block text-sm sm:text-base font-semibold text-foreground">{value}</span>
+            <span className="block truncate text-xs sm:text-sm text-muted-foreground">{selectedName}</span>
           </span>
           <ChevronDown
             className={cn(
@@ -76,12 +102,11 @@ function CurrencyPicker({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        sideOffset={8}
-        className="w-[min(100vw-2rem,var(--radix-popover-trigger-width))] rounded-[20px] border-0 bg-white p-2 shadow-[0_16px_48px_rgba(15,23,42,0.14)]"
+        sideOffset={6}
+        className="w-[min(100vw-2rem,var(--radix-popover-trigger-width))] rounded-[18px] border border-border/50 bg-white p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.14)]"
       >
-        <div className="max-h-72 overflow-y-auto">
+        <div className="max-h-56 sm:max-h-72 overflow-y-auto overscroll-contain">
           {SUPPORTED_CURRENCIES.map((code) => {
-            const meta = CURRENCY_META[code];
             const isSelected = code === value;
             return (
               <button
@@ -92,16 +117,14 @@ function CurrencyPicker({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors duration-200",
-                  isSelected ? "bg-primary/8" : "hover:bg-slate-50",
+                  "flex w-full min-h-11 items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors duration-200",
+                  isSelected ? "bg-primary/10" : "hover:bg-slate-50 active:bg-slate-100",
                 )}
               >
-                <span className="text-xl leading-none" aria-hidden>
-                  {meta.icon}
-                </span>
+                <CurrencyIcon code={code} compact />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-foreground">{code}</span>
-                  <span className="block truncate text-xs text-muted-foreground">
+                  <span className="block text-sm font-semibold leading-tight text-foreground">{code}</span>
+                  <span className="block truncate text-[11px] leading-tight text-muted-foreground">
                     {t(`converter.currencies.${code}`)}
                   </span>
                 </span>

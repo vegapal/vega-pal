@@ -31,7 +31,9 @@
     "test:invoice-visual": "playwright test",
     "test:locale-documents": "node scripts/merge-locale-documents.mjs && node scripts/test-invoice-wizard.mjs",
     "test:sidebar-account": "node scripts/test-sidebar-account.mjs",
-    "test:quotation-conversion": "node scripts/test-quotation-conversion.mjs"
+    "test:quotation-conversion": "node scripts/test-quotation-conversion.mjs",
+    "test:auth-persistence": "node scripts/test-auth-persistence.mjs",
+    "test:auth-remember-me": "playwright test -c playwright.auth.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -1,16 +1,30 @@
 /**
- * Auth session persistence for VegaPal.
+ * Auth session persistence — single authoritative browser behavior.
  *
- * Remember me ON  → localStorage (survives tab + browser close)
- * Remember me OFF → sessionStorage (cleared when the browser session ends)
+ * Remember me ON:
+ *   Supabase auth uses native localStorage (survives tab + browser close).
  *
- * Critical rules:
- * - Never delete a valid localStorage session during boot/getItem
- * - Always recover from the other backend if the preferred one is empty
- * - Sign out clears both backends
+ * Remember me OFF:
+ *   Supabase auth still writes to localStorage (GoTrue needs a durable store
+ *   during the tab lifetime), but a sessionStorage "alive" marker gates it.
+ *   When the browser session ends, the marker is gone and boot clears auth.
+ *
+ * ROOT CAUSE (prior broken design):
+ *   A dual localStorage/sessionStorage adapter could:
+ *   1) Silently fall back to an in-memory Map when localStorage.setItem failed
+ *      → session dies on any reload/browser close
+ *   2) Leave the live session only in sessionStorage when preference/timing raced
+ *      → browser close clears auth even with Remember me checked
+ *
+ * Auth storage key (this project): sb-<project-ref>-auth-token
+ * Backend after fix: always localStorage for the Supabase session payload.
  */
 
+import { logAuthDebug } from "@/lib/auth/debug";
+
 export const REMEMBER_ME_KEY = "vegapal_remember_me";
+/** Present only for the current browser session when Remember me is OFF. */
+export const SESSION_ALIVE_KEY = "vegapal_session_alive";
 
 export function getRememberMePreference(): boolean {
   if (typeof window === "undefined") return true;
@@ -27,50 +41,35 @@ export function setRememberMePreference(remember: boolean): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(REMEMBER_ME_KEY, remember ? "1" : "0");
+    if (remember) {
+      window.sessionStorage.removeItem(SESSION_ALIVE_KEY);
+    } else {
+      window.sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
+    }
   } catch {
     /* private mode / quota */
   }
 }
 
-type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-
-const memory = new Map<string, string>();
-const memoryStorage: StorageLike = {
-  getItem: (k) => memory.get(k) ?? null,
-  setItem: (k, v) => {
-    memory.set(k, v);
-  },
-  removeItem: (k) => {
-    memory.delete(k);
-  },
-};
-
-function safeGet(storage: Storage, key: string): string | null {
+export function markEphemeralSessionAlive(): void {
+  if (typeof window === "undefined") return;
   try {
-    return storage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function safeSet(storage: Storage, key: string, value: string): boolean {
-  try {
-    storage.setItem(key, value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function safeRemove(storage: Storage, key: string): void {
-  try {
-    storage.removeItem(key);
+    window.sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
   } catch {
     /* ignore */
   }
 }
 
-function isAuthStorageKey(key: string): boolean {
+export function isEphemeralSessionAlive(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.sessionStorage.getItem(SESSION_ALIVE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function isAuthStorageKey(key: string): boolean {
   return (
     key.includes("auth-token") ||
     key.includes("supabase.auth") ||
@@ -78,101 +77,209 @@ function isAuthStorageKey(key: string): boolean {
   );
 }
 
-function listAuthKeys(): string[] {
+export function listAuthStorageKeys(): string[] {
   if (typeof window === "undefined") return [];
-  const keys = new Set<string>();
-  const scan = (storage: Storage) => {
+  const keys: string[] = [];
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key && isAuthStorageKey(key)) keys.push(key);
+    }
+  } catch {
+    /* ignore */
+  }
+  return keys;
+}
+
+export function clearAllAuthStorage(): void {
+  if (typeof window === "undefined") return;
+  for (const key of listAuthStorageKeys()) {
     try {
-      for (let i = 0; i < storage.length; i++) {
-        const key = storage.key(i);
-        if (key && isAuthStorageKey(key)) keys.add(key);
-      }
+      window.localStorage.removeItem(key);
     } catch {
       /* ignore */
     }
-  };
-  scan(window.localStorage);
-  scan(window.sessionStorage);
-  return [...keys];
-}
-
-/**
- * After login / preference change: ensure the Supabase session payload
- * lives only in the backend that matches Remember me.
- */
-export function persistAuthSessionToPreferredStorage(): void {
-  if (typeof window === "undefined") return;
-  const remember = getRememberMePreference();
-  for (const key of listAuthKeys()) {
-    const localValue = safeGet(window.localStorage, key);
-    const sessionValue = safeGet(window.sessionStorage, key);
-    const value = remember ? localValue ?? sessionValue : sessionValue ?? localValue;
-    if (value == null) continue;
-    if (remember) {
-      safeSet(window.localStorage, key, value);
-      safeRemove(window.sessionStorage, key);
-    } else {
-      safeSet(window.sessionStorage, key, value);
-      safeRemove(window.localStorage, key);
+  }
+  try {
+    const doomed: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const key = window.sessionStorage.key(i);
+      if (key && isAuthStorageKey(key)) doomed.push(key);
     }
+    for (const key of doomed) window.sessionStorage.removeItem(key);
+    window.sessionStorage.removeItem(SESSION_ALIVE_KEY);
+  } catch {
+    /* ignore */
   }
 }
 
-/** @deprecated use persistAuthSessionToPreferredStorage */
+/** Safe metadata for diagnostics — never includes tokens. */
+export function getAuthPersistenceSnapshot(): {
+  rememberPreference: boolean;
+  storageBackend: "localStorage";
+  authStorageKeyExists: boolean;
+  authStorageKeys: string[];
+  ephemeralAlive: boolean;
+  hasRefreshToken: boolean;
+} {
+  const keys = listAuthStorageKeys();
+  let hasRefreshToken = false;
+  if (typeof window !== "undefined") {
+    for (const key of keys) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw) as { refresh_token?: unknown };
+        if (typeof parsed?.refresh_token === "string" && parsed.refresh_token.length > 0) {
+          hasRefreshToken = true;
+          break;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return {
+    rememberPreference: getRememberMePreference(),
+    storageBackend: "localStorage",
+    authStorageKeyExists: keys.length > 0,
+    authStorageKeys: keys,
+    ephemeralAlive: isEphemeralSessionAlive(),
+    hasRefreshToken,
+  };
+}
+
+/**
+ * After Remember-me login: prove session landed in localStorage (dev logs only).
+ */
+export function assertRememberMePersisted(): boolean {
+  const snap = getAuthPersistenceSnapshot();
+  logAuthDebug("persist.assert", {
+    rememberPreference: snap.rememberPreference,
+    storageBackend: snap.storageBackend,
+    authStorageKeyExists: snap.authStorageKeyExists,
+    authStorageKeys: snap.authStorageKeys,
+    ephemeralAlive: snap.ephemeralAlive,
+    hasRefreshToken: snap.hasRefreshToken,
+  });
+  if (!snap.rememberPreference) return true;
+  return snap.authStorageKeyExists && snap.hasRefreshToken;
+}
+
+/**
+ * On boot: if Remember me is OFF and the browser session marker is gone,
+ * wipe auth so a prior localStorage session cannot outlive the browser.
+ */
+export function enforceEphemeralSessionPolicy(): boolean {
+  if (typeof window === "undefined") return false;
+  if (getRememberMePreference()) return false;
+  if (isEphemeralSessionAlive()) return false;
+  const hadAuth = listAuthStorageKeys().length > 0;
+  if (hadAuth) {
+    logAuthDebug("persist.ephemeralClear", {
+      reason: "remember_off_and_browser_session_ended",
+      authStorageKeyExists: true,
+    });
+    clearAllAuthStorage();
+  }
+  return hadAuth;
+}
+
+/**
+ * After login / preference change: migrate any legacy sessionStorage auth
+ * copies into localStorage and set the ephemeral marker when needed.
+ */
+export function persistAuthSessionToPreferredStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const doomed: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const key = window.sessionStorage.key(i);
+      if (key && isAuthStorageKey(key)) doomed.push(key);
+    }
+    for (const key of doomed) {
+      const value = window.sessionStorage.getItem(key);
+      if (value && !window.localStorage.getItem(key)) {
+        window.localStorage.setItem(key, value);
+      }
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    /* ignore */
+  }
+  if (!getRememberMePreference()) {
+    markEphemeralSessionAlive();
+  }
+  logAuthDebug("persist.migrate", getAuthPersistenceSnapshot());
+}
+
+/** @deprecated */
 export const migrateAuthSessionToPreferredStorage = persistAuthSessionToPreferredStorage;
 
 /**
- * Supabase-compatible storage adapter.
- * Writes go to the preferred backend; reads recover from either.
+ * Authoritative Supabase browser storage: always native localStorage.
+ * Full Storage interface — GoTrue expects a real Storage-like object.
+ * Never falls back to memory (that was the production logout bug).
  */
-export const authSessionStorage: StorageLike = {
-  getItem(key) {
-    if (typeof window === "undefined") return memoryStorage.getItem(key);
-
-    const remember = getRememberMePreference();
-    const preferred = remember ? window.localStorage : window.sessionStorage;
-    const other = remember ? window.sessionStorage : window.localStorage;
-
-    const preferredValue = safeGet(preferred, key);
-    if (preferredValue != null) return preferredValue;
-
-    const otherValue = safeGet(other, key);
-    if (otherValue != null) {
-      // Recover without destroying the source if the write fails.
-      if (safeSet(preferred, key, otherValue)) {
-        safeRemove(other, key);
-      }
-      return otherValue;
+export const authSessionStorage: Storage = {
+  get length() {
+    if (typeof window === "undefined") return 0;
+    try {
+      return window.localStorage.length;
+    } catch {
+      return 0;
     }
-    return null;
   },
-
-  setItem(key, value) {
-    if (typeof window === "undefined") {
-      memoryStorage.setItem(key, value);
-      return;
+  clear() {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.clear();
+    } catch {
+      /* ignore */
     }
-    const remember = getRememberMePreference();
-    if (remember) {
-      if (!safeSet(window.localStorage, key, value)) {
-        memoryStorage.setItem(key, value);
-        return;
-      }
-      safeRemove(window.sessionStorage, key);
-      return;
-    }
-    if (!safeSet(window.sessionStorage, key, value)) {
-      memoryStorage.setItem(key, value);
-      return;
-    }
-    safeRemove(window.localStorage, key);
   },
-
-  removeItem(key) {
-    if (typeof window !== "undefined") {
-      safeRemove(window.localStorage, key);
-      safeRemove(window.sessionStorage, key);
+  key(index: number) {
+    if (typeof window === "undefined") return null;
+    try {
+      return window.localStorage.key(index);
+    } catch {
+      return null;
     }
-    memoryStorage.removeItem(key);
+  },
+  getItem(key: string) {
+    if (typeof window === "undefined") return null;
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem(key: string, value: string) {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(key, value);
+      if (isAuthStorageKey(key)) {
+        try {
+          window.sessionStorage.removeItem(key);
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch (err) {
+      logAuthDebug("persist.setItemFailed", {
+        keyIsAuth: isAuthStorageKey(key),
+        errorName: err instanceof Error ? err.name : "unknown",
+      });
+      throw err;
+    }
+  },
+  removeItem(key: string) {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
   },
 };
