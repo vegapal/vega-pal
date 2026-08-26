@@ -15,6 +15,7 @@ import { ArrowRight, Building2, Check, LogOut, Upload, Trash2, Wallet } from "lu
 import { settingsSchema, firstZodError } from "@/lib/validation/schemas";
 import { InvoicePlanUsageIndicator } from "@/components/plan/InvoicePlanUsageIndicator";
 import { PlanBadge } from "@/components/admin/AdminBadges";
+import { PlanSubscriptionSummary } from "@/components/plan/PlanSubscriptionSummary";
 
 export const Route = createFileRoute("/settings/")({
   head: () => ({
@@ -273,6 +274,10 @@ function SettingsIndex() {
               aria-label={t("fields.walletAddress")}
             />
           </Field>
+        </Section>
+
+        <Section title={t("sections.plan.title")} desc={t("sections.plan.desc")}>
+          <PlanSubscriptionSummary />
         </Section>
 
         <Section title={t("sections.notifications.title")} desc={t("sections.notifications.desc")}>

@@ -289,6 +289,31 @@ Apply migration `supabase/migrations/20260826160000_saved_payment_methods.sql` o
 
 Creates `public.payment_methods` with owner-only RLS. Invoice `payment_methods` JSONB remains the historical snapshot — editing/deleting saved methods does not change old invoices.
 
+### Subscriptions + activity logs (2026-08-26)
+
+Apply migration `supabase/migrations/20260826180000_subscriptions_and_activity.sql` on existing projects (SQL Editor), then regenerate bootstrap:
+
+```bash
+npm run db:bootstrap
+```
+
+Creates:
+
+- `public.subscriptions` — authoritative paid plan lifecycle (`profiles.plan` stays a cached effective plan)
+- `public.get_effective_plan(user_id)` — used by invoice limit enforcement
+- `public.user_activity_logs` + `log_user_activity` RPC
+- `public.expire_due_subscriptions()` — marks expired rows and syncs `profiles.plan`
+
+**Vercel cron (optional cleanup):** `GET/POST /api/cron/expire-subscriptions` hourly via `vercel.json`.
+
+Set env:
+
+```env
+CRON_SECRET=<long-random-secret>
+```
+
+Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`. Entitlement never depends on the cron — `ends_at` checks are authoritative on every plan-gated action.
+
 ---
 
 ## Repo maintenance

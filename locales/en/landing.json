@@ -103,6 +103,7 @@
         "name": "Free",
         "description": "Start invoicing with everything you need.",
         "cta": "Start Free",
+        "ctaCurrent": "Current plan",
         "features": {
           "invoices": "5 invoices / month",
           "pdf": "PDF invoices",
@@ -121,6 +122,9 @@
         "name": "Pro",
         "description": "For freelancers and small businesses scaling up.",
         "cta": "Pay with USDT",
+        "ctaUpgrade": "Upgrade to Pro",
+        "ctaCurrent": "Current plan",
+        "ctaContact": "Contact us",
         "features": {
           "invoices": "Unlimited invoices",
           "users": "2 users",
@@ -134,6 +138,9 @@
         "name": "Business",
         "description": "For teams that need more volume and control.",
         "cta": "Pay with USDT",
+        "ctaUpgrade": "Upgrade to Business",
+        "ctaCurrent": "Current plan",
+        "ctaContact": "Request upgrade",
         "features": {
           "invoices": "Unlimited invoices",
           "users": "4 users",

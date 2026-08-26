@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { logUserActivity } from "@/lib/activity/log-user-activity";
 import {
   findDuplicateBank,
   findDuplicateCrypto,
@@ -55,7 +56,13 @@ export async function createSavedPaymentMethod(
   const payload = savedMethodToInsert(input, userData.user.id);
   const { data, error } = await pm().insert(payload).select("*").single();
   if (error) throw error;
-  return rowToSavedPaymentMethod(data as PaymentMethodRow);
+  const created = rowToSavedPaymentMethod(data as PaymentMethodRow);
+  void logUserActivity("payment_method_created", {
+    userId: userData.user.id,
+    description: `Saved ${created.type} payment method`,
+    metadata: { payment_method_id: created.id, type: created.type },
+  });
+  return created;
 }
 
 export async function updateSavedPaymentMethod(
@@ -106,6 +113,11 @@ export async function deleteSavedPaymentMethod(id: string): Promise<void> {
 
   const { error } = await pm().delete().eq("id", id).eq("user_id", userData.user.id);
   if (error) throw error;
+  void logUserActivity("payment_method_deleted", {
+    userId: userData.user.id,
+    description: "Deleted payment method",
+    metadata: { payment_method_id: id },
+  });
 }
 
 export async function setDefaultSavedPaymentMethod(id: string): Promise<void> {

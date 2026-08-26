@@ -17,6 +17,11 @@
       "title": "المحفظة الافتراضية السابقة",
       "desc": "محفظة احتياطية اختيارية عند عدم اختيار طريقة دفع محفوظة."
     },
+    "plan": {
+      "title": "الخطة والاشتراك",
+      "desc": "خطتك الحالية وحد الفواتير وتواريخ التجديد.",
+      "loading": "جاري تحميل الخطة…"
+    },
     "notifications": {
       "title": "Notifications",
       "desc": "How VegaPal keeps you in the loop."

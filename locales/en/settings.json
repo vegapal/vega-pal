@@ -17,6 +17,11 @@
       "title": "Legacy default wallet",
       "desc": "Optional fallback wallet used when no saved crypto method is selected."
     },
+    "plan": {
+      "title": "Plan & subscription",
+      "desc": "Your current plan, invoice allowance, and renewal dates.",
+      "loading": "Loading plan…"
+    },
     "paymentMethods": {
       "title": "Payment Methods",
       "desc": "Save bank accounts and crypto wallets to reuse on future invoices. Invoices keep a snapshot of the details you select.",

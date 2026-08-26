@@ -171,8 +171,19 @@
     "usageUnlimited": "Unlimited invoices",
     "usageFree": "{{used}} / {{limit}} invoices used this month",
     "warningNearLimit": "You have used {{used}} of {{limit}} invoices this month.",
-    "limitReached": "You have reached the Free plan limit of 5 invoices this month. Upgrade to Pro to create unlimited invoices.",
+    "limitReached": "You've used all 5 invoices included in your Free plan this month.",
     "upgradePlan": "Upgrade plan",
+    "upgradeToPro": "Upgrade to Pro",
+    "viewPlans": "View plans",
+    "renewPlan": "Renew plan",
+    "planLabel": "{{plan}} Plan",
+    "freeAllowance": "{{limit}} invoices per month",
+    "started": "Started",
+    "expires": "Expires",
+    "expiresOn": "Expires {{date}}",
+    "renewsOn": "Renews {{date}}",
+    "expiresToday": "Your plan expires today.",
+    "expiresInDays": "Your {{plan}} plan expires in {{count}} days.",
     "badges": {
       "free": "Free",
       "pro": "Pro",
@@ -180,7 +191,8 @@
     },
     "status": {
       "active": "Active",
-      "disabled": "Disabled"
+      "disabled": "Disabled",
+      "cancelsAtPeriodEnd": "Cancels at period end"
     }
   },
   "empty": {

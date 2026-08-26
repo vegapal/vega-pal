@@ -9,6 +9,7 @@ import { FormSuccess } from "@/components/ui/form-success";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AccountStatusBadge, PlanBadge } from "@/components/admin/AdminBadges";
+import { AdminSubscriptionPanel } from "@/components/admin/AdminSubscriptionPanel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -186,6 +187,14 @@ function AdminUserDetailPage() {
       {success ? <FormSuccess message={success} /> : null}
       <FormError message={error} />
 
+      <AdminSubscriptionPanel
+        userId={userId}
+        detail={user}
+        onDone={load}
+        onError={setError}
+        onSuccess={setSuccess}
+      />
+
       <div className="grid lg:grid-cols-2 gap-6">
         <section className="rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-soft space-y-4">
           <h2 className="font-semibold">{t("userDetail.profile")}</h2>
@@ -330,6 +339,24 @@ function AdminUserDetailPage() {
               </tbody>
             </table>
           </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card overflow-hidden shadow-soft">
+        <div className="px-5 sm:px-6 py-4 border-b border-border">
+          <h2 className="font-semibold">Recent activity</h2>
+        </div>
+        {(user.recentActivity ?? []).length === 0 ? (
+          <p className="px-5 sm:px-6 py-6 text-sm text-muted-foreground">No recent activity recorded.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {(user.recentActivity ?? []).map((item) => (
+              <li key={item.id} className="px-5 sm:px-6 py-3 text-sm">
+                <p className="text-xs text-muted-foreground">{formatDateTime(item.createdAt)}</p>
+                <p className="font-medium mt-0.5">{item.description || item.action}</p>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

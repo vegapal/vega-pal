@@ -25,6 +25,8 @@ import {
   ShieldCheck, Zap, Globe2, ArrowRight, Check, FileText, BarChart3,
   Sparkles, Banknote, Mail, Headphones,
 } from "lucide-react";
+import { useSession } from "@/lib/vegapal-store";
+import type { UserPlan } from "@/lib/admin/plans";
 
 const LiveCurrencyConverter = lazy(() =>
   import("@/components/landing/LiveCurrencyConverter").then((m) => ({
@@ -60,6 +62,7 @@ function PricingCard({
   popular = false,
   href,
   onCtaClick,
+  disabled = false,
 }: {
   name: string;
   description: string;
@@ -70,6 +73,7 @@ function PricingCard({
   popular?: boolean;
   href?: string;
   onCtaClick?: () => void;
+  disabled?: boolean;
 }) {
   const { t: tc } = useTranslation("common");
 
@@ -100,11 +104,18 @@ function PricingCard({
         ))}
       </ul>
       {href ? (
-        <Button asChild variant={variant} size="lg" className="mt-8 w-full">
+        <Button asChild variant={variant} size="lg" className="mt-8 w-full" disabled={disabled}>
           <Link to={href}>{cta}</Link>
         </Button>
       ) : (
-        <Button type="button" variant={variant} size="lg" className="mt-8 w-full" onClick={onCtaClick}>
+        <Button
+          type="button"
+          variant={variant}
+          size="lg"
+          className="mt-8 w-full"
+          onClick={onCtaClick}
+          disabled={disabled || !onCtaClick}
+        >
           {cta}
         </Button>
       )}
@@ -169,7 +180,48 @@ const BUSINESS_PLAN_FEATURES = [
 function Landing() {
   const { t } = useTranslation("landing");
   const { t: tc } = useTranslation("common");
+  const { user } = useSession();
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlan | null>(null);
+  const currentPlan = (user?.plan ?? null) as UserPlan | null;
+
+  const freeCta =
+    currentPlan === "free"
+      ? { label: t("pricing.plans.free.ctaCurrent"), href: "/dashboard" as const, onClick: undefined }
+      : currentPlan
+        ? { label: t("pricing.plans.free.cta"), href: "/dashboard" as const, onClick: undefined }
+        : { label: t("pricing.plans.free.cta"), href: "/register" as const, onClick: undefined };
+
+  const proCta =
+    currentPlan === "pro"
+      ? { label: t("pricing.plans.pro.ctaCurrent"), href: undefined, onClick: undefined, disabled: true }
+      : currentPlan === "business"
+        ? { label: t("pricing.plans.pro.ctaContact"), href: "/#contact" as const, onClick: undefined }
+        : currentPlan === "free"
+          ? {
+              label: t("pricing.plans.pro.ctaUpgrade"),
+              href: undefined,
+              onClick: () => setSubscriptionPlan({ planKey: "pro", price: 19 }),
+            }
+          : {
+              label: t("pricing.plans.pro.cta"),
+              href: undefined,
+              onClick: () => setSubscriptionPlan({ planKey: "pro", price: 19 }),
+            };
+
+  const businessCta =
+    currentPlan === "business"
+      ? { label: t("pricing.plans.business.ctaCurrent"), href: undefined, onClick: undefined, disabled: true }
+      : currentPlan === "pro" || currentPlan === "free"
+        ? {
+            label: t("pricing.plans.business.ctaUpgrade"),
+            href: undefined,
+            onClick: () => setSubscriptionPlan({ planKey: "business", price: 49 }),
+          }
+        : {
+            label: t("pricing.plans.business.cta"),
+            href: undefined,
+            onClick: () => setSubscriptionPlan({ planKey: "business", price: 49 }),
+          };
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -376,9 +428,9 @@ function Landing() {
               description={t("pricing.plans.free.description")}
               price={0}
               features={FREE_PLAN_FEATURES.map((key) => t(`pricing.plans.free.features.${key}`))}
-              cta={t("pricing.plans.free.cta")}
+              cta={freeCta.label}
               variant="outline"
-              href="/register"
+              href={freeCta.href}
             />
             <PricingCard
               name={t("pricing.plans.pro.name")}
@@ -386,18 +438,22 @@ function Landing() {
               price={19}
               popular
               features={PRO_PLAN_FEATURES.map((key) => t(`pricing.plans.pro.features.${key}`))}
-              cta={t("pricing.plans.pro.cta")}
+              cta={proCta.label}
               variant="hero"
-              onCtaClick={() => setSubscriptionPlan({ planKey: "pro", price: 19 })}
+              href={proCta.href}
+              onCtaClick={proCta.onClick}
+              disabled={Boolean(proCta.disabled)}
             />
             <PricingCard
               name={t("pricing.plans.business.name")}
               description={t("pricing.plans.business.description")}
               price={49}
               features={BUSINESS_PLAN_FEATURES.map((key) => t(`pricing.plans.business.features.${key}`))}
-              cta={t("pricing.plans.business.cta")}
+              cta={businessCta.label}
               variant="outline"
-              onCtaClick={() => setSubscriptionPlan({ planKey: "business", price: 49 })}
+              href={businessCta.href}
+              onCtaClick={businessCta.onClick}
+              disabled={Boolean(businessCta.disabled)}
             />
           </div>
         </div>

@@ -151,8 +151,19 @@
     "usageUnlimited": "ใบแจ้งหนี้ไม่จำกัด",
     "usageFree": "ใช้ใบแจ้งหนี้ {{used}} / {{limit}} ใบในเดือนนี้",
     "warningNearLimit": "คุณใช้ใบแจ้งหนี้ {{used}} จาก {{limit}} ใบในเดือนนี้",
-    "limitReached": "คุณถึงขีดจำกัดแพ็กเกจ Free ที่ 5 ใบแจ้งหนี้ต่อเดือนแล้ว อัปเกรดเป็น Pro เพื่อสร้างใบแจ้งหนี้ไม่จำกัด",
+    "limitReached": "คุณใช้ใบแจ้งหนี้ครบ 5 ใบในแพ็กเกจ Free ของเดือนนี้แล้ว",
     "upgradePlan": "อัปเกรดแพ็กเกจ",
+    "upgradeToPro": "อัปเกรดเป็น Pro",
+    "viewPlans": "ดูแพ็กเกจ",
+    "renewPlan": "ต่ออายุแพ็กเกจ",
+    "planLabel": "แพ็กเกจ {{plan}}",
+    "freeAllowance": "{{limit}} ใบแจ้งหนี้ต่อเดือน",
+    "started": "เริ่มต้น",
+    "expires": "หมดอายุ",
+    "expiresOn": "หมดอายุ {{date}}",
+    "renewsOn": "ต่ออายุ {{date}}",
+    "expiresToday": "แพ็กเกจของคุณหมดอายุวันนี้",
+    "expiresInDays": "แพ็กเกจ {{plan}} จะหมดอายุใน {{count}} วัน",
     "badges": {
       "free": "Free",
       "pro": "Pro",
@@ -160,7 +171,8 @@
     },
     "status": {
       "active": "ใช้งาน",
-      "disabled": "ปิดใช้งาน"
+      "disabled": "ปิดใช้งาน",
+      "cancelsAtPeriodEnd": "ยกเลิกเมื่อสิ้นสุดรอบ"
     }
   },
   "empty": {

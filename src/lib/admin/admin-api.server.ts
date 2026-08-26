@@ -46,6 +46,12 @@ export type AdminUsersQuery = {
   search?: string;
   plan?: UserPlan;
   status?: "active" | "disabled";
+  filter?:
+    | "expired"
+    | "expiring_soon"
+    | "email_unconfirmed"
+    | "";
+  sort?: "newest" | "oldest" | "last_active" | "most_invoices" | "subscription_expiry";
 };
 
 function json(data: unknown, status = 200) {
@@ -98,7 +104,14 @@ async function countInvoicesThisMonth(
 
 async function getAuthInfoForUserIds(userIds: string[]) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const map = new Map<string, { last_sign_in_at: string | null; email: string | null }>();
+  const map = new Map<
+    string,
+    {
+      last_sign_in_at: string | null;
+      email: string | null;
+      email_confirmed_at: string | null;
+    }
+  >();
 
   await Promise.all(
     userIds.map(async (id) => {
@@ -107,6 +120,7 @@ async function getAuthInfoForUserIds(userIds: string[]) {
         map.set(id, {
           last_sign_in_at: data.user.last_sign_in_at ?? null,
           email: data.user.email ?? null,
+          email_confirmed_at: data.user.email_confirmed_at ?? null,
         });
       }
     }),
@@ -120,12 +134,20 @@ async function getStats() {
   const todayStart = startOfUtcToday();
   const monthStart = startOfUtcMonth();
   const nextMonthStart = startOfUtcNextMonth();
+  const weekStart = new Date();
+  weekStart.setUTCDate(weekStart.getUTCDate() - 7);
+  const weekStartIso = weekStart.toISOString();
+  const nowIso = new Date().toISOString();
+  const in7 = new Date(Date.now() + 7 * 86400000).toISOString();
+  const in30 = new Date(Date.now() + 30 * 86400000).toISOString();
 
-  const [{ data: profiles, error: profilesError }, { data: invoices, error: invoicesError }] =
-    await Promise.all([
-      supabaseAdmin.from("profiles").select("id, plan, is_disabled, created_at"),
-      supabaseAdmin.from("invoices").select("id, status, created_at"),
-    ]);
+  const [
+    { data: profiles, error: profilesError },
+    { data: invoices, error: invoicesError },
+  ] = await Promise.all([
+    supabaseAdmin.from("profiles").select("id, plan, is_disabled, created_at"),
+    supabaseAdmin.from("invoices").select("id, status, created_at, document_status, payment_status, invoice_currency, total"),
+  ]);
 
   if (profilesError) throw profilesError;
   if (invoicesError) throw invoicesError;
@@ -133,20 +155,66 @@ async function getStats() {
   const profileRows = profiles ?? [];
   const invoiceRows = invoices ?? [];
 
+  let activePaid = 0;
+  let expiring7 = 0;
+  let expiring30 = 0;
+  let expiredSubs = 0;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: subs } = await (supabaseAdmin as any)
+      .from("subscriptions")
+      .select("status, ends_at");
+    for (const s of subs ?? []) {
+      if (s.status === "active" && s.ends_at > nowIso) {
+        activePaid += 1;
+        if (s.ends_at <= in7) expiring7 += 1;
+        if (s.ends_at <= in30) expiring30 += 1;
+      }
+      if (s.status === "expired" || (s.status === "active" && s.ends_at <= nowIso)) {
+        expiredSubs += 1;
+      }
+    }
+  } catch {
+    /* table may not exist until migration */
+  }
+
+  const volumeByCurrency: Record<string, number> = {};
+  for (const inv of invoiceRows) {
+    const currency = (inv as { invoice_currency?: string }).invoice_currency || "—";
+    const total = Number((inv as { total?: number }).total) || 0;
+    volumeByCurrency[currency] = (volumeByCurrency[currency] ?? 0) + total;
+  }
+
+  const overdue = invoiceRows.filter((i) => {
+    const payment = (i as { payment_status?: string }).payment_status;
+    const doc = (i as { document_status?: string }).document_status;
+    return payment === "overdue" || i.status === "overdue" || doc === "overdue";
+  }).length;
+
   return {
     totalUsers: profileRows.length,
     newUsersToday: profileRows.filter((p) => p.created_at >= todayStart).length,
+    newUsersThisWeek: profileRows.filter((p) => p.created_at >= weekStartIso).length,
     newUsersThisMonth: profileRows.filter((p) => p.created_at >= monthStart).length,
+    activeUsers: profileRows.filter((p) => !p.is_disabled).length,
     freeUsers: profileRows.filter((p) => p.plan === "free").length,
     proUsers: profileRows.filter((p) => p.plan === "pro").length,
     businessUsers: profileRows.filter((p) => p.plan === "business").length,
     disabledUsers: profileRows.filter((p) => p.is_disabled).length,
+    emailUnconfirmedUsers: 0,
+    activePaidSubscriptions: activePaid,
+    expiringIn7Days: expiring7,
+    expiringIn30Days: expiring30,
+    expiredSubscriptions: expiredSubs,
     totalInvoices: invoiceRows.length,
+    invoicesToday: invoiceRows.filter((i) => i.created_at >= todayStart).length,
     invoicesThisMonth: invoiceRows.filter(
       (i) => i.created_at >= monthStart && i.created_at < nextMonthStart,
     ).length,
-    paidInvoices: invoiceRows.filter((i) => i.status === "paid").length,
-    pendingInvoices: invoiceRows.filter((i) => i.status === "pending").length,
+    paidInvoices: invoiceRows.filter((i) => i.status === "paid" || (i as { payment_status?: string }).payment_status === "paid").length,
+    pendingInvoices: invoiceRows.filter((i) => i.status === "pending" || (i as { payment_status?: string }).payment_status === "pending").length,
+    overdueInvoices: overdue,
+    volumeByCurrency,
   };
 }
 
@@ -185,27 +253,81 @@ async function getUsersList(query: AdminUsersQuery) {
   const profileRows = (profiles ?? []) as ProfileRow[];
   const userIds = profileRows.map((p) => p.id);
 
-  const [{ data: invoices, error: invoicesError }, authMap] = await Promise.all([
+  const [{ data: invoices, error: invoicesError }, authMap, subsResult] = await Promise.all([
     userIds.length
-      ? supabaseAdmin.from("invoices").select("user_id, status").in("user_id", userIds)
+      ? supabaseAdmin.from("invoices").select("user_id, status, created_at").in("user_id", userIds)
       : Promise.resolve({ data: [], error: null }),
     getAuthInfoForUserIds(userIds),
+    userIds.length
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabaseAdmin as any)
+          .from("subscriptions")
+          .select("user_id, plan, status, ends_at, cancel_at_period_end")
+          .in("user_id", userIds)
+          .eq("status", "active")
+          .order("ends_at", { ascending: false })
+          .then((r: { data: unknown; error: unknown }) => r)
+          .catch(() => ({ data: [], error: true }))
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (invoicesError) throw invoicesError;
 
-  const invoiceCounts = new Map<string, { total: number; paid: number; pending: number }>();
+  const now = Date.now();
+  const monthStart = startOfUtcMonth();
+  const monthEnd = startOfNextUtcMonth();
+  const in7 = now + 7 * 24 * 60 * 60 * 1000;
+
+  const invoiceCounts = new Map<
+    string,
+    { total: number; paid: number; pending: number; thisMonth: number }
+  >();
   for (const inv of invoices ?? []) {
-    const current = invoiceCounts.get(inv.user_id) ?? { total: 0, paid: 0, pending: 0 };
+    const current = invoiceCounts.get(inv.user_id) ?? {
+      total: 0,
+      paid: 0,
+      pending: 0,
+      thisMonth: 0,
+    };
     current.total += 1;
     if (inv.status === "paid") current.paid += 1;
     if (inv.status === "pending") current.pending += 1;
+    if (inv.created_at >= monthStart && inv.created_at < monthEnd) current.thisMonth += 1;
     invoiceCounts.set(inv.user_id, current);
   }
 
-  const users = profileRows.map((profile) => {
-    const counts = invoiceCounts.get(profile.id) ?? { total: 0, paid: 0, pending: 0 };
+  const subByUser = new Map<
+    string,
+    { status: string; endsAt: string | null; plan: string; cancelAtPeriodEnd: boolean }
+  >();
+  for (const row of (Array.isArray(subsResult?.data) ? subsResult.data : []) as {
+    user_id: string;
+    plan: string;
+    status: string;
+    ends_at: string;
+    cancel_at_period_end: boolean;
+  }[]) {
+    if (subByUser.has(row.user_id)) continue;
+    const endsMs = new Date(row.ends_at).getTime();
+    const entitled = row.status === "active" && endsMs > now;
+    subByUser.set(row.user_id, {
+      plan: row.plan,
+      status: entitled ? "active" : "expired",
+      endsAt: row.ends_at,
+      cancelAtPeriodEnd: Boolean(row.cancel_at_period_end),
+    });
+  }
+
+  let users = profileRows.map((profile) => {
+    const counts = invoiceCounts.get(profile.id) ?? {
+      total: 0,
+      paid: 0,
+      pending: 0,
+      thisMonth: 0,
+    };
     const auth = authMap.get(profile.id);
+    const sub = subByUser.get(profile.id);
+    const endsMs = sub?.endsAt ? new Date(sub.endsAt).getTime() : null;
     return {
       id: profile.id,
       name: profile.name,
@@ -216,11 +338,38 @@ async function getUsersList(query: AdminUsersQuery) {
       isDisabled: profile.is_disabled,
       joinedAt: profile.created_at,
       lastSignInAt: auth?.last_sign_in_at ?? null,
+      lastActiveAt: profile.updated_at ?? auth?.last_sign_in_at ?? null,
+      emailConfirmed: Boolean(auth?.email_confirmed_at),
       invoiceCount: counts.total,
+      invoiceCountThisMonth: counts.thisMonth,
       paidInvoiceCount: counts.paid,
       pendingInvoiceCount: counts.pending,
       status: profile.is_disabled ? ("disabled" as const) : ("active" as const),
+      subscriptionStatus: sub?.status ?? (profile.plan === "free" ? "none" : "none"),
+      subscriptionEndsAt: sub?.endsAt ?? null,
+      isExpiringSoon: Boolean(endsMs && endsMs > now && endsMs <= in7),
     };
+  });
+
+  if (query.filter === "expired") {
+    users = users.filter((u) => u.subscriptionStatus === "expired");
+  } else if (query.filter === "expiring_soon") {
+    users = users.filter((u) => u.isExpiringSoon);
+  } else if (query.filter === "email_unconfirmed") {
+    users = users.filter((u) => !u.emailConfirmed);
+  }
+
+  const sort = query.sort ?? "newest";
+  users = [...users].sort((a, b) => {
+    if (sort === "oldest") return a.joinedAt.localeCompare(b.joinedAt);
+    if (sort === "last_active") {
+      return (b.lastActiveAt ?? "").localeCompare(a.lastActiveAt ?? "");
+    }
+    if (sort === "most_invoices") return b.invoiceCount - a.invoiceCount;
+    if (sort === "subscription_expiry") {
+      return (a.subscriptionEndsAt ?? "9999").localeCompare(b.subscriptionEndsAt ?? "9999");
+    }
+    return b.joinedAt.localeCompare(a.joinedAt);
   });
 
   const total = count ?? 0;
@@ -303,8 +452,15 @@ async function getUserDetail(userId: string) {
   if (profileError) throw profileError;
   if (!profile) return null;
 
-  const [authMap, auditResult, recentInvoicesResult, allInvoicesResult, invoiceCountThisMonth] =
-    await Promise.all([
+  const [
+    authMap,
+    auditResult,
+    recentInvoicesResult,
+    allInvoicesResult,
+    invoiceCountThisMonth,
+    subscription,
+    activity,
+  ] = await Promise.all([
       getAuthInfoForUserIds([userId]),
       getAuditLogsForUser(userId),
       supabaseAdmin
@@ -315,6 +471,18 @@ async function getUserDetail(userId: string) {
         .limit(10),
       supabaseAdmin.from("invoices").select("status").eq("user_id", userId),
       countInvoicesThisMonth(supabaseAdmin, userId).catch(() => 0),
+      import("@/lib/subscriptions/subscription.service.server")
+        .then((m) => m.getEffectiveSubscriptionForUser(supabaseAdmin, userId))
+        .catch(() => null),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabaseAdmin as any)
+        .from("user_activity_logs")
+        .select("id, action, description, metadata, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(30)
+        .then((r: { data: unknown; error: unknown }) => r)
+        .catch(() => ({ data: [], error: true })),
     ]);
 
   if (recentInvoicesResult.error) {
@@ -326,7 +494,8 @@ async function getUserDetail(userId: string) {
 
   const invoiceRows = allInvoicesResult.error ? [] : (allInvoicesResult.data ?? []);
   const auth = authMap.get(userId);
-  const plan = normalizeUserPlan(profile.plan);
+  const plan = subscription?.effectivePlan ?? normalizeUserPlan(profile.plan);
+  const activityRows = Array.isArray(activity?.data) ? activity.data : [];
 
   return {
     id: profile.id,
@@ -362,6 +531,30 @@ async function getUserDetail(userId: string) {
     auditLogs: auditResult.logs,
     auditLogsUnavailable: auditResult.unavailable,
     status: profile.is_disabled ? ("disabled" as const) : ("active" as const),
+    subscription: subscription
+      ? {
+          effectivePlan: subscription.effectivePlan,
+          profilePlan: subscription.profilePlan,
+          status: subscription.status,
+          startsAt: subscription.startsAt,
+          endsAt: subscription.endsAt,
+          daysRemaining: subscription.daysRemaining,
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+          isExpired: subscription.isExpired,
+          isExpiringSoon: subscription.isExpiringSoon,
+        }
+      : null,
+    recentActivity: activityRows.map((row: {
+      id: string;
+      action: string;
+      description: string | null;
+      created_at: string;
+    }) => ({
+      id: row.id,
+      action: row.action,
+      description: row.description,
+      createdAt: row.created_at,
+    })),
   };
 }
 
@@ -495,47 +688,80 @@ async function patchUser(
   if (!before) return null;
 
   const updates: TablesUpdate<"profiles"> = { updated_at: new Date().toISOString() };
-  if (body.plan !== undefined) updates.plan = body.plan;
   if (body.isDisabled !== undefined) updates.is_disabled = body.isDisabled;
 
-  const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .update(updates)
-    .eq("id", userId)
-    .select("id, plan, is_disabled")
-    .maybeSingle();
-
-  if (error) throw new Error(friendlyError(error.message));
-  if (!data) return null;
-
-  const meta = getRequestMeta(request);
-
+  // Plan changes go through the subscription service (authoritative lifecycle).
   if (body.plan !== undefined && before.plan !== body.plan) {
+    const {
+      activateSubscription,
+      moveUserToFree,
+    } = await import("@/lib/subscriptions/subscription.service.server");
+
+    if (body.plan === "free") {
+      await moveUserToFree(supabaseAdmin, userId);
+    } else {
+      await activateSubscription(supabaseAdmin, {
+        userId,
+        plan: body.plan,
+        months: 1,
+        activatedBy: adminUserId,
+        source: "admin_manual",
+        notes: "Activated via admin plan change",
+      });
+    }
+
     await writeAdminAuditLog(supabaseAdmin, {
       adminUserId,
       targetUserId: userId,
       action: "plan_changed",
       oldValue: { plan: before.plan },
-      newValue: { plan: body.plan },
-      ...meta,
+      newValue: { plan: body.plan, months: body.plan === "free" ? null : 1 },
+      ...getRequestMeta(request),
     });
   }
 
-  if (body.isDisabled !== undefined && before.is_disabled !== body.isDisabled) {
-    await syncAuthBan(userId, body.isDisabled);
-    await writeAdminAuditLog(supabaseAdmin, {
-      adminUserId,
-      targetUserId: userId,
-      action: body.isDisabled ? "user_disabled" : "user_enabled",
-      oldValue: { is_disabled: before.is_disabled },
-      newValue: { is_disabled: body.isDisabled },
-      ...meta,
-    });
+  if (body.isDisabled !== undefined) {
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .update(updates)
+      .eq("id", userId)
+      .select("id, plan, is_disabled")
+      .maybeSingle();
+
+    if (error) throw new Error(friendlyError(error.message));
+    if (!data) return null;
+
+    if (before.is_disabled !== body.isDisabled) {
+      await syncAuthBan(userId, body.isDisabled);
+      await writeAdminAuditLog(supabaseAdmin, {
+        adminUserId,
+        targetUserId: userId,
+        action: body.isDisabled ? "user_disabled" : "user_enabled",
+        oldValue: { is_disabled: before.is_disabled },
+        newValue: { is_disabled: body.isDisabled },
+        ...getRequestMeta(request),
+      });
+    }
+
+    return {
+      id: data.id,
+      plan: normalizeUserPlan(data.plan),
+      isDisabled: data.is_disabled,
+      status: data.is_disabled ? "disabled" : "active",
+    };
   }
+
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id, plan, is_disabled")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw new Error(friendlyError(error.message));
+  if (!data) return null;
 
   return {
     id: data.id,
-    plan: data.plan,
+    plan: normalizeUserPlan(data.plan),
     isDisabled: data.is_disabled,
     status: data.is_disabled ? "disabled" : "active",
   };
@@ -544,13 +770,26 @@ async function patchUser(
 function parseUsersQuery(url: URL): AdminUsersQuery {
   const plan = url.searchParams.get("plan");
   const status = url.searchParams.get("status");
+  const filter = url.searchParams.get("filter");
+  const sort = url.searchParams.get("sort");
   return {
     page: Number(url.searchParams.get("page") ?? "1"),
     pageSize: Number(url.searchParams.get("pageSize") ?? "20"),
     search: url.searchParams.get("search") ?? undefined,
     plan: plan && ["free", "pro", "business"].includes(plan) ? (plan as UserPlan) : undefined,
-    status:
-      status === "active" || status === "disabled" ? status : undefined,
+    status: status === "active" || status === "disabled" ? status : undefined,
+    filter:
+      filter === "expired" || filter === "expiring_soon" || filter === "email_unconfirmed"
+        ? filter
+        : undefined,
+    sort:
+      sort === "newest" ||
+      sort === "oldest" ||
+      sort === "last_active" ||
+      sort === "most_invoices" ||
+      sort === "subscription_expiry"
+        ? sort
+        : undefined,
   };
 }
 
@@ -642,6 +881,121 @@ export async function handleAdminApiRequest(request: Request): Promise<Response>
       }
 
       return json({ error: "Method not allowed" }, 405);
+    }
+
+    const subMatch = path.match(/^\/api\/admin\/users\/([^/]+)\/subscription$/);
+    if (subMatch && request.method === "POST") {
+      const userId = decodeURIComponent(subMatch[1]);
+      const body = (await request.json()) as {
+        action?: string;
+        plan?: UserPlan;
+        months?: number;
+        customEndsAt?: string;
+        paymentReference?: string;
+        notes?: string;
+      };
+
+      const action = body.action;
+      const allowed = new Set([
+        "activate",
+        "renew",
+        "extend",
+        "cancel_at_period_end",
+        "cancel_immediately",
+        "move_to_free",
+      ]);
+      if (!action || !allowed.has(action)) {
+        return json({ error: "Invalid subscription action." }, 400);
+      }
+
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const svc = await import("@/lib/subscriptions/subscription.service.server");
+        const meta = getRequestMeta(request);
+        let result: unknown;
+
+        if (action === "activate") {
+          if (body.plan !== "pro" && body.plan !== "business") {
+            return json({ error: "Choose Pro or Business to activate." }, 400);
+          }
+          const months = ([1, 3, 6, 12] as const).includes(body.months as 1 | 3 | 6 | 12)
+            ? (body.months as 1 | 3 | 6 | 12)
+            : 1;
+          result = await svc.activateSubscription(supabaseAdmin, {
+            userId,
+            plan: body.plan,
+            months,
+            customEndsAt: body.customEndsAt,
+            paymentReference: body.paymentReference,
+            notes: body.notes,
+            activatedBy: admin.userId,
+          });
+          await writeAdminAuditLog(supabaseAdmin, {
+            adminUserId: admin.userId,
+            targetUserId: userId,
+            action: "subscription_activated",
+            oldValue: null,
+            newValue: { plan: body.plan, months, customEndsAt: body.customEndsAt ?? null },
+            ...meta,
+          });
+        } else if (action === "renew" || action === "extend") {
+          const months = ([1, 3, 6, 12] as const).includes(body.months as 1 | 3 | 6 | 12)
+            ? (body.months as 1 | 3 | 6 | 12)
+            : 1;
+          result = await svc.renewOrExtendSubscription(supabaseAdmin, {
+            userId,
+            months,
+            customEndsAt: body.customEndsAt,
+            activatedBy: admin.userId,
+            notes: body.notes,
+            fromCurrentExpiry: true,
+          });
+          await writeAdminAuditLog(supabaseAdmin, {
+            adminUserId: admin.userId,
+            targetUserId: userId,
+            action: action === "renew" ? "subscription_renewed" : "subscription_extended",
+            oldValue: null,
+            newValue: { months, customEndsAt: body.customEndsAt ?? null },
+            ...meta,
+          });
+        } else if (action === "cancel_at_period_end") {
+          result = await svc.cancelSubscriptionAtPeriodEnd(supabaseAdmin, userId);
+          await writeAdminAuditLog(supabaseAdmin, {
+            adminUserId: admin.userId,
+            targetUserId: userId,
+            action: "subscription_cancel_at_period_end",
+            oldValue: null,
+            newValue: { cancel_at_period_end: true },
+            ...meta,
+          });
+        } else if (action === "cancel_immediately") {
+          result = await svc.cancelSubscriptionImmediately(supabaseAdmin, userId);
+          await writeAdminAuditLog(supabaseAdmin, {
+            adminUserId: admin.userId,
+            targetUserId: userId,
+            action: "subscription_canceled_immediately",
+            oldValue: null,
+            newValue: { plan: "free" },
+            ...meta,
+          });
+        } else {
+          result = await svc.moveUserToFree(supabaseAdmin, userId);
+          await writeAdminAuditLog(supabaseAdmin, {
+            adminUserId: admin.userId,
+            targetUserId: userId,
+            action: "subscription_moved_to_free",
+            oldValue: null,
+            newValue: { plan: "free" },
+            ...meta,
+          });
+        }
+
+        return json({ ok: true, result });
+      } catch (err) {
+        const message =
+          err instanceof Error ? friendlyError(err.message) : "Could not update subscription.";
+        return json({ error: message }, 400);
+      }
     }
 
     return json({ error: "Not found" }, 404);

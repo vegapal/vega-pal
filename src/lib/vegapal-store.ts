@@ -16,6 +16,7 @@ import {
   type InvoicePlanUsage,
 } from "@/lib/plan/invoice-limit";
 import { authApiRequest } from "@/lib/auth/auth-client";
+import { logUserActivity } from "@/lib/activity/log-user-activity";
 import {
   applyAutoOverduePayment,
   defaultPaymentStatusForType,
@@ -242,6 +243,8 @@ export async function getInvoicePlanUsage(): Promise<InvoicePlanUsage | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
 
+  let usage: InvoicePlanUsage | null = null;
+
   const { data, error } = await supabase.rpc("get_invoice_plan_usage");
   if (!error && data && Array.isArray(data) && data.length > 0) {
     const row = data[0] as {
@@ -249,37 +252,79 @@ export async function getInvoicePlanUsage(): Promise<InvoicePlanUsage | null> {
       invoices_this_month: number;
       monthly_limit: number | null;
     };
-    return {
+    usage = {
       plan: row.plan,
       invoicesThisMonth: row.invoices_this_month,
       monthlyLimit: row.monthly_limit,
     };
+  } else {
+    const profile = await loadProfile(u.user);
+    const plan = profile?.plan ?? "free";
+    if (plan !== "free") {
+      usage = { plan, invoicesThisMonth: 0, monthlyLimit: null };
+    } else {
+      const { count, error: countError } = await supabase
+        .from("invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", u.user.id)
+        .gte("created_at", startOfUtcMonthIso())
+        .lt("created_at", startOfNextUtcMonthIso());
+
+      usage = {
+        plan,
+        invoicesThisMonth: countError ? 0 : (count ?? 0),
+        monthlyLimit: FREE_PLAN_MONTHLY_INVOICE_LIMIT,
+      };
+    }
   }
 
-  const profile = await loadProfile(u.user);
-  const plan = profile?.plan ?? "free";
-  if (plan !== "free") {
-    return { plan, invoicesThisMonth: 0, monthlyLimit: null };
+  if (!usage) return null;
+
+  if (usage.plan !== "free") {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: subRows } = await (supabase as any)
+        .from("subscriptions")
+        .select("starts_at, ends_at, cancel_at_period_end, status")
+        .eq("user_id", u.user.id)
+        .eq("status", "active")
+        .gt("ends_at", new Date().toISOString())
+        .order("ends_at", { ascending: false })
+        .limit(1);
+      const sub = Array.isArray(subRows) && subRows[0] ? subRows[0] : null;
+      if (sub) {
+        const endsAt = String(sub.ends_at);
+        const remaining = Math.ceil(
+          (new Date(endsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000),
+        );
+        usage = {
+          ...usage,
+          startsAt: String(sub.starts_at),
+          endsAt,
+          daysRemaining: remaining,
+          isExpiringSoon: remaining >= 0 && remaining <= 7,
+          cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
+        };
+      }
+    } catch {
+      /* subscription enrichment is best-effort */
+    }
   }
 
-  const { count, error: countError } = await supabase
-    .from("invoices")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", u.user.id)
-    .gte("created_at", startOfUtcMonthIso())
-    .lt("created_at", startOfNextUtcMonthIso());
-
-  if (countError) return { plan, invoicesThisMonth: 0, monthlyLimit: FREE_PLAN_MONTHLY_INVOICE_LIMIT };
-
-  return {
-    plan,
-    invoicesThisMonth: count ?? 0,
-    monthlyLimit: FREE_PLAN_MONTHLY_INVOICE_LIMIT,
-  };
+  return usage;
 }
 
-async function assertCanCreateInvoice(userId: string, plan: UserPlan): Promise<void> {
+async function assertCanCreateInvoice(userId: string, _plan: UserPlan): Promise<void> {
+  const usage = await getInvoicePlanUsage();
+  const plan = usage?.plan ?? _plan;
   if (plan !== "free") return;
+
+  const used = usage?.invoicesThisMonth;
+  if (used !== undefined && used >= FREE_PLAN_MONTHLY_INVOICE_LIMIT) {
+    const limitError = new Error(FREE_PLAN_LIMIT_MESSAGE) as Error & { code?: string };
+    limitError.code = "free_plan_invoice_limit";
+    throw limitError;
+  }
 
   const { count, error } = await supabase
     .from("invoices")
@@ -677,6 +722,9 @@ export const auth = {
   },
   async signOut() {
     try {
+      void import("@/lib/activity/log-user-activity").then(({ logUserActivity }) =>
+        logUserActivity("logout", { description: "Signed out" }),
+      );
       await authApiRequest("/api/auth/logout", { method: "POST" });
     } catch {
       // Best-effort; always clear local session.
@@ -955,6 +1003,15 @@ export const invoices = {
     }
     const created = await fetchInvoiceWithItems((invRow as InvoiceRow).id);
     if (!created) throw new Error("Failed to load invoice");
+    void logUserActivity("invoice_created", {
+      userId: u.user.id,
+      description: `Created invoice ${created.number}`,
+      metadata: {
+        invoice_id: created.id,
+        invoice_type: created.documentType,
+        currency: created.invoiceCurrency,
+      },
+    });
     return created;
   },
 
@@ -1108,6 +1165,10 @@ export const invoices = {
         .update(update as never)
         .eq("id", id);
       if (error) throw error;
+      void logUserActivity("invoice_updated", {
+        description: `Updated invoice`,
+        metadata: { invoice_id: id },
+      });
     }
   },
 
@@ -1139,6 +1200,10 @@ export const invoices = {
 
   async cancel(id: string) {
     await invoices.setStatus(id, "cancelled");
+    void logUserActivity("invoice_canceled", {
+      description: `Canceled invoice`,
+      metadata: { invoice_id: id },
+    });
   },
 
   async convertQuotationToInvoice(quotationId: string): Promise<QuotationConversionResult> {
@@ -1214,7 +1279,7 @@ export const invoices = {
   async duplicate(id: string): Promise<Invoice | null> {
     const src = await fetchInvoiceWithItems(id);
     if (!src) return null;
-    return invoices.create({
+    const created = await invoices.create({
       documentType: src.documentType,
       documentStatus: "draft",
       paymentStatus: defaultPaymentStatusForType(src.documentType),
@@ -1234,6 +1299,16 @@ export const invoices = {
       displayOptions: src.displayOptions,
       paymentMethods: src.paymentMethods,
     });
+    void logUserActivity("invoice_duplicated", {
+      description: `Duplicated invoice ${src.number}`,
+      metadata: {
+        invoice_id: created.id,
+        source_invoice_id: src.id,
+        invoice_type: created.documentType,
+        currency: created.invoiceCurrency,
+      },
+    });
+    return created;
   },
 };
 

@@ -151,8 +151,19 @@
     "usageUnlimited": "فواتير غير محدودة",
     "usageFree": "{{used}} / {{limit}} فاتورة مستخدمة هذا الشهر",
     "warningNearLimit": "لقد استخدمت {{used}} من {{limit}} فواتير هذا الشهر.",
-    "limitReached": "لقد وصلت إلى حد الخطة المجانية البالغ 5 فواتير هذا الشهر. قم بالترقية إلى Pro لإنشاء فواتير غير محدودة.",
+    "limitReached": "لقد استخدمت جميع الفواتير الخمس المدرجة في خطتك المجانية هذا الشهر.",
     "upgradePlan": "ترقية الخطة",
+    "upgradeToPro": "الترقية إلى Pro",
+    "viewPlans": "عرض الخطط",
+    "renewPlan": "تجديد الخطة",
+    "planLabel": "خطة {{plan}}",
+    "freeAllowance": "{{limit}} فواتير شهرياً",
+    "started": "بدأت",
+    "expires": "تنتهي",
+    "expiresOn": "تنتهي في {{date}}",
+    "renewsOn": "تتجدد في {{date}}",
+    "expiresToday": "تنتهي خطتك اليوم.",
+    "expiresInDays": "تنتهي خطة {{plan}} خلال {{count}} أيام.",
     "badges": {
       "free": "مجاني",
       "pro": "Pro",
@@ -160,7 +171,8 @@
     },
     "status": {
       "active": "نشط",
-      "disabled": "معطّل"
+      "disabled": "معطّل",
+      "cancelsAtPeriodEnd": "تُلغى في نهاية الفترة"
     }
   },
   "empty": {

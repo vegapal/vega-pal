@@ -35,10 +35,14 @@ export function InvoicePlanUsageIndicator({
   const progressValue = isFree
     ? Math.min(100, (usage.invoicesThisMonth / usage.monthlyLimit!) * 100)
     : 0;
+  const planLabel = t(`plan.badges.${usage.plan}`);
 
   return (
     <div className={className}>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm font-medium text-foreground">
+        {t("plan.planLabel", { plan: planLabel })}
+      </p>
+      <p className="text-sm text-muted-foreground mt-0.5">
         {isFree
           ? t("plan.usageFree", {
               used: usage.invoicesThisMonth,
@@ -46,6 +50,13 @@ export function InvoicePlanUsageIndicator({
             })
           : t("plan.usageUnlimited")}
       </p>
+      {!isFree && usage.endsAt ? (
+        <p className="text-xs text-muted-foreground mt-1">
+          {usage.cancelAtPeriodEnd
+            ? t("plan.expiresOn", { date: new Date(usage.endsAt).toLocaleDateString() })
+            : t("plan.renewsOn", { date: new Date(usage.endsAt).toLocaleDateString() })}
+        </p>
+      ) : null}
 
       {isFree ? (
         <Progress value={progressValue} className="mt-2 h-2" aria-label={t("plan.usageFree", {
@@ -70,7 +81,20 @@ export function InvoicePlanUsageIndicator({
         <div className="mt-3 rounded-xl border border-warning/30 bg-warning/5 p-4 space-y-3">
           <p className="text-sm leading-relaxed">{t("plan.limitReached")}</p>
           <Button asChild size="sm" variant="hero">
-            <Link to="/pricing">{t("plan.upgradePlan")}</Link>
+            <Link to="/" hash="pricing">{t("plan.upgradeToPro")}</Link>
+          </Button>
+        </div>
+      ) : null}
+
+      {!isFree && usage.isExpiringSoon && usage.daysRemaining != null && usage.daysRemaining >= 0 ? (
+        <div className="mt-3 rounded-xl border border-warning/30 bg-warning/5 p-4 space-y-3">
+          <p className="text-sm leading-relaxed">
+            {usage.daysRemaining === 0
+              ? t("plan.expiresToday")
+              : t("plan.expiresInDays", { count: usage.daysRemaining, plan: planLabel })}
+          </p>
+          <Button asChild size="sm" variant="hero">
+            <Link to="/" hash="pricing">{t("plan.renewPlan")}</Link>
           </Button>
         </div>
       ) : null}

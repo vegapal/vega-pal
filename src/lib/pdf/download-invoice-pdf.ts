@@ -6,10 +6,15 @@ import {
   openBlobInNewTab,
   triggerBlobDownload,
 } from "@/lib/pdf/pdf-filename";
+import { logUserActivity } from "@/lib/activity/log-user-activity";
 
 export async function downloadInvoicePdf(inv: Invoice): Promise<void> {
   const { blob, filename } = await createInvoicePdfFile(inv);
   triggerBlobDownload(blob, filename);
+  void logUserActivity("pdf_downloaded", {
+    description: `Downloaded PDF ${inv.number}`,
+    metadata: { invoice_id: inv.id, invoice_type: inv.documentType },
+  });
 }
 
 export async function viewInvoicePdf(inv: Invoice): Promise<void> {
@@ -35,6 +40,10 @@ export async function shareInvoicePdf(
           title: filename,
           text: inv.title?.trim() || inv.number,
         });
+        void logUserActivity("pdf_shared", {
+          description: `Shared PDF ${inv.number}`,
+          metadata: { invoice_id: inv.id, method: "files" },
+        });
         return { ok: true, method: "files" };
       } catch (err) {
         if (isAbortError(err)) return { ok: false, cancelled: true, message: "Share cancelled." };
@@ -49,6 +58,10 @@ export async function shareInvoicePdf(
           text: inv.title?.trim() || inv.number,
           url: options.publicUrl,
         });
+        void logUserActivity("pdf_shared", {
+          description: `Shared PDF ${inv.number}`,
+          metadata: { invoice_id: inv.id, method: "link" },
+        });
         return { ok: true, method: "link" };
       } catch (err) {
         if (isAbortError(err)) return { ok: false, cancelled: true, message: "Share cancelled." };
@@ -56,6 +69,10 @@ export async function shareInvoicePdf(
     }
 
     triggerBlobDownload(blob, filename);
+    void logUserActivity("pdf_shared", {
+      description: `Shared PDF ${inv.number}`,
+      metadata: { invoice_id: inv.id, method: "download" },
+    });
     return { ok: true, method: "download" };
   } catch {
     return { ok: false, message: "We couldn't generate your PDF. Please try again." };

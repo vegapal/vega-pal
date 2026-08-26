@@ -1,7 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
 
-export type AuditAction = "plan_changed" | "user_disabled" | "user_enabled" | "user_deleted";
+export type AuditAction =
+  | "plan_changed"
+  | "user_disabled"
+  | "user_enabled"
+  | "user_deleted"
+  | "subscription_activated"
+  | "subscription_renewed"
+  | "subscription_extended"
+  | "subscription_cancel_at_period_end"
+  | "subscription_canceled_immediately"
+  | "subscription_moved_to_free";
 
 export async function writeAdminAuditLog(
   supabaseAdmin: SupabaseClient<Database>,

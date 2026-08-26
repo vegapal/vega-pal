@@ -373,11 +373,93 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          plan: string
+          status: string
+          starts_at: string
+          ends_at: string
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          activated_by: string | null
+          source: string
+          payment_reference: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plan: string
+          status?: string
+          starts_at?: string
+          ends_at: string
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          activated_by?: string | null
+          source?: string
+          payment_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plan?: string
+          status?: string
+          starts_at?: string
+          ends_at?: string
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          activated_by?: string | null
+          source?: string
+          payment_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_activity_logs: {
+        Row: {
+          id: string
+          user_id: string
+          action: string
+          description: string | null
+          metadata: Record<string, unknown>
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          action: string
+          description?: string | null
+          metadata?: Record<string, unknown>
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          action?: string
+          description?: string | null
+          metadata?: Record<string, unknown>
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_effective_plan: {
+        Args: { p_user_id: string }
+        Returns: Database["public"]["Enums"]["user_plan"]
+      }
       get_invoice_plan_usage: {
         Args: Record<string, never>
         Returns: {
@@ -385,6 +467,19 @@ export type Database = {
           invoices_this_month: number
           monthly_limit: number | null
         }[]
+      }
+      log_user_activity: {
+        Args: {
+          p_user_id: string
+          p_action: string
+          p_description?: string
+          p_metadata?: Record<string, unknown>
+        }
+        Returns: undefined
+      }
+      expire_due_subscriptions: {
+        Args: Record<string, never>
+        Returns: number
       }
       allocate_invoice_document_number: {
         Args: { p_document_type: string }

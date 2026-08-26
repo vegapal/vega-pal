@@ -5,15 +5,25 @@ import { normalizeUserPlan } from "@/lib/admin/plans";
 export type AdminStats = {
   totalUsers: number;
   newUsersToday: number;
+  newUsersThisWeek?: number;
   newUsersThisMonth: number;
+  activeUsers?: number;
   freeUsers: number;
   proUsers: number;
   businessUsers: number;
   disabledUsers: number;
+  emailUnconfirmedUsers?: number;
+  activePaidSubscriptions?: number;
+  expiringIn7Days?: number;
+  expiringIn30Days?: number;
+  expiredSubscriptions?: number;
   totalInvoices: number;
+  invoicesToday?: number;
   invoicesThisMonth: number;
   paidInvoices: number;
   pendingInvoices: number;
+  overdueInvoices?: number;
+  volumeByCurrency?: Record<string, number>;
 };
 
 export type AdminUserRow = {
@@ -26,10 +36,16 @@ export type AdminUserRow = {
   isDisabled: boolean;
   joinedAt: string;
   lastSignInAt: string | null;
+  lastActiveAt?: string | null;
+  emailConfirmed?: boolean;
   invoiceCount: number;
+  invoiceCountThisMonth?: number;
   paidInvoiceCount: number;
   pendingInvoiceCount: number;
   status: "active" | "disabled";
+  subscriptionStatus?: string;
+  subscriptionEndsAt?: string | null;
+  isExpiringSoon?: boolean;
 };
 
 export type AdminAuditLogEntry = {
@@ -64,6 +80,23 @@ export type AdminUserDetail = AdminUserRow & {
   auditLogs: AdminAuditLogEntry[];
   auditLogsUnavailable?: boolean;
   recentInvoicesUnavailable?: boolean;
+  subscription?: {
+    effectivePlan: UserPlan;
+    profilePlan: UserPlan;
+    status: string;
+    startsAt: string | null;
+    endsAt: string | null;
+    daysRemaining: number | null;
+    cancelAtPeriodEnd: boolean;
+    isExpired: boolean;
+    isExpiringSoon: boolean;
+  } | null;
+  recentActivity?: {
+    id: string;
+    action: string;
+    description: string | null;
+    createdAt: string;
+  }[];
 };
 
 export type AdminUsersPagination = {
@@ -81,6 +114,8 @@ export type AdminUsersQuery = {
   search?: string;
   plan?: UserPlan | "";
   status?: "active" | "disabled" | "";
+  filter?: "expired" | "expiring_soon" | "email_unconfirmed" | "";
+  sort?: "newest" | "oldest" | "last_active" | "most_invoices" | "subscription_expiry";
 };
 
 export type AdminUsersResponse = {
@@ -170,6 +205,8 @@ export async function fetchAdminUsers(query: AdminUsersQuery = {}): Promise<Admi
   if (query.search?.trim()) params.set("search", query.search.trim());
   if (query.plan) params.set("plan", query.plan);
   if (query.status) params.set("status", query.status);
+  if (query.filter) params.set("filter", query.filter);
+  if (query.sort) params.set("sort", query.sort);
   const qs = params.toString();
   return adminFetch(`/api/admin/users${qs ? `?${qs}` : ""}`);
 }
@@ -194,5 +231,30 @@ export async function deleteAdminUser(
 ): Promise<{ ok: true; id: string; email: string }> {
   return adminFetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
     method: "DELETE",
+  });
+}
+
+export type AdminSubscriptionAction =
+  | "activate"
+  | "renew"
+  | "extend"
+  | "cancel_at_period_end"
+  | "cancel_immediately"
+  | "move_to_free";
+
+export async function postAdminSubscription(
+  userId: string,
+  body: {
+    action: AdminSubscriptionAction;
+    plan?: UserPlan;
+    months?: number;
+    customEndsAt?: string;
+    paymentReference?: string;
+    notes?: string;
+  },
+): Promise<{ ok: true; result: unknown }> {
+  return adminFetch(`/api/admin/users/${encodeURIComponent(userId)}/subscription`, {
+    method: "POST",
+    body: JSON.stringify(body),
   });
 }

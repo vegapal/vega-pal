@@ -5,6 +5,11 @@ export type InvoicePlanUsage = {
   plan: UserPlan;
   invoicesThisMonth: number;
   monthlyLimit: number | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  daysRemaining?: number | null;
+  isExpiringSoon?: boolean;
+  cancelAtPeriodEnd?: boolean;
 };
 
 export const FREE_PLAN_LIMIT_MESSAGE =

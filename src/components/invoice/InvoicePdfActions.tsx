@@ -5,11 +5,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { Invoice } from "@/lib/vegapal-store";
 import {
-  downloadInvoicePdf,
-  shareInvoicePdf,
-  viewInvoicePdf,
+  downloadInvoicePdf as downloadFile,
+  shareInvoicePdf as shareFile,
+  viewInvoicePdf as viewFile,
 } from "@/lib/pdf/download-invoice-pdf";
 import { canShare, isMobileViewport } from "@/lib/pdf/pdf-filename";
+import { logUserActivity } from "@/lib/activity/log-user-activity";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -32,13 +33,21 @@ export function InvoicePdfActions({ invoice, publicUrl, className, size = "defau
     setBusy(action);
     try {
       if (action === "download") {
-        await downloadInvoicePdf(invoice);
+        await downloadFile(invoice);
+        void logUserActivity("pdf_downloaded", {
+          description: `Downloaded PDF ${invoice.number}`,
+          metadata: { invoice_id: invoice.id, invoice_type: invoice.documentType },
+        });
         toast.success(t("pdf.downloaded"));
       } else if (action === "view") {
-        await viewInvoicePdf(invoice);
+        await viewFile(invoice);
       } else {
-        const result = await shareInvoicePdf(invoice, { publicUrl });
+        const result = await shareFile(invoice, { publicUrl });
         if (result.ok) {
+          void logUserActivity("pdf_shared", {
+            description: `Shared PDF ${invoice.number}`,
+            metadata: { invoice_id: invoice.id, invoice_type: invoice.documentType },
+          });
           if (result.method === "download") toast.message(t("pdf.shareFallbackDownload"));
           else toast.success(t("pdf.shared"));
         } else if (!result.cancelled) {

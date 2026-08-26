@@ -63,6 +63,14 @@ export default {
         return await applySecurityHeaders(response);
       }
 
+      if (url.pathname === "/api/cron/expire-subscriptions") {
+        const { handleSubscriptionsExpireCron } = await import(
+          "@/lib/subscriptions/expire-cron.server"
+        );
+        const response = await handleSubscriptionsExpireCron(request);
+        return await applySecurityHeaders(response);
+      }
+
       if (url.pathname.startsWith("/api/invoices/pdf")) {
         const { handleInvoicePdfApiRequest } = await import("@/lib/pdf/invoice-pdf-api.server");
         const response = await handleInvoicePdfApiRequest(request);

@@ -151,8 +151,19 @@
     "usageUnlimited": "Безлимитные счета",
     "usageFree": "{{used}} / {{limit}} счетов в этом месяце",
     "warningNearLimit": "Вы использовали {{used}} из {{limit}} счетов в этом месяце.",
-    "limitReached": "Вы достигли лимита Free: 5 счетов в месяц. Перейдите на Pro для безлимитных счетов.",
+    "limitReached": "Вы использовали все 5 счетов Free-тарифа в этом месяце.",
     "upgradePlan": "Сменить тариф",
+    "upgradeToPro": "Перейти на Pro",
+    "viewPlans": "Смотреть тарифы",
+    "renewPlan": "Продлить тариф",
+    "planLabel": "Тариф {{plan}}",
+    "freeAllowance": "{{limit}} счетов в месяц",
+    "started": "Начало",
+    "expires": "Истекает",
+    "expiresOn": "Истекает {{date}}",
+    "renewsOn": "Продлевается {{date}}",
+    "expiresToday": "Ваш тариф истекает сегодня.",
+    "expiresInDays": "Тариф {{plan}} истекает через {{count}} дн.",
     "badges": {
       "free": "Free",
       "pro": "Pro",
@@ -160,7 +171,8 @@
     },
     "status": {
       "active": "Активен",
-      "disabled": "Отключён"
+      "disabled": "Отключён",
+      "cancelsAtPeriodEnd": "Отмена в конце периода"
     }
   },
   "empty": {

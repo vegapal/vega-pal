@@ -151,8 +151,19 @@
     "usageUnlimited": "无限发票",
     "usageFree": "本月已使用 {{used}} / {{limit}} 张发票",
     "warningNearLimit": "您本月已使用 {{used}} / {{limit}} 张发票。",
-    "limitReached": "您已达到 Free 套餐每月 5 张发票的上限。升级到 Pro 可创建无限发票。",
+    "limitReached": "您已用完 Free 套餐本月包含的 5 张发票。",
     "upgradePlan": "升级套餐",
+    "upgradeToPro": "升级到 Pro",
+    "viewPlans": "查看套餐",
+    "renewPlan": "续订套餐",
+    "planLabel": "{{plan}} 套餐",
+    "freeAllowance": "每月 {{limit}} 张发票",
+    "started": "开始于",
+    "expires": "到期",
+    "expiresOn": "{{date}} 到期",
+    "renewsOn": "{{date}} 续订",
+    "expiresToday": "您的套餐今天到期。",
+    "expiresInDays": "您的 {{plan}} 套餐将在 {{count}} 天后到期。",
     "badges": {
       "free": "Free",
       "pro": "Pro",
@@ -160,7 +171,8 @@
     },
     "status": {
       "active": "正常",
-      "disabled": "已禁用"
+      "disabled": "已禁用",
+      "cancelsAtPeriodEnd": "周期结束时取消"
     }
   },
   "empty": {

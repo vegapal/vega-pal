@@ -48,6 +48,7 @@ function LoginPage() {
   const { t: tc } = useTranslation("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
@@ -78,8 +79,13 @@ function LoginPage() {
     const normalizedEmail = parsed.data.email.toLowerCase();
     try {
       turnstile.requireToken();
+      const { setRememberMePreference } = await import("@/lib/auth/auth-session-storage");
+      setRememberMePreference(rememberMe);
       await auth.signIn(normalizedEmail, parsed.data.password, turnstile.enabled ? turnstile.token : undefined);
       trackLogin("email");
+      void import("@/lib/activity/log-user-activity").then(({ logUserActivity }) =>
+        logUserActivity("login", { description: "Signed in" }),
+      );
       navigate({ to: "/dashboard" });
     } catch (err) {
       turnstile.reset();
@@ -130,6 +136,22 @@ function LoginPage() {
             placeholder={t("login.passwordPlaceholder")}
           />
         </div>
+        <label className="flex items-start gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 rounded border-input"
+            checked={rememberMe}
+            disabled={loading}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            aria-describedby="remember-me-hint"
+          />
+          <span>
+            <span className="text-sm font-medium block">{t("login.rememberMe")}</span>
+            <span id="remember-me-hint" className="text-xs text-muted-foreground block mt-0.5">
+              {t("login.rememberMeHint")}
+            </span>
+          </span>
+        </label>
         <FormError message={error} />
         {unconfirmedEmail ? (
           <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-4">
