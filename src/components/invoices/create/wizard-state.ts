@@ -57,6 +57,10 @@ export type InvoiceWizardState = {
   bank: BankPaymentConfig;
   cash: CashPaymentConfig;
   alreadyPaid: boolean;
+  /** Opt-in: persist newly entered bank details after invoice save. */
+  saveBankForFuture: boolean;
+  /** Opt-in: persist newly entered crypto wallet after invoice save. */
+  saveCryptoForFuture: boolean;
 };
 
 export function todayISO() {
@@ -109,6 +113,8 @@ export function createInitialWizardState(): InvoiceWizardState {
     bank: { enabled: false, accountName: "", bankName: "", accountNumber: "", iban: "", swift: "" },
     cash: { enabled: false, instructions: "" },
     alreadyPaid: false,
+    saveBankForFuture: false,
+    saveCryptoForFuture: false,
   };
 }
 

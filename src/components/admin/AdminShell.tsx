@@ -79,7 +79,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`);
 
   return (
-    <div className="min-h-screen bg-ice flex">
+    <div className="min-h-screen bg-canvas flex">
       <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-card sticky top-0 h-screen">
         <div className="px-5 py-5">
           <Link to="/admin" className="inline-flex">
@@ -97,8 +97,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 {...(item.to === "/admin/users" ? { search: { deleted: false } } : {})}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-primary/10 text-primary shadow-soft"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary/10 text-primary"
+                    : "text-slate hover:bg-soft-section hover:text-ink"
                 }`}
               >
                 <item.icon className="h-4 w-4" />

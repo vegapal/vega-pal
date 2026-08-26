@@ -70,12 +70,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const linkClass = (active: boolean) =>
     `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150 motion-reduce:transition-none ${
       active
-        ? "bg-primary/10 text-primary shadow-soft"
-        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        ? "bg-primary/10 text-primary"
+        : "text-slate hover:bg-soft-section hover:text-ink"
     }`;
 
   return (
-    <div className="min-h-screen bg-ice">
+    <div className="min-h-screen bg-canvas">
       <aside
         className="hidden lg:flex fixed inset-y-0 start-0 z-30 w-64 flex-col border-e border-border bg-card h-[100dvh] max-h-[100dvh] overflow-hidden"
         aria-label={t("nav.sidebar")}
@@ -107,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen flex-col min-w-0 lg:ps-64">
-        <header className="lg:hidden h-14 border-b border-border bg-background/95 backdrop-blur flex items-center justify-between px-4 sticky top-0 z-30">
+        <header className="lg:hidden h-14 border-b border-border bg-card/95 backdrop-blur flex items-center justify-between px-4 sticky top-0 z-30">
           <Link to="/dashboard" className="inline-flex">
             <Logo markOnly size="sm" />
           </Link>

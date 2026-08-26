@@ -3,21 +3,81 @@
 @import "tw-animate-css";
 
 @font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Sans Arabic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/noto-sans-arabic/noto-sans-arabic-400-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Noto Sans Arabic";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/noto-sans-arabic/noto-sans-arabic-500-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Noto Sans Arabic";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/noto-sans-arabic/noto-sans-arabic-600-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Noto Sans Arabic";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/noto-sans-arabic/noto-sans-arabic-700-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+/* Keep Inter as a narrow fallback for older PDF/html paths that still reference it */
+@font-face {
   font-family: "Inter";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/inter/inter-latin-400-normal.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-
 @font-face {
   font-family: "Inter";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
   src: url("/fonts/inter/inter-latin-700-normal.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -58,63 +118,69 @@
   --color-ice: var(--ice);
   --color-slate: var(--slate);
   --color-ink: var(--ink);
+  --color-soft-section: var(--soft-section);
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
 
-  --shadow-soft: 0 1px 2px 0 rgb(8 20 38 / 0.04), 0 1px 3px 0 rgb(8 20 38 / 0.06);
-  --shadow-elevated: 0 12px 28px -12px rgb(6 20 38 / 0.18);
-  --shadow-glow: 0 16px 40px -18px rgb(22 119 232 / 0.35);
+  --shadow-soft: 0 1px 2px 0 rgb(7 27 47 / 0.04), 0 1px 3px 0 rgb(7 27 47 / 0.06);
+  --shadow-elevated: 0 12px 28px -12px rgb(6 36 63 / 0.16);
+  --shadow-glow: 0 12px 28px -16px rgb(22 119 232 / 0.28);
 }
 
 :root {
   /* ~12px base radius — cards use rounded-2xl (~16–18px) */
   --radius: 0.75rem;
 
-  /* Official VegaPal palette */
-  --vega-midnight: #061426;
-  --vega-deep-navy: #0B203A;
+  /* VegaPal banking / fintech palette */
+  --vega-banking-navy: #082D4F;
+  --vega-deep-nav: #06243F;
+  --vega-ocean: #0D4F7C;
+  --vega-midnight: #06243F;
+  --vega-deep-navy: #082D4F;
   --vega-blue: #1677E8;
   --vega-electric: #2F9BFF;
-  --vega-cyan: #30D5F3;
-  --vega-canvas: #F7F9FC;
-  --vega-ice: #F7F9FC;
-  --vega-mist: #F1F6FB;
-  --vega-border: #DDE6F0;
-  --vega-ink: #081426;
-  --vega-slate: #5E6B7C;
+  --vega-cyan: #19CFF3;
+  --vega-canvas: #F1F5F9;
+  --vega-soft-section: #E9F0F7;
+  --vega-ice: #F1F5F9;
+  --vega-mist: #E9F0F7;
+  --vega-border: #D7E1EB;
+  --vega-ink: #071B2F;
+  --vega-slate: #526477;
   --vega-on-dark: #FFFFFF;
-  --vega-on-dark-secondary: #C8D5E5;
-  --vega-on-dark-muted: #93A7BD;
+  --vega-on-dark-secondary: #D8E5F0;
+  --vega-on-dark-muted: #A8BDD0;
 
-  --navy: #0B203A;
+  --navy: #082D4F;
   --navy-foreground: #FFFFFF;
-  --ink: #081426;
-  --slate: #5E6B7C;
-  --ice: #F7F9FC;
+  --ink: #071B2F;
+  --slate: #526477;
+  --ice: #F1F5F9;
+  --soft-section: #E9F0F7;
 
   --background: #FFFFFF;
-  --foreground: #081426;
+  --foreground: #071B2F;
 
   --card: #FFFFFF;
-  --card-foreground: #081426;
+  --card-foreground: #071B2F;
 
   --popover: #FFFFFF;
-  --popover-foreground: #081426;
+  --popover-foreground: #071B2F;
 
   --primary: #1677E8;
   --primary-foreground: #FFFFFF;
   --primary-hover: #1268CF;
   --primary-active: #105BB5;
 
-  --secondary: #F7F9FC;
-  --secondary-foreground: #081426;
+  --secondary: #E9F0F7;
+  --secondary-foreground: #071B2F;
 
-  --muted: #F1F6FB;
-  --muted-foreground: #5E6B7C;
+  --muted: #E9F0F7;
+  --muted-foreground: #526477;
 
-  --accent: #EAF3FE;
-  --accent-foreground: #0B203A;
+  --accent: #E8F2FC;
+  --accent-foreground: #082D4F;
 
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
@@ -123,46 +189,45 @@
   --success-foreground: #FFFFFF;
 
   --warning: #F59E0B;
-  --warning-foreground: #081426;
+  --warning-foreground: #071B2F;
 
-  --border: #DDE6F0;
-  --input: #DDE6F0;
+  --border: #D7E1EB;
+  --input: #D7E1EB;
   --ring: #1677E8;
 
-  --gradient-brand: linear-gradient(135deg, #1677E8 0%, #2F9BFF 55%, #30D5F3 100%);
-  /* Calm midnight panels — subtle blue light, no loud glow */
+  --gradient-brand: linear-gradient(135deg, #1677E8 0%, #19CFF3 100%);
   --gradient-hero:
-    radial-gradient(circle at 25% 35%, rgba(22, 119, 232, 0.16), transparent 42%),
-    linear-gradient(145deg, #071827 0%, #0A2038 55%, #071827 100%);
+    radial-gradient(circle at 20% 30%, rgba(22, 119, 232, 0.12), transparent 45%),
+    linear-gradient(135deg, #06243F 0%, #082D4F 55%, #0D4F7C 100%);
   --gradient-auth:
-    radial-gradient(circle at 25% 35%, rgba(22, 119, 232, 0.16), transparent 42%),
-    linear-gradient(145deg, #071827 0%, #0A2038 55%, #071827 100%);
+    radial-gradient(circle at 22% 28%, rgba(22, 119, 232, 0.1), transparent 48%),
+    linear-gradient(135deg, #06243F 0%, #082D4F 55%, #0D4F7C 100%);
   --gradient-mesh:
-    radial-gradient(circle at 22% 30%, rgba(22, 119, 232, 0.1), transparent 45%);
-  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #F7F9FC 100%);
+    radial-gradient(circle at 18% 28%, rgba(25, 207, 243, 0.06), transparent 42%);
+  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%);
 }
 
 .dark {
-  --background: #061426;
-  --foreground: #F4F8FC;
-  --card: #0B203A;
-  --card-foreground: #F4F8FC;
-  --popover: #0B203A;
-  --popover-foreground: #F4F8FC;
+  --background: #06243F;
+  --foreground: #F1F5F9;
+  --card: #082D4F;
+  --card-foreground: #F1F5F9;
+  --popover: #082D4F;
+  --popover-foreground: #F1F5F9;
   --primary: #2F9BFF;
-  --primary-foreground: #061426;
-  --secondary: #122844;
-  --secondary-foreground: #F4F8FC;
-  --muted: #122844;
-  --muted-foreground: #9AA6B5;
-  --accent: #153456;
-  --accent-foreground: #EAF3FE;
+  --primary-foreground: #06243F;
+  --secondary: #0D4F7C;
+  --secondary-foreground: #F1F5F9;
+  --muted: #0D4F7C;
+  --muted-foreground: #A8BDD0;
+  --accent: #0D4F7C;
+  --accent-foreground: #E8F2FC;
   --border: rgb(255 255 255 / 0.1);
   --input: rgb(255 255 255 / 0.12);
   --ring: #2F9BFF;
   --success: #10B981;
   --success-foreground: #FFFFFF;
-  --navy: #0B203A;
+  --navy: #082D4F;
   --navy-foreground: #FFFFFF;
 }
 
@@ -197,6 +262,9 @@
 }
 @utility bg-canvas {
   background-color: var(--vega-canvas);
+}
+@utility bg-soft-section {
+  background-color: var(--vega-soft-section);
 }
 @utility bg-brand-gradient {
   background: var(--gradient-brand);

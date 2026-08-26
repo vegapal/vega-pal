@@ -99,15 +99,22 @@
     },
     "savedPaymentMethods": {
       "useSaved": "Use a saved payment method",
-      "addNew": "Add new payment method",
+      "useSavedBank": "Use a saved bank account",
+      "useSavedCrypto": "Use a saved wallet",
+      "addNew": "Add a new payment method",
+      "addNewBank": "Add a new bank account",
+      "addNewCrypto": "Add a new wallet",
       "backToSaved": "Use a saved payment method",
       "saveBankTitle": "Save this bank account for future invoices?",
       "saveBankDesc": "Save it securely to your VegaPal account and reuse it on future invoices.",
+      "saveBankCheckbox": "Save this bank account for future invoices",
       "saveCryptoTitle": "Save this wallet for future invoices?",
       "saveCryptoDesc": "Save this public wallet address and network to reuse it on future invoices.",
+      "saveCryptoCheckbox": "Save this wallet for future invoices",
+      "saveCheckboxHint": "You can manage saved payment methods anytime from Settings.",
       "saveMethod": "Save payment method",
       "notNow": "Not now",
-      "manageInSettings": "Manage saved payment methods"
+      "manageInSettings": "Manage payment methods"
     },
     "preview": {
       "livePreview": "Live preview",

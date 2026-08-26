@@ -14,14 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   CRYPTO_PAYMENT_CURRENCIES,
   INVOICE_CURRENCIES,
   PAYMENT_NETWORKS,
@@ -33,7 +25,6 @@ import { showBankFields, showCashFields, showCryptoFields } from "./build-paymen
 import type { InvoiceWizardState } from "./wizard-state";
 import { SavedPaymentMethodCard } from "@/components/payment-methods/SavedPaymentMethodCard";
 import {
-  createSavedPaymentMethod,
   listSavedPaymentMethods,
   touchSavedPaymentMethodUsed,
 } from "@/lib/payment-methods/store";
@@ -46,8 +37,6 @@ import {
   findDuplicateCrypto,
   type SavedPaymentMethod,
 } from "@/lib/payment-methods/types";
-import { formatAppError } from "@/lib/auth/errors";
-import { toast } from "sonner";
 
 const PRIMARY: {
   value: Exclude<PaymentMethodType, "multiple">;
@@ -91,8 +80,8 @@ function PaymentMethodCard({
         "box-border w-full min-w-0 rounded-xl border p-4 text-left transition cursor-pointer",
         fullWidth && "md:col-span-3",
         selected
-          ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
-          : "border-border bg-card hover:border-primary/30 hover:shadow-sm",
+          ? "border-primary bg-primary/5 shadow-soft ring-1 ring-primary/25"
+          : "border-border bg-card hover:border-primary/30 hover:shadow-soft",
       )}
     >
       <div className="flex items-start gap-3">
@@ -130,6 +119,38 @@ function Field({
   );
 }
 
+function SaveForFutureCheckbox({
+  id,
+  checked,
+  onCheckedChange,
+  title,
+  description,
+}: {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (next: boolean) => void;
+  title: string;
+  description: string;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex items-start gap-3 rounded-xl border border-border bg-soft-section/80 p-4 cursor-pointer"
+    >
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(v) => onCheckedChange(v === true)}
+        className="mt-0.5"
+      />
+      <span className="space-y-0.5 min-w-0">
+        <span className="text-sm font-medium block text-ink">{title}</span>
+        <span className="text-xs text-slate block leading-relaxed">{description}</span>
+      </span>
+    </label>
+  );
+}
+
 export function PaymentStep({
   state,
   onChange,
@@ -145,15 +166,22 @@ export function PaymentStep({
   const [saved, setSaved] = useState<SavedPaymentMethod[]>([]);
   const [manualBank, setManualBank] = useState(false);
   const [manualCrypto, setManualCrypto] = useState(false);
-  const [savePrompt, setSavePrompt] = useState<"bank" | "crypto" | null>(null);
-  const [saveBusy, setSaveBusy] = useState(false);
-  const [dismissedBankSave, setDismissedBankSave] = useState(false);
-  const [dismissedCryptoSave, setDismissedCryptoSave] = useState(false);
 
   useEffect(() => {
     void listSavedPaymentMethods()
-      .then(setSaved)
-      .catch(() => setSaved([]));
+      .then((methods) => {
+        setSaved(methods);
+        const banks = methods.filter((m) => m.type === "bank");
+        const cryptos = methods.filter((m) => m.type === "crypto");
+        // No saved methods → stay in the new-details form so the save checkbox is visible.
+        if (banks.length === 0) setManualBank(true);
+        if (cryptos.length === 0) setManualCrypto(true);
+      })
+      .catch(() => {
+        setSaved([]);
+        setManualBank(true);
+        setManualCrypto(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -214,14 +242,14 @@ export function PaymentStep({
   };
 
   const selectBank = (method: SavedPaymentMethod) => {
-    onChange({ bank: applySavedMethodToBank(method) });
+    onChange({ bank: applySavedMethodToBank(method), saveBankForFuture: false });
     onSavedMethodApplied?.("bank", method.id);
     setManualBank(false);
     void touchSavedPaymentMethodUsed(method.id);
   };
 
   const selectCrypto = (method: SavedPaymentMethod) => {
-    onChange({ crypto: applySavedMethodToCrypto(method) });
+    onChange({ crypto: applySavedMethodToCrypto(method), saveCryptoForFuture: false });
     onSavedMethodApplied?.("crypto", method.id);
     setManualCrypto(false);
     void touchSavedPaymentMethodUsed(method.id);
@@ -253,76 +281,25 @@ export function PaymentStep({
     state.crypto.currency,
   );
 
-  const showBankSaveHint =
-    bankVisible &&
-    manualBank &&
-    !selectedBankId &&
-    bankConfigLooksSavable(state.bank) &&
-    !bankDup &&
-    !dismissedBankSave;
+  const editingNewBank = bankVisible && (manualBank || banks.length === 0) && !selectedBankId;
+  const editingNewCrypto =
+    cryptoVisible && (manualCrypto || cryptos.length === 0) && !selectedCryptoId;
 
-  const showCryptoSaveHint =
-    cryptoVisible &&
-    manualCrypto &&
-    !selectedCryptoId &&
-    cryptoConfigLooksSavable(state.crypto) &&
-    !cryptoDup &&
-    !dismissedCryptoSave;
+  const showBankSaveCheckbox =
+    editingNewBank && bankConfigLooksSavable(state.bank) && !bankDup;
+  const showCryptoSaveCheckbox =
+    editingNewCrypto && cryptoConfigLooksSavable(state.crypto) && !cryptoDup;
 
-  const confirmSave = async () => {
-    if (!savePrompt) return;
-    setSaveBusy(true);
-    try {
-      if (savePrompt === "bank") {
-        const created = await createSavedPaymentMethod({
-          type: "bank",
-          label:
-            state.bank.bankName?.trim() ||
-            state.bank.accountName?.trim() ||
-            ts("paymentMethods.labelBankPlaceholder"),
-          bankName: state.bank.bankName,
-          accountHolderName: state.bank.accountName,
-          accountName: state.bank.accountName,
-          iban: state.bank.iban,
-          accountNumber: state.bank.accountNumber,
-          swiftBic: state.bank.swift,
-          bankCurrency: state.bank.currency,
-          paymentReference: state.bank.instructions,
-          isDefault: banks.length === 0,
-        });
-        setSaved((prev) => [...prev.filter((m) => m.id !== created.id), created]);
-        onSavedMethodApplied?.("bank", created.id);
-        toast.success(ts("paymentMethods.saved"));
-      } else {
-        const created = await createSavedPaymentMethod({
-          type: "crypto",
-          label:
-            `${state.crypto.currency} ${state.crypto.network}`.trim() ||
-            ts("paymentMethods.labelCryptoPlaceholder"),
-          cryptoCurrency: state.crypto.currency,
-          network: state.crypto.network,
-          walletAddress: state.crypto.walletAddress,
-          isDefault: cryptos.length === 0,
-        });
-        setSaved((prev) => [...prev.filter((m) => m.id !== created.id), created]);
-        onSavedMethodApplied?.("crypto", created.id);
-        toast.success(ts("paymentMethods.saved"));
-      }
-      setSavePrompt(null);
-    } catch (err) {
-      toast.error(formatAppError(err));
-    } finally {
-      setSaveBusy(false);
-    }
-  };
+  const showBankChooser = banks.length > 0 && !manualBank;
+  const showCryptoChooser = cryptos.length > 0 && !manualCrypto;
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 space-y-6 shadow-soft">
       <div>
         <h2
           ref={headingRef}
           tabIndex={-1}
-          className="text-lg font-semibold tracking-tight outline-none"
+          className="text-lg font-semibold tracking-tight outline-none text-ink"
         >
           {t("wizard.payment.heading")}
         </h2>
@@ -418,28 +395,26 @@ export function PaymentStep({
         )}
 
         {bankVisible && (
-          <div className="rounded-lg border border-border p-4 space-y-4">
+          <div className="rounded-xl border border-border bg-card p-4 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-medium">{t("create.paymentMethods.bankTransferTitle")}</p>
+              <p className="text-sm font-medium text-ink">{t("create.paymentMethods.bankTransferTitle")}</p>
               <p className="text-[11px] text-muted-foreground">{ts("paymentMethods.securityNote")}</p>
             </div>
 
-            {banks.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                <Link
-                  to="/settings/payment-methods"
-                  className="text-primary underline-offset-2 hover:underline font-medium"
-                >
-                  {t("create.savedPaymentMethods.manageInSettings")}
-                </Link>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {t("create.savedPaymentMethods.useSavedBank")}
               </p>
-            ) : null}
+              <Link
+                to="/settings/payment-methods"
+                className="text-xs text-primary underline-offset-2 hover:underline font-medium"
+              >
+                {t("create.savedPaymentMethods.manageInSettings")}
+              </Link>
+            </div>
 
-            {banks.length > 0 && !manualBank ? (
+            {showBankChooser ? (
               <div className="space-y-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  {t("create.savedPaymentMethods.useSaved")}
-                </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {banks.map((m) => (
                     <SavedPaymentMethodCard
@@ -452,7 +427,7 @@ export function PaymentStep({
                   ))}
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={startManualBank}>
-                  <Plus className="h-4 w-4" /> {t("create.savedPaymentMethods.addNew")}
+                  <Plus className="h-4 w-4" /> {t("create.savedPaymentMethods.addNewBank")}
                 </Button>
               </div>
             ) : (
@@ -463,7 +438,10 @@ export function PaymentStep({
                     variant="ghost"
                     size="sm"
                     className="px-0"
-                    onClick={() => setManualBank(false)}
+                    onClick={() => {
+                      setManualBank(false);
+                      onChange({ saveBankForFuture: false });
+                    }}
                   >
                     {t("create.savedPaymentMethods.backToSaved")}
                   </Button>
@@ -533,28 +511,14 @@ export function PaymentStep({
                     />
                   </Field>
                 </div>
-                {showBankSaveHint ? (
-                  <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
-                    <div>
-                      <p className="text-sm font-medium">{t("create.savedPaymentMethods.saveBankTitle")}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {t("create.savedPaymentMethods.saveBankDesc")}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" onClick={() => setSavePrompt("bank")}>
-                        {t("create.savedPaymentMethods.saveMethod")}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setDismissedBankSave(true)}
-                      >
-                        {t("create.savedPaymentMethods.notNow")}
-                      </Button>
-                    </div>
-                  </div>
+                {showBankSaveCheckbox ? (
+                  <SaveForFutureCheckbox
+                    id="save-bank-for-future"
+                    checked={state.saveBankForFuture}
+                    onCheckedChange={(next) => onChange({ saveBankForFuture: next })}
+                    title={t("create.savedPaymentMethods.saveBankCheckbox")}
+                    description={t("create.savedPaymentMethods.saveCheckboxHint")}
+                  />
                 ) : null}
               </>
             )}
@@ -562,28 +526,26 @@ export function PaymentStep({
         )}
 
         {cryptoVisible && (
-          <div className="rounded-lg border border-border p-4 space-y-4">
+          <div className="rounded-xl border border-border bg-card p-4 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-medium">{t("create.paymentMethods.cryptoPayment")}</p>
+              <p className="text-sm font-medium text-ink">{t("create.paymentMethods.cryptoPayment")}</p>
               <p className="text-[11px] text-muted-foreground">{ts("paymentMethods.securityNote")}</p>
             </div>
 
-            {cryptos.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                <Link
-                  to="/settings/payment-methods"
-                  className="text-primary underline-offset-2 hover:underline font-medium"
-                >
-                  {t("create.savedPaymentMethods.manageInSettings")}
-                </Link>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {t("create.savedPaymentMethods.useSavedCrypto")}
               </p>
-            ) : null}
+              <Link
+                to="/settings/payment-methods"
+                className="text-xs text-primary underline-offset-2 hover:underline font-medium"
+              >
+                {t("create.savedPaymentMethods.manageInSettings")}
+              </Link>
+            </div>
 
-            {cryptos.length > 0 && !manualCrypto ? (
+            {showCryptoChooser ? (
               <div className="space-y-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  {t("create.savedPaymentMethods.useSaved")}
-                </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {cryptos.map((m) => (
                     <SavedPaymentMethodCard
@@ -596,7 +558,7 @@ export function PaymentStep({
                   ))}
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={startManualCrypto}>
-                  <Plus className="h-4 w-4" /> {t("create.savedPaymentMethods.addNew")}
+                  <Plus className="h-4 w-4" /> {t("create.savedPaymentMethods.addNewCrypto")}
                 </Button>
               </div>
             ) : (
@@ -607,7 +569,10 @@ export function PaymentStep({
                     variant="ghost"
                     size="sm"
                     className="px-0"
-                    onClick={() => setManualCrypto(false)}
+                    onClick={() => {
+                      setManualCrypto(false);
+                      onChange({ saveCryptoForFuture: false });
+                    }}
                   >
                     {t("create.savedPaymentMethods.backToSaved")}
                   </Button>
@@ -658,30 +623,14 @@ export function PaymentStep({
                     />
                   </Field>
                 </div>
-                {showCryptoSaveHint ? (
-                  <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
-                    <div>
-                      <p className="text-sm font-medium">
-                        {t("create.savedPaymentMethods.saveCryptoTitle")}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {t("create.savedPaymentMethods.saveCryptoDesc")}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" onClick={() => setSavePrompt("crypto")}>
-                        {t("create.savedPaymentMethods.saveMethod")}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setDismissedCryptoSave(true)}
-                      >
-                        {t("create.savedPaymentMethods.notNow")}
-                      </Button>
-                    </div>
-                  </div>
+                {showCryptoSaveCheckbox ? (
+                  <SaveForFutureCheckbox
+                    id="save-crypto-for-future"
+                    checked={state.saveCryptoForFuture}
+                    onCheckedChange={(next) => onChange({ saveCryptoForFuture: next })}
+                    title={t("create.savedPaymentMethods.saveCryptoCheckbox")}
+                    description={t("create.savedPaymentMethods.saveCheckboxHint")}
+                  />
                 ) : null}
               </>
             )}
@@ -689,8 +638,8 @@ export function PaymentStep({
         )}
 
         {cashVisible && (
-          <div className="rounded-lg border border-border p-4 space-y-4">
-            <p className="text-sm font-medium">{t("create.paymentMethods.cashPayment")}</p>
+          <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+            <p className="text-sm font-medium text-ink">{t("create.paymentMethods.cashPayment")}</p>
             <div className="grid gap-4">
               <Field label={tc("labels.instructions")}>
                 <Textarea
@@ -713,31 +662,6 @@ export function PaymentStep({
           </div>
         )}
       </div>
-
-      <Dialog open={!!savePrompt} onOpenChange={(open) => !open && setSavePrompt(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {savePrompt === "bank"
-                ? t("create.savedPaymentMethods.saveBankTitle")
-                : t("create.savedPaymentMethods.saveCryptoTitle")}
-            </DialogTitle>
-            <DialogDescription>
-              {savePrompt === "bank"
-                ? t("create.savedPaymentMethods.saveBankDesc")
-                : t("create.savedPaymentMethods.saveCryptoDesc")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setSavePrompt(null)}>
-              {t("create.savedPaymentMethods.notNow")}
-            </Button>
-            <Button type="button" onClick={() => void confirmSave()} disabled={saveBusy}>
-              {t("create.savedPaymentMethods.saveMethod")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

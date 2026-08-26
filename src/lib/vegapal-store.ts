@@ -555,7 +555,7 @@ export function useSession() {
     cachedPendingEmailConfirmation,
   );
   const [authEmail, setAuthEmail] = useState<string | null>(cachedAuthEmail);
-  const [loading, setLoading] = useState(cachedProfile === null && !cachedPendingEmailConfirmation);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -616,13 +616,20 @@ export function useSession() {
     sessionListeners.add(cb);
 
     let cancelled = false;
+    let settled = false;
+    const finish = async () => {
+      if (cancelled || settled) return;
+      settled = true;
+      await refresh();
+    };
+
     void (async () => {
       if (typeof window !== "undefined" && window.location.pathname === "/reset-password") {
-        if (!cancelled) await refresh();
+        await finish();
         return;
       }
       await completeAuthFromUrl();
-      if (!cancelled) await refresh();
+      if (!cancelled) await finish();
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -630,10 +637,15 @@ export function useSession() {
         event === "INITIAL_SESSION" ||
         event === "SIGNED_IN" ||
         event === "SIGNED_OUT" ||
+        event === "TOKEN_REFRESHED" ||
         event === "USER_UPDATED" ||
         event === "PASSWORD_RECOVERY"
       ) {
-        refresh();
+        if (event === "INITIAL_SESSION") {
+          void finish();
+        } else if (settled) {
+          void refresh();
+        }
       }
     });
     return () => {
@@ -694,6 +706,10 @@ export const auth = {
       refresh_token: result.session.refresh_token,
     });
     if (sessionError) throw sessionError;
+
+    // Ensure tokens land in localStorage (remember on) or sessionStorage (remember off).
+    const { migrateAuthSessionToPreferredStorage } = await import("@/lib/auth/auth-session-storage");
+    migrateAuthSessionToPreferredStorage();
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;

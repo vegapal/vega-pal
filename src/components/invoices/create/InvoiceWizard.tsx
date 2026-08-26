@@ -114,6 +114,8 @@ function stateFromExisting(existing: Invoice): InvoiceWizardState {
     cash: { ...existing.paymentMethods.cash },
     alreadyPaid: existing.paymentStatus === "paid",
     showExtraClient: false,
+    saveBankForFuture: false,
+    saveCryptoForFuture: false,
   };
 }
 
@@ -340,6 +342,55 @@ export function InvoiceWizard({ editId }: Props) {
       const documentStatus = asDraft ? "draft" : "issued";
       const payload = buildPayload(documentStatus);
 
+      // Persist newly entered methods only when the user explicitly opted in.
+      // Invoice payload always keeps a snapshot — editing saved methods later won't rewrite old invoices.
+      if (!selectedBankId && state.saveBankForFuture) {
+        const { bankConfigLooksSavable } = await import("@/lib/payment-methods/types");
+        if (bankConfigLooksSavable(state.bank)) {
+          try {
+            const { createSavedPaymentMethod } = await import("@/lib/payment-methods/store");
+            const created = await createSavedPaymentMethod({
+              type: "bank",
+              label:
+                state.bank.bankName?.trim() ||
+                state.bank.accountName?.trim() ||
+                "Bank account",
+              bankName: state.bank.bankName,
+              accountHolderName: state.bank.accountName,
+              accountName: state.bank.accountName,
+              iban: state.bank.iban,
+              accountNumber: state.bank.accountNumber,
+              swiftBic: state.bank.swift,
+              bankCurrency: state.bank.currency,
+              paymentReference: state.bank.instructions,
+              isDefault: false,
+            });
+            setSelectedBankId(created.id);
+          } catch {
+            /* invoice save still proceeds; method save is best-effort */
+          }
+        }
+      }
+      if (!selectedCryptoId && state.saveCryptoForFuture) {
+        const { cryptoConfigLooksSavable } = await import("@/lib/payment-methods/types");
+        if (cryptoConfigLooksSavable(state.crypto)) {
+          try {
+            const { createSavedPaymentMethod } = await import("@/lib/payment-methods/store");
+            const created = await createSavedPaymentMethod({
+              type: "crypto",
+              label: `${state.crypto.currency} ${state.crypto.network}`.trim() || "Crypto wallet",
+              cryptoCurrency: state.crypto.currency,
+              network: state.crypto.network,
+              walletAddress: state.crypto.walletAddress,
+              isDefault: false,
+            });
+            setSelectedCryptoId(created.id);
+          } catch {
+            /* best-effort */
+          }
+        }
+      }
+
       if (editId && existing) {
         await invoices.update(existing.id, payload);
         notifyInvoices();
@@ -384,14 +435,14 @@ export function InvoiceWizard({ editId }: Props) {
     <div className="box-border mx-auto w-full min-w-0 max-w-6xl overflow-x-hidden px-4 sm:px-6 lg:px-10 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] lg:pb-10">
       <Link
         to="/invoices"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+        className="inline-flex items-center gap-1.5 text-sm text-slate hover:text-ink mb-4"
       >
         <ArrowLeft className="h-4 w-4" /> {t("create.backToInvoices")}
       </Link>
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
         {editId ? t("create.editTitle") : t("wizard.pageTitle")}
       </h1>
-      <p className="text-muted-foreground mt-1">
+      <p className="text-slate mt-1">
         {editId ? t("create.subtitle") : t("wizard.pageSubtitle")}
       </p>
 

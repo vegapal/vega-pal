@@ -102,14 +102,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/site.webmanifest" },
       {
         rel: "preload",
-        href: "/fonts/inter/inter-latin-400-normal.woff2",
+        href: "/fonts/manrope/manrope-latin-400-normal.woff2",
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous",
       },
       {
         rel: "preload",
-        href: "/fonts/inter/inter-latin-700-normal.woff2",
+        href: "/fonts/manrope/manrope-latin-600-normal.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preload",
+        href: "/fonts/manrope/manrope-latin-700-normal.woff2",
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous",

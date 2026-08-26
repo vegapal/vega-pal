@@ -14,6 +14,7 @@ import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 import { FormError } from "@/components/ui/form-error";
 import { EmailConfirmationActions } from "@/components/auth/EmailConfirmationActions";
 import { formatAuthError } from "@/lib/auth/errors";
+import { getRememberMePreference, setRememberMePreference } from "@/lib/auth/auth-session-storage";
 import { useTurnstile } from "@/hooks/use-turnstile";
 import { useSubmitGuard } from "@/hooks/use-submit-guard";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
@@ -47,7 +48,7 @@ function LoginPage() {
   const { t: tc } = useTranslation("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
@@ -78,7 +79,6 @@ function LoginPage() {
     const normalizedEmail = parsed.data.email.toLowerCase();
     try {
       turnstile.requireToken();
-      const { setRememberMePreference } = await import("@/lib/auth/auth-session-storage");
       setRememberMePreference(rememberMe);
       await auth.signIn(normalizedEmail, parsed.data.password, turnstile.enabled ? turnstile.token : undefined);
       trackLogin("email");
@@ -219,11 +219,11 @@ export function AuthLayout({
           {t("panel.copyright", { year: new Date().getFullYear() })}
         </div>
       </div>
-      <div className="flex items-start sm:items-center justify-center px-5 pt-6 pb-10 sm:p-8 lg:p-12 relative min-w-0">
+      <div className="flex items-start sm:items-center justify-center px-5 pt-6 pb-10 sm:p-8 lg:p-12 relative min-w-0 bg-canvas">
         <div className="absolute top-4 end-4 z-10">
           <LanguageSwitcher />
         </div>
-        <div className="w-full max-w-[24rem] min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-7 shadow-soft sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none lg:border-0">
+        <div className="w-full max-w-[24rem] min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-7 shadow-soft">
           <div className="lg:hidden mb-6">
             <Link to="/" className="inline-flex">
               <Logo size="default" />

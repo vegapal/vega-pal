@@ -35,12 +35,71 @@ const memoryStorage: StorageLike = {
   },
 };
 
-function activeBackend(): StorageLike {
-  if (typeof window === "undefined") return memoryStorage;
+function readRaw(storage: Storage, key: string): string | null {
   try {
-    return getRememberMePreference() ? window.localStorage : window.sessionStorage;
+    return storage.getItem(key);
   } catch {
-    return memoryStorage;
+    return null;
+  }
+}
+
+function writeRaw(storage: Storage, key: string, value: string): void {
+  storage.setItem(key, value);
+}
+
+function removeRaw(storage: Storage, key: string): void {
+  try {
+    storage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Move an auth session payload into the storage backend that matches the
+ * current Remember me preference. Safe to call after login / preference flips.
+ */
+export function migrateAuthSessionToPreferredStorage(storageKey?: string): void {
+  if (typeof window === "undefined") return;
+  const discovered = new Set<string>();
+  const collect = (storage: Storage) => {
+    try {
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (!key) continue;
+        if (
+          key.includes("auth-token") ||
+          key.includes("supabase.auth") ||
+          key.startsWith("sb-")
+        ) {
+          discovered.add(key);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+  collect(window.localStorage);
+  collect(window.sessionStorage);
+  if (storageKey) discovered.add(storageKey);
+
+  const remember = getRememberMePreference();
+  for (const key of discovered) {
+    const fromLocal = readRaw(window.localStorage, key);
+    const fromSession = readRaw(window.sessionStorage, key);
+    const value = remember ? fromLocal ?? fromSession : fromSession ?? fromLocal;
+    if (value == null) continue;
+    try {
+      if (remember) {
+        writeRaw(window.localStorage, key, value);
+        removeRaw(window.sessionStorage, key);
+      } else {
+        writeRaw(window.sessionStorage, key, value);
+        removeRaw(window.localStorage, key);
+      }
+    } catch {
+      /* ignore quota / private mode */
+    }
   }
 }
 
@@ -48,20 +107,33 @@ function activeBackend(): StorageLike {
  * Supabase auth storage:
  * - Remember me on → localStorage (survives browser restart)
  * - Remember me off → sessionStorage (cleared when browser closes)
- * - removeItem clears both so Sign out / preference flips never leave a stale session
+ * - getItem never destroys the other backend merely because it is empty
+ * - removeItem clears both so Sign out never leaves a stale session
  */
 export const authSessionStorage: StorageLike = {
   getItem(key) {
-    const backend = activeBackend();
-    const value = backend.getItem(key);
-    if (value != null) return value;
-    // Prefer active backend; if empty and remember is off, do not fall back to localStorage.
-    if (!getRememberMePreference() && typeof window !== "undefined") {
-      try {
-        window.localStorage.removeItem(key);
-      } catch {
-        /* ignore */
+    if (typeof window === "undefined") return memoryStorage.getItem(key);
+
+    const remember = getRememberMePreference();
+    try {
+      const preferred = remember ? window.localStorage : window.sessionStorage;
+      const fallback = remember ? window.sessionStorage : window.localStorage;
+      const preferredValue = readRaw(preferred, key);
+      if (preferredValue != null) return preferredValue;
+
+      const fallbackValue = readRaw(fallback, key);
+      if (fallbackValue != null) {
+        // Recover + migrate so the next restart uses the correct backend.
+        try {
+          writeRaw(preferred, key, fallbackValue);
+          removeRaw(fallback, key);
+        } catch {
+          /* still return the recovered value */
+        }
+        return fallbackValue;
       }
+    } catch {
+      return memoryStorage.getItem(key);
     }
     return null;
   },
@@ -70,31 +142,23 @@ export const authSessionStorage: StorageLike = {
     if (typeof window !== "undefined") {
       try {
         if (remember) {
-          window.sessionStorage.removeItem(key);
-          window.localStorage.setItem(key, value);
+          writeRaw(window.localStorage, key, value);
+          removeRaw(window.sessionStorage, key);
         } else {
-          window.localStorage.removeItem(key);
-          window.sessionStorage.setItem(key, value);
+          writeRaw(window.sessionStorage, key, value);
+          removeRaw(window.localStorage, key);
         }
         return;
       } catch {
-        /* fall through */
+        /* fall through to memory */
       }
     }
-    activeBackend().setItem(key, value);
+    memoryStorage.setItem(key, value);
   },
   removeItem(key) {
     if (typeof window !== "undefined") {
-      try {
-        window.localStorage.removeItem(key);
-      } catch {
-        /* ignore */
-      }
-      try {
-        window.sessionStorage.removeItem(key);
-      } catch {
-        /* ignore */
-      }
+      removeRaw(window.localStorage, key);
+      removeRaw(window.sessionStorage, key);
     }
     memoryStorage.removeItem(key);
   },

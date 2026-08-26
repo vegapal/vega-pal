@@ -223,7 +223,7 @@ function Landing() {
           };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-canvas overflow-x-hidden">
       {subscriptionPlan !== null && (
         <Suspense fallback={null}>
           <SubscriptionPaymentModal
@@ -394,7 +394,7 @@ function Landing() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="py-24 bg-background border-y border-border">
+      <section id="how" className="py-24 bg-soft-section border-y border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-primary uppercase tracking-wider">{t("howItWorks.eyebrow")}</p>
@@ -402,7 +402,7 @@ function Landing() {
           </div>
           <div className="mt-14 grid md:grid-cols-3 gap-6">
             {HOW_IT_WORKS_STEPS.map((s) => (
-              <div key={s.n} className="rounded-2xl bg-canvas border border-border p-7 shadow-soft">
+              <div key={s.n} className="rounded-2xl bg-card border border-border p-7 shadow-soft">
                 <span className="text-primary font-mono text-sm font-semibold">{s.n}</span>
                 <h3 className="mt-3 text-xl font-semibold text-ink">{t(`howItWorks.steps.${s.key}`)}</h3>
               </div>
@@ -412,7 +412,7 @@ function Landing() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-24 bg-canvas">
+      <section id="pricing" className="py-24 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-primary uppercase tracking-wider">{t("pricing.eyebrow")}</p>

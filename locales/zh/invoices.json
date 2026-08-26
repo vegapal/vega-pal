@@ -106,15 +106,22 @@
     },
     "savedPaymentMethods": {
       "useSaved": "使用已保存的付款方式",
+      "useSavedBank": "使用已保存的银行账户",
+      "useSavedCrypto": "使用已保存的钱包",
       "addNew": "添加新付款方式",
+      "addNewBank": "添加新银行账户",
+      "addNewCrypto": "添加新钱包",
       "backToSaved": "使用已保存的付款方式",
       "saveBankTitle": "保存此银行账户以用于未来发票？",
       "saveBankDesc": "安全保存到您的 VegaPal 账户，以便在未来发票中复用。",
+      "saveBankCheckbox": "保存此银行账户以用于未来发票",
       "saveCryptoTitle": "保存此钱包以用于未来发票？",
       "saveCryptoDesc": "保存此公开钱包地址和网络，以便在未来发票中复用。",
+      "saveCryptoCheckbox": "保存此钱包以用于未来发票",
+      "saveCheckboxHint": "您可以随时在设置中管理已保存的付款方式。",
       "saveMethod": "保存付款方式",
       "notNow": "暂时不用",
-      "manageInSettings": "管理已保存的付款方式"
+      "manageInSettings": "管理付款方式"
     }
   },
   "wizard": {
