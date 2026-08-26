@@ -18,21 +18,25 @@ export function useResendConfirmation(email: string) {
     return () => window.clearInterval(timer);
   }, [secondsLeft]);
 
-  const resend = useCallback(async () => {
-    if (!email || secondsLeft > 0 || resending) return;
-    setError("");
-    setSuccess(false);
-    setResending(true);
-    try {
-      await auth.resendConfirmationEmail(email);
-      setSuccess(true);
-      setSecondsLeft(COOLDOWN_SEC);
-    } catch (err) {
-      setError(formatAuthError(err));
-    } finally {
-      setResending(false);
-    }
-  }, [email, resending, secondsLeft]);
+  const resend = useCallback(
+    async (turnstileToken?: string) => {
+      if (!email || secondsLeft > 0 || resending) return;
+      setError("");
+      setSuccess(false);
+      setResending(true);
+      try {
+        await auth.resendConfirmationEmail(email, turnstileToken);
+        setSuccess(true);
+        setSecondsLeft(COOLDOWN_SEC);
+      } catch (err) {
+        setError(formatAuthError(err));
+        throw err;
+      } finally {
+        setResending(false);
+      }
+    },
+    [email, resending, secondsLeft],
+  );
 
   return {
     resend,

@@ -23,11 +23,16 @@ export async function handleHealthCheckRequest(): Promise<Response> {
   );
   const urlDebug = await probeSupabaseUrlConfig();
   const probeTarget = describeProfilesProbeTarget(urlDebug.host);
-  console.error("[health] supabase url debug (temporary)", {
-    ...urlDebug,
-    profilesProbeTarget: probeTarget,
-    serviceRoleKeyDefined: env.supabaseServiceRoleKey,
-  });
+  const isProduction =
+    process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+
+  if (!isProduction) {
+    console.error("[health] supabase url debug (temporary)", {
+      ...urlDebug,
+      profilesProbeTarget: probeTarget,
+      serviceRoleKeyDefined: env.supabaseServiceRoleKey,
+    });
+  }
 
   let supabaseReachable = false;
   if (env.supabaseUrl && env.supabaseServiceRoleKey) {
@@ -70,10 +75,20 @@ export async function handleHealthCheckRequest(): Promise<Response> {
 
   const requiredEnvOk = Object.values(env).every(Boolean);
 
+  // Production: minimal public payload (no host/DNS/env booleans — reconnaissance aid).
+  if (isProduction) {
+    return json({
+      ok: requiredEnvOk && supabaseReachable,
+    });
+  }
+
   return json({
     ok: requiredEnvOk && supabaseReachable,
     app: "ok",
     supabase: supabaseReachable,
     env,
+    supabaseHost: urlDebug.host,
+    supabaseDnsResolved: urlDebug.dnsResolved,
+    supabaseDnsErrorCode: urlDebug.dnsErrorCode,
   });
 }

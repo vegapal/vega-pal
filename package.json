@@ -19,6 +19,7 @@
     "db:migrate": "node scripts/run-migrations.mjs",
     "db:check-refs": "node scripts/check-hardcoded-supabase-refs.mjs",
     "seo:check-origin": "node scripts/check-seo-origin.mjs",
+    "seo:sitemap": "node scripts/generate-sitemap.mjs",
     "analytics:check": "node scripts/check-analytics-config.mjs",
     "analytics:check-pii": "node scripts/check-analytics-pii.mjs",
     "test:turnstile": "node scripts/test-turnstile-verify.mjs",
@@ -33,7 +34,9 @@
     "test:sidebar-account": "node scripts/test-sidebar-account.mjs",
     "test:quotation-conversion": "node scripts/test-quotation-conversion.mjs",
     "test:auth-persistence": "node scripts/test-auth-persistence.mjs",
-    "test:auth-remember-me": "playwright test -c playwright.auth.config.ts"
+    "test:auth-remember-me": "playwright test -c playwright.auth.config.ts",
+    "security:check-client-secrets": "node scripts/check-client-secrets.mjs",
+    "test:security-contracts": "npx tsx scripts/test-security-contracts.harness.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

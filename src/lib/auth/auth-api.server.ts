@@ -6,8 +6,14 @@ import {
   authApiJson,
   responseFromSupabaseAuthError,
   serviceUnavailableResponse,
+  supabaseUnreachableResponse,
 } from "@/lib/auth/auth-api-response";
-import { getMissingSupabaseServerEnv, requireSupabaseServerEnv } from "@/lib/auth/supabase-env.server";
+import {
+  getMissingSupabaseServerEnv,
+  getSupabaseServerHost,
+  requireSupabaseServerEnv,
+} from "@/lib/auth/supabase-env.server";
+import { safeNetworkErrorFields } from "@/lib/health/network-error-log.server";
 import {
   checkServerRateLimit,
   clientIpFromRequest,
@@ -49,12 +55,31 @@ function createAuthClient() {
   });
 }
 
+function logAuthStep(step: string, extra?: Record<string, unknown>): void {
+  // Safe operational diagnostics only — never log tokens, passwords, or keys.
+  console.info(
+    JSON.stringify({
+      event: "auth_login_step",
+      step,
+      host: getSupabaseServerHost(),
+      ...extra,
+    }),
+  );
+}
+
 async function verifyTurnstileForAuth(request: Request, token: string | undefined): Promise<Response | null> {
   const remoteIp = clientIpFromRequest(request);
   const host = request.headers.get("host");
   const result = await verifyTurnstileToken(token ?? "", { remoteIp, host });
   if (!result.success) {
-    return authApiError(403, "captcha_verification_failed");
+    console.warn(
+      JSON.stringify({
+        event: "auth_turnstile_failed",
+        requestHost: host ? host.split(":")[0] : null,
+        skipped: Boolean(result.skipped),
+      }),
+    );
+    return authApiError(403, "Captcha verification failed. Please try again.", "captcha_verification_failed");
   }
   return null;
 }
@@ -189,11 +214,15 @@ async function handleSignup(request: Request): Promise<Response> {
 
 async function handleLogin(request: Request): Promise<Response> {
   const missing = getMissingSupabaseServerEnv();
-  if (missing.length > 0) return serviceUnavailableResponse(missing);
+  if (missing.length > 0) {
+    logAuthStep("missing_env", { missingEnv: missing });
+    return serviceUnavailableResponse(missing);
+  }
 
   const ip = clientIpFromRequest(request);
   const rate = checkServerRateLimit(`login:${ip}`, 15, 15 * 60_000);
   if (!rate.allowed) {
+    logAuthStep("rate_limited", { retryAfterSec: rate.retryAfterSec });
     return authApiError(
       429,
       `Too many attempts. Try again in ${rate.retryAfterSec} seconds.`,
@@ -205,52 +234,100 @@ async function handleLogin(request: Request): Promise<Response> {
   try {
     body = (await request.json()) as Record<string, unknown>;
   } catch {
+    logAuthStep("invalid_json");
     return authApiError(400, "Invalid request body.", "invalid_json");
   }
 
-  const captchaBlock = await verifyTurnstileForAuth(request, typeof body.turnstileToken === "string" ? body.turnstileToken : undefined);
-  if (captchaBlock) return captchaBlock;
+  logAuthStep("turnstile_start");
+  const captchaBlock = await verifyTurnstileForAuth(
+    request,
+    typeof body.turnstileToken === "string" ? body.turnstileToken : undefined,
+  );
+  if (captchaBlock) {
+    logAuthStep("turnstile_failed");
+    return captchaBlock;
+  }
+  logAuthStep("turnstile_ok");
 
   const parsed = loginSchema.safeParse({ email: body.email, password: body.password });
   if (!parsed.success) {
+    logAuthStep("validation_failed");
     return authApiError(400, formatZodError(parsed.error), "validation_failed");
   }
 
   const email = parsed.data.email.toLowerCase();
 
   try {
+    logAuthStep("supabase_signin_start");
     const supabase = createAuthClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password: parsed.data.password,
     });
 
-    if (error) return responseFromSupabaseAuthError(error, "login");
+    if (error) {
+      logAuthStep("supabase_signin_failed", { code: error.code ?? "unknown" });
+      return responseFromSupabaseAuthError(error, "login");
+    }
+    logAuthStep("supabase_signin_ok");
 
     const user = data.user;
     if (user && !isEmailConfirmed(user)) {
       await supabase.auth.signOut();
+      logAuthStep("email_not_confirmed");
       return authApiError(403, "Please confirm your email before continuing.", "email_not_confirmed");
     }
 
     if (user) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("is_disabled")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (profile?.is_disabled) {
-        await supabase.auth.signOut();
-        return authApiError(403, "This account has been disabled. Contact support if you need help.", "account_disabled");
+      logAuthStep("profile_lookup_start");
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: profile, error: profileError } = await supabaseAdmin
+          .from("profiles")
+          .select("is_disabled")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (profileError) {
+          console.error(
+            JSON.stringify({
+              event: "auth_profile_lookup_failed",
+              code: profileError.code ?? "unknown",
+              host: getSupabaseServerHost(),
+            }),
+          );
+          await supabase.auth.signOut();
+          return supabaseUnreachableResponse("login_profile", new Error(profileError.message));
+        }
+        if (profile?.is_disabled) {
+          await supabase.auth.signOut();
+          logAuthStep("account_disabled");
+          return authApiError(
+            403,
+            "This account has been disabled. Contact support if you need help.",
+            "account_disabled",
+          );
+        }
+        logAuthStep("profile_lookup_ok");
+      } catch (profileErr) {
+        await supabase.auth.signOut().catch(() => undefined);
+        console.error(
+          JSON.stringify({
+            event: "auth_profile_lookup_threw",
+            host: getSupabaseServerHost(),
+            ...safeNetworkErrorFields(profileErr),
+          }),
+        );
+        return supabaseUnreachableResponse("login_profile", profileErr);
       }
     }
 
     const session = data.session;
     if (!session) {
+      logAuthStep("missing_session");
       return authApiError(401, "Incorrect email or password.", "invalid_credentials");
     }
 
+    logAuthStep("login_ok");
     return authApiJson({
       ok: true,
       session: {
@@ -271,8 +348,22 @@ async function handleLogin(request: Request): Promise<Response> {
     if (err instanceof Error && err.message.includes("Missing Supabase")) {
       return serviceUnavailableResponse(getMissingSupabaseServerEnv());
     }
-    console.error("[auth-api] login unexpected error");
-    return authApiError(500, "Something went wrong. Please try again.");
+    const network = safeNetworkErrorFields(err);
+    if (
+      network.message.toLowerCase().includes("fetch failed") ||
+      network.causeCode === "ENOTFOUND" ||
+      network.causeCode === "ECONNREFUSED"
+    ) {
+      return supabaseUnreachableResponse("login", err);
+    }
+    console.error(
+      JSON.stringify({
+        event: "auth_login_unexpected",
+        host: getSupabaseServerHost(),
+        ...network,
+      }),
+    );
+    return authApiError(500, "Something went wrong. Please try again.", "internal_error");
   }
 }
 
@@ -417,6 +508,12 @@ async function handleResendConfirmation(request: Request): Promise<Response> {
   if (!parsed.success) {
     return authApiError(400, formatZodError(parsed.error), "validation_failed");
   }
+
+  const captchaBlock = await verifyTurnstileForAuth(
+    request,
+    typeof body.turnstileToken === "string" ? body.turnstileToken : undefined,
+  );
+  if (captchaBlock) return captchaBlock;
 
   try {
     const supabase = createAuthClient();
