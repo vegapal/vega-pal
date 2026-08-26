@@ -15,6 +15,10 @@ import {
 import { handleHealthCheckRequest } from "../src/lib/health/health-check.server.ts";
 import { SECURITY_HEADERS } from "../src/lib/security-headers.ts";
 import { FREE_PLAN_MONTHLY_INVOICE_LIMIT } from "../src/lib/admin/plans.ts";
+import {
+  PUBLIC_INVOICE_FORBIDDEN_KEYS,
+  PUBLIC_INVOICE_SELECT,
+} from "../src/lib/invoices/public-invoice.ts";
 import type { InvoiceDocumentModel } from "../src/components/invoice-document/invoice-document.types.ts";
 
 function pass(id: string) {
@@ -119,6 +123,17 @@ function testMigrationRpcGuards() {
   pass("security migration RPC guards present");
 }
 
+function testPublicPayPageAllowlist() {
+  const payRoute = readFileSync(join(process.cwd(), "src/routes/pay.$id.tsx"), "utf8");
+  assert.ok(payRoute.includes("usePublicInvoice"), "pay route must use usePublicInvoice");
+  assert.ok(!payRoute.includes('select("*")'), "pay route must not use select(*)");
+
+  for (const forbidden of PUBLIC_INVOICE_FORBIDDEN_KEYS) {
+    assert.ok(!PUBLIC_INVOICE_SELECT.includes(forbidden), `${forbidden} must not be in public select`);
+  }
+  pass("public pay page column allowlist");
+}
+
 function testRobotsBlocksPrivateRoutes() {
   const robots = readFileSync(join(process.cwd(), "public/robots.txt"), "utf8");
   for (const path of ["/dashboard", "/admin", "/pay", "/invoices", "/settings"]) {
@@ -133,6 +148,7 @@ async function main() {
   testPdfEscapesUserHtml();
   testSecurityHeaders();
   testMigrationRpcGuards();
+  testPublicPayPageAllowlist();
   testRobotsBlocksPrivateRoutes();
   await testHealthProductionMinimal();
   console.log("\nAll security contract checks passed.");

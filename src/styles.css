@@ -234,7 +234,7 @@
 @layer base {
   * { border-color: var(--color-border); }
   html {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   body {
     background-color: var(--color-background);
@@ -242,7 +242,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv11", "ss01", "ss03", "tnum";
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   /* Inherit surface text color — never force ink on dark branded panels */
   h1, h2, h3, h4 {

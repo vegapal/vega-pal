@@ -104,7 +104,7 @@ function CurrencyPicker({
       <PopoverContent
         align="start"
         sideOffset={6}
-        className="w-[min(100vw-2rem,var(--radix-popover-trigger-width))] rounded-[18px] border border-border/50 bg-white p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.14)]"
+        className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100%-0.5rem)] rounded-[18px] border border-border/50 bg-white p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.14)]"
       >
         <div className="max-h-56 sm:max-h-72 overflow-y-auto overscroll-contain">
           {SUPPORTED_CURRENCIES.map((code) => {

@@ -1,6 +1,6 @@
 import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import { useInvoice } from "@/lib/vegapal-store";
+import { usePublicInvoice } from "@/lib/invoices/public-invoice";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
 import {
   formatInvoiceAmount,
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/pay/$id")({
 
 function PublicInvoice() {
   const { id } = useParams({ from: "/pay/$id" });
-  const { data: inv, loading } = useInvoice(id);
+  const { data: inv, loading } = usePublicInvoice(id);
 
   if (loading) {
     return (

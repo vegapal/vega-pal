@@ -36,7 +36,9 @@
     "test:auth-persistence": "node scripts/test-auth-persistence.mjs",
     "test:auth-remember-me": "playwright test -c playwright.auth.config.ts",
     "security:check-client-secrets": "node scripts/check-client-secrets.mjs",
-    "test:security-contracts": "npx tsx scripts/test-security-contracts.harness.ts"
+    "test:security-contracts": "npx tsx scripts/test-security-contracts.harness.ts",
+    "test:cross-user-auth": "npx tsx scripts/test-cross-user-auth.harness.ts",
+    "test:mobile-prelaunch": "node scripts/run-mobile-prelaunch.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
