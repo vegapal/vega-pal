@@ -197,5 +197,16 @@
     "appearanceSystem": "System",
     "appearanceLight": "Light",
     "appearanceDark": "Dark"
+  },
+  "pdf": {
+    "actionsLabel": "PDF 操作",
+    "download": "下载 PDF",
+    "share": "分享 PDF",
+    "view": "查看 PDF",
+    "preparing": "正在准备 PDF…",
+    "downloaded": "PDF 已下载",
+    "shared": "已分享",
+    "shareFallbackDownload": "此处无法分享 — 已改为下载 PDF。",
+    "generateFailed": "无法生成 PDF，请重试。"
   }
 }

@@ -283,6 +283,12 @@ Migration `20260629120000_grant_initial_admin.sql` may promote a specific email 
 | Admin API 403 | `role` not `admin` or user disabled |
 | Turnstile blocks login on prod | Keys missing or domain not `vega-pal.com` |
 
+### Saved payment methods (2026-08-26)
+
+Apply migration `supabase/migrations/20260826160000_saved_payment_methods.sql` on existing projects (SQL Editor), or re-run a fresh `docs/BOOTSTRAP_FRESH_DATABASE.sql` on new projects.
+
+Creates `public.payment_methods` with owner-only RLS. Invoice `payment_methods` JSONB remains the historical snapshot — editing/deleting saved methods does not change old invoices.
+
 ---
 
 ## Repo maintenance

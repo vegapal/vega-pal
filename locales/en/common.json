@@ -195,6 +195,17 @@
     "walletAlt": "USDT wallet QR code",
     "walletQrAlt": "Wallet QR code"
   },
+  "pdf": {
+    "actionsLabel": "PDF actions",
+    "download": "Download PDF",
+    "share": "Share PDF",
+    "view": "View PDF",
+    "preparing": "Preparing PDF...",
+    "downloaded": "PDF downloaded",
+    "shared": "Shared",
+    "shareFallbackDownload": "Sharing isn't available here — your PDF was downloaded instead.",
+    "generateFailed": "We couldn't generate your PDF. Please try again."
+  },
   "time": {
     "justNow": "just now",
     "secAgo": "{{count}} sec ago",

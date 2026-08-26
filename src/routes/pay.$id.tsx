@@ -12,14 +12,10 @@ import { dueDateFieldLabel } from "@/lib/invoice/document-labels";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { StatusPill } from "@/components/StatusBadge";
-import { Check, ShieldCheck, Sparkles, Download, Ban } from "lucide-react";
+import { InvoicePdfActions } from "@/components/invoice/InvoicePdfActions";
+import { Check, ShieldCheck, Sparkles, Ban } from "lucide-react";
 
 import type { Invoice } from "@/lib/vegapal-store";
-
-async function downloadInvoicePdf(inv: Invoice) {
-  const { downloadInvoicePdf } = await import("@/lib/pdf/download-invoice-pdf");
-  await downloadInvoicePdf(inv);
-}
 
 const PaymentMethodCards = lazy(() =>
   import("@/components/invoice/PaymentMethodCards").then((m) => ({
@@ -28,7 +24,7 @@ const PaymentMethodCards = lazy(() =>
 );
 
 export const Route = createFileRoute("/pay/$id")({
-  beforeLoad: () => ensureNamespacesLoaded(["invoices"]),
+  beforeLoad: () => ensureNamespacesLoaded(["invoices", "common"]),
   head: () => ({
     meta: [
       { title: "Pay invoice — VegaPal" },
@@ -127,18 +123,23 @@ function PublicInvoice() {
               ))}
             </div>
             <div className="w-full sm:w-auto sm:ml-auto shrink-0">
-              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => downloadInvoicePdf(inv)}>
-                <Download className="h-4 w-4" /> Download PDF
-              </Button>
+              <InvoicePdfActions
+                invoice={inv}
+                publicUrl={typeof window !== "undefined" ? window.location.href : undefined}
+                size="sm"
+                className="justify-end"
+              />
             </div>
           </div>
         )}
 
         {!d.showSellerInfo && (
           <div className="flex justify-end mb-6">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => downloadInvoicePdf(inv)}>
-              <Download className="h-4 w-4" /> Download PDF
-            </Button>
+            <InvoicePdfActions
+              invoice={inv}
+              publicUrl={typeof window !== "undefined" ? window.location.href : undefined}
+              size="sm"
+            />
           </div>
         )}
 

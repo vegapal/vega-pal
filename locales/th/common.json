@@ -197,5 +197,16 @@
     "appearanceSystem": "System",
     "appearanceLight": "Light",
     "appearanceDark": "Dark"
+  },
+  "pdf": {
+    "actionsLabel": "การดำเนินการ PDF",
+    "download": "ดาวน์โหลด PDF",
+    "share": "แชร์ PDF",
+    "view": "ดู PDF",
+    "preparing": "กำลังเตรียม PDF...",
+    "downloaded": "ดาวน์โหลด PDF แล้ว",
+    "shared": "แชร์แล้ว",
+    "shareFallbackDownload": "ไม่สามารถแชร์ได้ที่นี่ — ดาวน์โหลด PDF ให้แทนแล้ว",
+    "generateFailed": "ไม่สามารถสร้าง PDF ได้ กรุณาลองอีกครั้ง"
   }
 }

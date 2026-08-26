@@ -1,45 +1,72 @@
 import type { Invoice } from "@/lib/vegapal-store";
-import { supabase } from "@/integrations/supabase/client";
-import { isHtmlInvoicePdfEnabled } from "@/lib/pdf/html-invoice-pdf-flag";
+import { createInvoicePdfFile } from "@/lib/pdf/create-invoice-pdf-file";
+import {
+  canShare,
+  canShareFiles,
+  openBlobInNewTab,
+  triggerBlobDownload,
+} from "@/lib/pdf/pdf-filename";
 
 export async function downloadInvoicePdf(inv: Invoice): Promise<void> {
-  if (!isHtmlInvoicePdfEnabled()) {
-    const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
-    await generateInvoicePDF(inv);
-    return;
-  }
+  const { blob, filename } = await createInvoicePdfFile(inv);
+  triggerBlobDownload(blob, filename);
+}
 
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) {
-    throw new Error("You must be signed in to download this PDF.");
-  }
+export async function viewInvoicePdf(inv: Invoice): Promise<void> {
+  const { blob } = await createInvoicePdfFile(inv);
+  openBlobInNewTab(blob);
+}
 
-  const response = await fetch("/api/invoices/pdf", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ invoiceId: inv.id }),
-  });
+export type ShareInvoicePdfResult =
+  | { ok: true; method: "files" | "link" | "download" }
+  | { ok: false; cancelled?: boolean; message: string };
 
-  if (!response.ok) {
-    let message = "Could not generate PDF.";
-    try {
-      const body = (await response.json()) as { error?: string };
-      if (body.error) message = body.error;
-    } catch {
-      /* ignore */
+export async function shareInvoicePdf(
+  inv: Invoice,
+  options?: { publicUrl?: string },
+): Promise<ShareInvoicePdfResult> {
+  try {
+    const { file, filename, blob } = await createInvoicePdfFile(inv);
+
+    if (canShareFiles()) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: filename,
+          text: inv.title?.trim() || inv.number,
+        });
+        return { ok: true, method: "files" };
+      } catch (err) {
+        if (isAbortError(err)) return { ok: false, cancelled: true, message: "Share cancelled." };
+        // Fall through to link / download
+      }
     }
-    throw new Error(message);
-  }
 
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${inv.number}.pdf`;
-  anchor.click();
-  URL.revokeObjectURL(url);
+    if (canShare() && options?.publicUrl) {
+      try {
+        await navigator.share({
+          title: filename,
+          text: inv.title?.trim() || inv.number,
+          url: options.publicUrl,
+        });
+        return { ok: true, method: "link" };
+      } catch (err) {
+        if (isAbortError(err)) return { ok: false, cancelled: true, message: "Share cancelled." };
+      }
+    }
+
+    triggerBlobDownload(blob, filename);
+    return { ok: true, method: "download" };
+  } catch {
+    return { ok: false, message: "We couldn't generate your PDF. Please try again." };
+  }
+}
+
+function isAbortError(err: unknown): boolean {
+  return (
+    !!err &&
+    typeof err === "object" &&
+    "name" in err &&
+    (err as { name?: string }).name === "AbortError"
+  );
 }

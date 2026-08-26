@@ -14,12 +14,16 @@
       "desc": "在发票上向客户展示的信息。"
     },
     "payments": {
-      "title": "收款",
-      "desc": "接收发票付款的钱包。"
+      "title": "旧版默认钱包",
+      "desc": "在未选择已保存加密付款方式时使用的可选备用钱包。"
     },
     "notifications": {
       "title": "通知",
       "desc": "VegaPal 如何向您推送更新。"
+    },
+    "paymentMethods": {
+      "title": "付款方式",
+      "desc": "保存银行账户和加密钱包以便复用。发票会保留您选择时的付款信息快照。"
     }
   },
   "fields": {
@@ -51,5 +55,46 @@
   "signOut": {
     "title": "退出登录",
     "description": "在此设备上结束当前会话。"
+  },
+  "paymentMethods": {
+    "bankAccounts": "银行账户",
+    "bankAccountsDesc": "可在发票中重复使用的银行转账信息。",
+    "cryptoWallets": "加密货币钱包",
+    "cryptoWalletsDesc": "仅保存公开钱包地址 — 绝不索取私钥。",
+    "addBank": "添加银行账户",
+    "addCrypto": "添加加密钱包",
+    "editTitle": "编辑付款方式",
+    "label": "标签",
+    "labelBankPlaceholder": "ENBD Business AED",
+    "labelCryptoPlaceholder": "Main USDT Wallet",
+    "bankName": "银行名称",
+    "accountHolder": "账户持有人",
+    "iban": "IBAN",
+    "accountNumber": "账号",
+    "swift": "SWIFT / BIC",
+    "currency": "银行币种",
+    "token": "币种 / 代币",
+    "network": "网络",
+    "walletAddress": "公开钱包地址",
+    "makeDefault": "设为此类型的默认方式",
+    "default": "默认",
+    "bankTransfer": "银行转账",
+    "select": "选择",
+    "selected": "已选择",
+    "setDefault": "设为默认",
+    "edit": "编辑",
+    "delete": "删除",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中…",
+    "saved": "付款方式已保存",
+    "deleted": "付款方式已删除",
+    "deleteTitle": "删除此付款方式？",
+    "deleteDesc": "现有发票不会受到影响。",
+    "emptyTitle": "尚未保存付款方式。",
+    "emptyDesc": "保存银行账户或钱包，以便更快创建发票。",
+    "loading": "正在加载付款方式…",
+    "securityNote": "VegaPal 绝不会索取您的私钥或助记词。",
+    "untitled": "未命名"
   }
 }

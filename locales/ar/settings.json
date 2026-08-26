@@ -14,12 +14,16 @@
       "desc": "Information shown to your clients on invoices."
     },
     "payments": {
-      "title": "Payments",
-      "desc": "Wallet where invoice payments will be received."
+      "title": "المحفظة الافتراضية السابقة",
+      "desc": "محفظة احتياطية اختيارية عند عدم اختيار طريقة دفع محفوظة."
     },
     "notifications": {
       "title": "Notifications",
       "desc": "How VegaPal keeps you in the loop."
+    },
+    "paymentMethods": {
+      "title": "طرق الدفع",
+      "desc": "احفظ الحسابات البنكية ومحافظ العملات لإعادة استخدامها. تحتفظ الفواتير بنسخة من التفاصيل التي تختارها."
     }
   },
   "fields": {
@@ -51,5 +55,46 @@
   "signOut": {
     "title": "Sign out",
     "description": "End your session on this device."
+  },
+  "paymentMethods": {
+    "bankAccounts": "الحسابات البنكية",
+    "bankAccountsDesc": "تفاصيل التحويل البنكي لإعادة استخدامها في الفواتير.",
+    "cryptoWallets": "محافظ العملات الرقمية",
+    "cryptoWalletsDesc": "عناوين المحافظ العامة فقط — بدون مفاتيح خاصة.",
+    "addBank": "إضافة حساب بنكي",
+    "addCrypto": "إضافة محفظة رقمية",
+    "editTitle": "تعديل طريقة الدفع",
+    "label": "التسمية",
+    "labelBankPlaceholder": "حساب ENBD التجاري AED",
+    "labelCryptoPlaceholder": "محفظة USDT الرئيسية",
+    "bankName": "اسم البنك",
+    "accountHolder": "اسم صاحب الحساب",
+    "iban": "IBAN",
+    "accountNumber": "رقم الحساب",
+    "swift": "SWIFT / BIC",
+    "currency": "عملة الحساب",
+    "token": "العملة / الرمز",
+    "network": "الشبكة",
+    "walletAddress": "عنوان المحفظة العام",
+    "makeDefault": "تعيين كافتراضي لهذا النوع",
+    "default": "افتراضي",
+    "bankTransfer": "تحويل بنكي",
+    "select": "اختيار",
+    "selected": "محدد",
+    "setDefault": "تعيين كافتراضي",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ…",
+    "saved": "تم حفظ طريقة الدفع",
+    "deleted": "تم حذف طريقة الدفع",
+    "deleteTitle": "حذف طريقة الدفع هذه؟",
+    "deleteDesc": "لن تتأثر الفواتير الحالية.",
+    "emptyTitle": "لا توجد طرق دفع محفوظة بعد.",
+    "emptyDesc": "احفظ حساباً بنكياً أو محفظة لإنشاء الفواتير بشكل أسرع.",
+    "loading": "جارٍ تحميل طرق الدفع…",
+    "securityNote": "لن يطلب منك VegaPal مفتاحك الخاص أو عبارة الاسترداد مطلقاً.",
+    "untitled": "بدون عنوان"
   }
 }

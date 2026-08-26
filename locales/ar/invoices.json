@@ -103,6 +103,17 @@
       "sellerFallback": "Seller",
       "clientFallback": "Client",
       "itemFallback": "Item {{index}}"
+    },
+    "savedPaymentMethods": {
+      "useSaved": "استخدام طريقة دفع محفوظة",
+      "addNew": "إضافة طريقة دفع جديدة",
+      "backToSaved": "استخدام طريقة دفع محفوظة",
+      "saveBankTitle": "حفظ هذا الحساب البنكي للفواتير المستقبلية؟",
+      "saveBankDesc": "احفظه بأمان في حساب VegaPal وأعد استخدامه في الفواتير القادمة.",
+      "saveCryptoTitle": "حفظ هذه المحفظة للفواتير المستقبلية؟",
+      "saveCryptoDesc": "احفظ عنوان المحفظة العام والشبكة لإعادة استخدامها في الفواتير القادمة.",
+      "saveMethod": "حفظ طريقة الدفع",
+      "notNow": "ليس الآن"
     }
   },
   "wizard": {

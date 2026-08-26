@@ -14,13 +14,58 @@
       "desc": "Information shown to your clients on invoices."
     },
     "payments": {
-      "title": "Payments",
-      "desc": "Wallet where invoice payments will be received."
+      "title": "Legacy default wallet",
+      "desc": "Optional fallback wallet used when no saved crypto method is selected."
+    },
+    "paymentMethods": {
+      "title": "Payment Methods",
+      "desc": "Save bank accounts and crypto wallets to reuse on future invoices. Invoices keep a snapshot of the details you select."
     },
     "notifications": {
       "title": "Notifications",
       "desc": "How VegaPal keeps you in the loop."
     }
+  },
+  "paymentMethods": {
+    "bankAccounts": "Bank Accounts",
+    "bankAccountsDesc": "Reusable bank transfer details for invoices.",
+    "cryptoWallets": "Crypto Wallets",
+    "cryptoWalletsDesc": "Public wallet addresses only — never private keys.",
+    "addBank": "Add bank account",
+    "addCrypto": "Add crypto wallet",
+    "editTitle": "Edit payment method",
+    "label": "Label",
+    "labelBankPlaceholder": "ENBD Business AED",
+    "labelCryptoPlaceholder": "Main USDT Wallet",
+    "bankName": "Bank name",
+    "accountHolder": "Account holder name",
+    "iban": "IBAN",
+    "accountNumber": "Account number",
+    "swift": "SWIFT / BIC",
+    "currency": "Bank currency",
+    "token": "Currency / token",
+    "network": "Network",
+    "walletAddress": "Public wallet address",
+    "makeDefault": "Set as default for this type",
+    "default": "Default",
+    "bankTransfer": "Bank Transfer",
+    "select": "Select",
+    "selected": "Selected",
+    "setDefault": "Set default",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Payment method saved",
+    "deleted": "Payment method deleted",
+    "deleteTitle": "Delete this payment method?",
+    "deleteDesc": "Existing invoices will not be affected.",
+    "emptyTitle": "No saved payment methods yet.",
+    "emptyDesc": "Save a bank account or wallet to create invoices faster.",
+    "loading": "Loading payment methods…",
+    "securityNote": "VegaPal will never ask for your private key or seed phrase.",
+    "untitled": "Untitled"
   },
   "fields": {
     "logo": "Logo",

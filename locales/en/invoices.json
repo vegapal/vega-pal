@@ -97,6 +97,17 @@
       "cashLocation": "Payment location or notes",
       "cashLocationPlaceholder": "Office address or meeting location"
     },
+    "savedPaymentMethods": {
+      "useSaved": "Use a saved payment method",
+      "addNew": "Add new payment method",
+      "backToSaved": "Use a saved payment method",
+      "saveBankTitle": "Save this bank account for future invoices?",
+      "saveBankDesc": "Save it securely to your VegaPal account and reuse it on future invoices.",
+      "saveCryptoTitle": "Save this wallet for future invoices?",
+      "saveCryptoDesc": "Save this public wallet address and network to reuse it on future invoices.",
+      "saveMethod": "Save payment method",
+      "notNow": "Not now"
+    },
     "preview": {
       "livePreview": "Live preview",
       "invoiceTitleFallback": "Invoice title",

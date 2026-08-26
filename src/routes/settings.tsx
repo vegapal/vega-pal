@@ -17,6 +17,7 @@ import { settingsSchema, firstZodError } from "@/lib/validation/schemas";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
 import { InvoicePlanUsageIndicator } from "@/components/plan/InvoicePlanUsageIndicator";
 import { PlanBadge } from "@/components/admin/AdminBadges";
+import { PaymentMethodsManager } from "@/components/payment-methods/PaymentMethodsManager";
 
 export const Route = createFileRoute("/settings")({
   beforeLoad: () => ensureNamespacesLoaded(["settings"]),
@@ -227,12 +228,17 @@ function Settings() {
           </Field>
         </Section>
 
+        <Section title={t("sections.paymentMethods.title")} desc={t("sections.paymentMethods.desc")}>
+          <PaymentMethodsManager embedded />
+        </Section>
+
         <Section title={t("sections.payments.title")} desc={t("sections.payments.desc")}>
           <Field label={t("fields.network")}>
             <select
               value={network}
               onChange={(e) => setNetwork(e.target.value)}
               className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              aria-label={t("fields.network")}
             >
               <option value="TRC20">{t("networks.trc20")}</option>
               <option value="ERC20">{t("networks.erc20")}</option>
@@ -245,6 +251,7 @@ function Settings() {
               onChange={(e) => setWallet(e.target.value)}
               placeholder={t("fields.walletPlaceholder")}
               className="font-mono text-sm"
+              aria-label={t("fields.walletAddress")}
             />
           </Field>
         </Section>

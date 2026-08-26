@@ -65,7 +65,8 @@ export async function generateInvoicePDF(inv: Invoice) {
     return;
   }
   const { doc } = await buildInvoicePdfDocument(inv);
-  doc.save(`${inv.number}.pdf`);
+  const { buildInvoicePdfFilename } = await import("@/lib/pdf/pdf-filename");
+  doc.save(buildInvoicePdfFilename(inv));
 }
 
 /** @internal test fixtures */

@@ -35,7 +35,6 @@ import {
   Mail,
   Calendar,
   Hash,
-  Download,
   Pencil,
   Files,
   XCircle,
@@ -43,13 +42,9 @@ import {
   FileInput,
 } from "lucide-react";
 import { ConvertQuotationDialog } from "@/components/invoices/ConvertQuotationDialog";
+import { InvoicePdfActions } from "@/components/invoice/InvoicePdfActions";
 import { useSubmitGuard } from "@/hooks/use-submit-guard";
 import { toast } from "sonner";
-
-async function downloadInvoicePdf(inv: import("@/lib/vegapal-store").Invoice) {
-  const { downloadInvoicePdf } = await import("@/lib/pdf/download-invoice-pdf");
-  await downloadInvoicePdf(inv);
-}
 
 const PaymentMethodCards = lazy(() =>
   import("@/components/invoice/PaymentMethodCards").then((m) => ({
@@ -58,7 +53,7 @@ const PaymentMethodCards = lazy(() =>
 );
 
 export const Route = createFileRoute("/invoices/$id")({
-  beforeLoad: () => ensureNamespacesLoaded(["invoices"]),
+  beforeLoad: () => ensureNamespacesLoaded(["invoices", "common"]),
   head: () => ({
     meta: [
       { title: "Invoice — VegaPal" },
@@ -253,9 +248,10 @@ function InvoiceDetails() {
               </Button>
             </>
           ) : null}
-          <Button variant="outline" onClick={() => downloadInvoicePdf(inv)}>
-            <Download className="h-4 w-4" /> {tc("buttons.pdf")}
-          </Button>
+          <InvoicePdfActions
+            invoice={inv}
+            publicUrl={typeof window !== "undefined" ? `${window.location.origin}/pay/${inv.id}` : undefined}
+          />
           <Button variant="outline" asChild>
             <Link to="/invoices/new" search={{ edit: inv.id }}>
               <Pencil className="h-4 w-4" /> {tc("buttons.edit")}

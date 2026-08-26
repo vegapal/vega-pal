@@ -197,5 +197,16 @@
     "appearanceSystem": "System",
     "appearanceLight": "Light",
     "appearanceDark": "Dark"
+  },
+  "pdf": {
+    "actionsLabel": "إجراءات PDF",
+    "download": "تنزيل PDF",
+    "share": "مشاركة PDF",
+    "view": "عرض PDF",
+    "preparing": "جاري تجهيز PDF...",
+    "downloaded": "تم تنزيل PDF",
+    "shared": "تمت المشاركة",
+    "shareFallbackDownload": "المشاركة غير متاحة هنا — تم تنزيل ملف PDF بدلاً من ذلك.",
+    "generateFailed": "تعذر إنشاء ملف PDF. يرجى المحاولة مرة أخرى."
   }
 }

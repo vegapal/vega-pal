@@ -238,6 +238,72 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          label: string
+          is_default: boolean
+          bank_name: string | null
+          account_holder_name: string | null
+          account_name: string | null
+          iban: string | null
+          account_number: string | null
+          swift_bic: string | null
+          bank_currency: string | null
+          payment_reference: string | null
+          crypto_currency: string | null
+          network: string | null
+          wallet_address: string | null
+          created_at: string
+          updated_at: string
+          last_used_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          label?: string
+          is_default?: boolean
+          bank_name?: string | null
+          account_holder_name?: string | null
+          account_name?: string | null
+          iban?: string | null
+          account_number?: string | null
+          swift_bic?: string | null
+          bank_currency?: string | null
+          payment_reference?: string | null
+          crypto_currency?: string | null
+          network?: string | null
+          wallet_address?: string | null
+          created_at?: string
+          updated_at?: string
+          last_used_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          label?: string
+          is_default?: boolean
+          bank_name?: string | null
+          account_holder_name?: string | null
+          account_name?: string | null
+          iban?: string | null
+          account_number?: string | null
+          swift_bic?: string | null
+          bank_currency?: string | null
+          payment_reference?: string | null
+          crypto_currency?: string | null
+          network?: string | null
+          wallet_address?: string | null
+          created_at?: string
+          updated_at?: string
+          last_used_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           brand_color: string

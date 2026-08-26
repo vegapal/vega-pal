@@ -197,5 +197,16 @@
     "appearanceSystem": "System",
     "appearanceLight": "Light",
     "appearanceDark": "Dark"
+  },
+  "pdf": {
+    "actionsLabel": "Действия с PDF",
+    "download": "Скачать PDF",
+    "share": "Поделиться PDF",
+    "view": "Открыть PDF",
+    "preparing": "Подготовка PDF…",
+    "downloaded": "PDF скачан",
+    "shared": "Отправлено",
+    "shareFallbackDownload": "Поделиться здесь нельзя — PDF скачан вместо этого.",
+    "generateFailed": "Не удалось создать PDF. Попробуйте ещё раз."
   }
 }

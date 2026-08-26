@@ -103,6 +103,17 @@
       "sellerFallback": "卖方",
       "clientFallback": "客户",
       "itemFallback": "项目 {{index}}"
+    },
+    "savedPaymentMethods": {
+      "useSaved": "使用已保存的付款方式",
+      "addNew": "添加新付款方式",
+      "backToSaved": "使用已保存的付款方式",
+      "saveBankTitle": "保存此银行账户以用于未来发票？",
+      "saveBankDesc": "安全保存到您的 VegaPal 账户，以便在未来发票中复用。",
+      "saveCryptoTitle": "保存此钱包以用于未来发票？",
+      "saveCryptoDesc": "保存此公开钱包地址和网络，以便在未来发票中复用。",
+      "saveMethod": "保存付款方式",
+      "notNow": "暂时不用"
     }
   },
   "wizard": {

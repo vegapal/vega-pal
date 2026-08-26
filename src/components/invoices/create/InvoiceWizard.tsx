@@ -136,6 +136,8 @@ export function InvoiceWizard({ editId }: Props) {
   const submitGuard = useSubmitGuard();
 
   const [maxVisitedStep, setMaxVisitedStep] = useState<WizardStep>(1);
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
+  const [selectedCryptoId, setSelectedCryptoId] = useState<string | null>(null);
 
   const patchState = useCallback((patch: Partial<InvoiceWizardState>) => {
     setState((prev) => ({ ...prev, ...patch }));
@@ -160,14 +162,56 @@ export function InvoiceWizard({ editId }: Props) {
 
   useEffect(() => {
     if (editId || !user || profilePaymentInitialized) return;
-    const defaults = buildDefaultPaymentMethods(user.wallet ?? "", user.network);
-    patchState({
-      crypto: defaults.crypto,
-      bank: defaults.bank,
-      cash: defaults.cash,
-      paymentMethod: defaults.method,
-    });
-    setProfilePaymentInitialized(true);
+    let cancelled = false;
+    void (async () => {
+      const defaults = buildDefaultPaymentMethods(user.wallet ?? "", user.network);
+      let bank = defaults.bank;
+      let crypto = defaults.crypto;
+      let method = defaults.method;
+      try {
+        const { listSavedPaymentMethods } = await import("@/lib/payment-methods/store");
+        const { applySavedMethodToBank, applySavedMethodToCrypto } = await import(
+          "@/lib/payment-methods/types"
+        );
+        const saved = await listSavedPaymentMethods();
+        if (cancelled) return;
+        const defaultBank =
+          saved.find((m) => m.type === "bank" && m.isDefault) ??
+          saved.find((m) => m.type === "bank");
+        const defaultCrypto =
+          saved.find((m) => m.type === "crypto" && m.isDefault) ??
+          saved.find((m) => m.type === "crypto");
+        if (defaultBank) {
+          bank = applySavedMethodToBank(defaultBank);
+          setSelectedBankId(defaultBank.id);
+          method = "bank_transfer";
+        }
+        if (defaultCrypto) {
+          crypto = applySavedMethodToCrypto(defaultCrypto);
+          setSelectedCryptoId(defaultCrypto.id);
+          if (defaultBank) {
+            bank = { ...bank, enabled: true };
+            crypto = { ...crypto, enabled: true };
+            method = "multiple";
+          } else {
+            method = "crypto";
+          }
+        }
+      } catch {
+        /* use profile defaults */
+      }
+      if (cancelled) return;
+      patchState({
+        crypto,
+        bank,
+        cash: defaults.cash,
+        paymentMethod: method,
+      });
+      setProfilePaymentInitialized(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, editId, profilePaymentInitialized, patchState]);
 
   useEffect(() => {
@@ -390,7 +434,17 @@ export function InvoiceWizard({ editId }: Props) {
           {state.step === 2 ? <ClientStep {...stepProps} /> : null}
           {state.step === 3 ? <DocumentDetailsStep {...stepProps} /> : null}
           {state.step === 4 ? <InvoiceItemsStep {...stepProps} /> : null}
-          {state.step === 5 ? <PaymentStep {...stepProps} /> : null}
+          {state.step === 5 ? (
+            <PaymentStep
+              {...stepProps}
+              selectedBankId={selectedBankId}
+              selectedCryptoId={selectedCryptoId}
+              onSavedMethodApplied={(type, id) => {
+                if (type === "bank") setSelectedBankId(id);
+                else setSelectedCryptoId(id);
+              }}
+            />
+          ) : null}
           {state.step === 6 ? <ReviewStep state={state} headingRef={stepHeadingRef} /> : null}
 
           <div ref={formErrorRef}>

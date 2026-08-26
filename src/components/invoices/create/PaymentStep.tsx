@@ -1,3 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,17 +13,40 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   CRYPTO_PAYMENT_CURRENCIES,
   INVOICE_CURRENCIES,
   PAYMENT_NETWORKS,
   type PaymentMethodType,
 } from "@/lib/invoice-constants";
 import { cn } from "@/lib/utils";
-import { Banknote, Building2, Coins, Layers } from "lucide-react";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { Banknote, Building2, Coins, Layers, Plus } from "lucide-react";
 import { showBankFields, showCashFields, showCryptoFields } from "./build-payment-methods";
 import type { InvoiceWizardState } from "./wizard-state";
+import { SavedPaymentMethodCard } from "@/components/payment-methods/SavedPaymentMethodCard";
+import {
+  createSavedPaymentMethod,
+  listSavedPaymentMethods,
+  touchSavedPaymentMethodUsed,
+} from "@/lib/payment-methods/store";
+import {
+  applySavedMethodToBank,
+  applySavedMethodToCrypto,
+  bankConfigLooksSavable,
+  cryptoConfigLooksSavable,
+  findDuplicateBank,
+  findDuplicateCrypto,
+  type SavedPaymentMethod,
+} from "@/lib/payment-methods/types";
+import { formatAppError } from "@/lib/auth/errors";
+import { toast } from "sonner";
 
 const PRIMARY: {
   value: Exclude<PaymentMethodType, "multiple">;
@@ -35,6 +61,10 @@ type Props = {
   state: InvoiceWizardState;
   onChange: (patch: Partial<InvoiceWizardState>) => void;
   headingRef?: React.RefObject<HTMLHeadingElement | null>;
+  /** Called when a saved method is applied so parent can track ids for last_used. */
+  onSavedMethodApplied?: (type: "bank" | "crypto", id: string | null) => void;
+  selectedBankId?: string | null;
+  selectedCryptoId?: string | null;
 };
 
 function PaymentMethodCard({
@@ -99,9 +129,38 @@ function Field({
   );
 }
 
-export function PaymentStep({ state, onChange, headingRef }: Props) {
+export function PaymentStep({
+  state,
+  onChange,
+  headingRef,
+  onSavedMethodApplied,
+  selectedBankId,
+  selectedCryptoId,
+}: Props) {
   const { t } = useTranslation("invoices");
   const { t: tc } = useTranslation("common");
+  const { t: ts } = useTranslation("settings");
+
+  const [saved, setSaved] = useState<SavedPaymentMethod[]>([]);
+  const [manualBank, setManualBank] = useState(false);
+  const [manualCrypto, setManualCrypto] = useState(false);
+  const [savePrompt, setSavePrompt] = useState<"bank" | "crypto" | null>(null);
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [dismissedBankSave, setDismissedBankSave] = useState(false);
+  const [dismissedCryptoSave, setDismissedCryptoSave] = useState(false);
+
+  useEffect(() => {
+    void listSavedPaymentMethods()
+      .then(setSaved)
+      .catch(() => setSaved([]));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedBankId && bankConfigLooksSavable(state.bank)) setManualBank(true);
+    if (!selectedCryptoId && cryptoConfigLooksSavable(state.crypto)) setManualCrypto(true);
+    // Intentionally once when the payment step mounts (edit vs create).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const primaryPaymentMethods = useMemo(
     () =>
@@ -122,6 +181,9 @@ export function PaymentStep({ state, onChange, headingRef }: Props) {
       })),
     [t],
   );
+
+  const banks = saved.filter((m) => m.type === "bank");
+  const cryptos = saved.filter((m) => m.type === "crypto");
 
   const onPaymentMethodChange = (method: PaymentMethodType) => {
     if (method === "crypto") {
@@ -150,6 +212,30 @@ export function PaymentStep({ state, onChange, headingRef }: Props) {
     }
   };
 
+  const selectBank = (method: SavedPaymentMethod) => {
+    onChange({ bank: applySavedMethodToBank(method) });
+    onSavedMethodApplied?.("bank", method.id);
+    setManualBank(false);
+    void touchSavedPaymentMethodUsed(method.id);
+  };
+
+  const selectCrypto = (method: SavedPaymentMethod) => {
+    onChange({ crypto: applySavedMethodToCrypto(method) });
+    onSavedMethodApplied?.("crypto", method.id);
+    setManualCrypto(false);
+    void touchSavedPaymentMethodUsed(method.id);
+  };
+
+  const startManualBank = () => {
+    setManualBank(true);
+    onSavedMethodApplied?.("bank", null);
+  };
+
+  const startManualCrypto = () => {
+    setManualCrypto(true);
+    onSavedMethodApplied?.("crypto", null);
+  };
+
   const isQuotation = state.documentType === "quotation";
   const showAlreadyPaid =
     state.documentType === "tax_invoice" || state.documentType === "proforma_invoice";
@@ -157,6 +243,77 @@ export function PaymentStep({ state, onChange, headingRef }: Props) {
   const cryptoVisible = showCryptoFields(state.paymentMethod, state.crypto);
   const bankVisible = showBankFields(state.paymentMethod, state.bank);
   const cashVisible = showCashFields(state.paymentMethod, state.cash);
+
+  const bankDup = findDuplicateBank(saved, state.bank.iban, state.bank.accountNumber);
+  const cryptoDup = findDuplicateCrypto(
+    saved,
+    state.crypto.walletAddress,
+    state.crypto.network,
+    state.crypto.currency,
+  );
+
+  const showBankSaveHint =
+    bankVisible &&
+    manualBank &&
+    !selectedBankId &&
+    bankConfigLooksSavable(state.bank) &&
+    !bankDup &&
+    !dismissedBankSave;
+
+  const showCryptoSaveHint =
+    cryptoVisible &&
+    manualCrypto &&
+    !selectedCryptoId &&
+    cryptoConfigLooksSavable(state.crypto) &&
+    !cryptoDup &&
+    !dismissedCryptoSave;
+
+  const confirmSave = async () => {
+    if (!savePrompt) return;
+    setSaveBusy(true);
+    try {
+      if (savePrompt === "bank") {
+        const created = await createSavedPaymentMethod({
+          type: "bank",
+          label:
+            state.bank.bankName?.trim() ||
+            state.bank.accountName?.trim() ||
+            ts("paymentMethods.labelBankPlaceholder"),
+          bankName: state.bank.bankName,
+          accountHolderName: state.bank.accountName,
+          accountName: state.bank.accountName,
+          iban: state.bank.iban,
+          accountNumber: state.bank.accountNumber,
+          swiftBic: state.bank.swift,
+          bankCurrency: state.bank.currency,
+          paymentReference: state.bank.instructions,
+          isDefault: banks.length === 0,
+        });
+        setSaved((prev) => [...prev.filter((m) => m.id !== created.id), created]);
+        onSavedMethodApplied?.("bank", created.id);
+        toast.success(ts("paymentMethods.saved"));
+      } else {
+        const created = await createSavedPaymentMethod({
+          type: "crypto",
+          label:
+            `${state.crypto.currency} ${state.crypto.network}`.trim() ||
+            ts("paymentMethods.labelCryptoPlaceholder"),
+          cryptoCurrency: state.crypto.currency,
+          network: state.crypto.network,
+          walletAddress: state.crypto.walletAddress,
+          isDefault: cryptos.length === 0,
+        });
+        setSaved((prev) => [...prev.filter((m) => m.id !== created.id), created]);
+        onSavedMethodApplied?.("crypto", created.id);
+        toast.success(ts("paymentMethods.saved"));
+      }
+      setSavePrompt(null);
+    } catch (err) {
+      toast.error(formatAppError(err));
+    } finally {
+      setSaveBusy(false);
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8 space-y-6">
@@ -259,124 +416,252 @@ export function PaymentStep({ state, onChange, headingRef }: Props) {
           </div>
         )}
 
-        {cryptoVisible && (
+        {bankVisible && (
           <div className="rounded-lg border border-border p-4 space-y-4">
-            <p className="text-sm font-medium">{t("create.paymentMethods.cryptoPayment")}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={t("create.paymentMethods.cryptoCurrency")}>
-                <Select
-                  value={state.crypto.currency}
-                  onValueChange={(v) => onChange({ crypto: { ...state.crypto, currency: v } })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CRYPTO_PAYMENT_CURRENCIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label={tc("labels.network")}>
-                <Select
-                  value={state.crypto.network}
-                  onValueChange={(v) => onChange({ crypto: { ...state.crypto, network: v } })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_NETWORKS.map((n) => (
-                      <SelectItem key={n} value={n}>
-                        {n}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label={tc("labels.walletAddress")} full>
-                <Input
-                  value={state.crypto.walletAddress}
-                  onChange={(e) =>
-                    onChange({ crypto: { ...state.crypto, walletAddress: e.target.value } })
-                  }
-                  placeholder={t("create.paymentMethods.walletPlaceholder")}
-                  className="font-mono text-sm"
-                />
-              </Field>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium">{t("create.paymentMethods.bankTransferTitle")}</p>
+              <p className="text-[11px] text-muted-foreground">{ts("paymentMethods.securityNote")}</p>
             </div>
+
+            {banks.length > 0 && !manualBank ? (
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {t("create.savedPaymentMethods.useSaved")}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {banks.map((m) => (
+                    <SavedPaymentMethodCard
+                      key={m.id}
+                      method={m}
+                      selected={selectedBankId === m.id}
+                      onSelect={() => selectBank(m)}
+                      compact
+                    />
+                  ))}
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={startManualBank}>
+                  <Plus className="h-4 w-4" /> {t("create.savedPaymentMethods.addNew")}
+                </Button>
+              </div>
+            ) : (
+              <>
+                {banks.length > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="px-0"
+                    onClick={() => setManualBank(false)}
+                  >
+                    {t("create.savedPaymentMethods.backToSaved")}
+                  </Button>
+                ) : null}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field label={tc("labels.bankName")}>
+                    <Input
+                      value={state.bank.bankName ?? ""}
+                      onChange={(e) =>
+                        onChange({ bank: { ...state.bank, bankName: e.target.value } })
+                      }
+                    />
+                  </Field>
+                  <Field label={tc("labels.accountName")}>
+                    <Input
+                      value={state.bank.accountName ?? ""}
+                      onChange={(e) =>
+                        onChange({ bank: { ...state.bank, accountName: e.target.value } })
+                      }
+                    />
+                  </Field>
+                  <Field label={tc("labels.accountNumber")}>
+                    <Input
+                      value={state.bank.accountNumber ?? ""}
+                      onChange={(e) =>
+                        onChange({ bank: { ...state.bank, accountNumber: e.target.value } })
+                      }
+                    />
+                  </Field>
+                  <Field label={tc("labels.iban")}>
+                    <Input
+                      value={state.bank.iban ?? ""}
+                      onChange={(e) => onChange({ bank: { ...state.bank, iban: e.target.value } })}
+                    />
+                  </Field>
+                  <Field label={tc("labels.swift")}>
+                    <Input
+                      value={state.bank.swift ?? ""}
+                      onChange={(e) => onChange({ bank: { ...state.bank, swift: e.target.value } })}
+                    />
+                  </Field>
+                  <Field label={tc("labels.bankCurrency")}>
+                    <Select
+                      value={state.bank.currency ?? ""}
+                      onValueChange={(v) => onChange({ bank: { ...state.bank, currency: v } })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={tc("labels.selectCurrency")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INVOICE_CURRENCIES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label={tc("labels.instructions")} full>
+                    <Textarea
+                      rows={3}
+                      value={state.bank.instructions ?? ""}
+                      onChange={(e) =>
+                        onChange({ bank: { ...state.bank, instructions: e.target.value } })
+                      }
+                      placeholder={t("create.paymentMethods.bankInstructionsPlaceholder")}
+                    />
+                  </Field>
+                </div>
+                {showBankSaveHint ? (
+                  <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium">{t("create.savedPaymentMethods.saveBankTitle")}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t("create.savedPaymentMethods.saveBankDesc")}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" onClick={() => setSavePrompt("bank")}>
+                        {t("create.savedPaymentMethods.saveMethod")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDismissedBankSave(true)}
+                      >
+                        {t("create.savedPaymentMethods.notNow")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         )}
 
-        {bankVisible && (
+        {cryptoVisible && (
           <div className="rounded-lg border border-border p-4 space-y-4">
-            <p className="text-sm font-medium">{t("create.paymentMethods.bankTransferTitle")}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={tc("labels.bankName")}>
-                <Input
-                  value={state.bank.bankName ?? ""}
-                  onChange={(e) => onChange({ bank: { ...state.bank, bankName: e.target.value } })}
-                />
-              </Field>
-              <Field label={tc("labels.accountName")}>
-                <Input
-                  value={state.bank.accountName ?? ""}
-                  onChange={(e) =>
-                    onChange({ bank: { ...state.bank, accountName: e.target.value } })
-                  }
-                />
-              </Field>
-              <Field label={tc("labels.accountNumber")}>
-                <Input
-                  value={state.bank.accountNumber ?? ""}
-                  onChange={(e) =>
-                    onChange({ bank: { ...state.bank, accountNumber: e.target.value } })
-                  }
-                />
-              </Field>
-              <Field label={tc("labels.iban")}>
-                <Input
-                  value={state.bank.iban ?? ""}
-                  onChange={(e) => onChange({ bank: { ...state.bank, iban: e.target.value } })}
-                />
-              </Field>
-              <Field label={tc("labels.swift")}>
-                <Input
-                  value={state.bank.swift ?? ""}
-                  onChange={(e) => onChange({ bank: { ...state.bank, swift: e.target.value } })}
-                />
-              </Field>
-              <Field label={tc("labels.bankCurrency")}>
-                <Select
-                  value={state.bank.currency ?? ""}
-                  onValueChange={(v) => onChange({ bank: { ...state.bank, currency: v } })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={tc("labels.selectCurrency")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INVOICE_CURRENCIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label={tc("labels.instructions")} full>
-                <Textarea
-                  rows={3}
-                  value={state.bank.instructions ?? ""}
-                  onChange={(e) =>
-                    onChange({ bank: { ...state.bank, instructions: e.target.value } })
-                  }
-                  placeholder={t("create.paymentMethods.bankInstructionsPlaceholder")}
-                />
-              </Field>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium">{t("create.paymentMethods.cryptoPayment")}</p>
+              <p className="text-[11px] text-muted-foreground">{ts("paymentMethods.securityNote")}</p>
             </div>
+
+            {cryptos.length > 0 && !manualCrypto ? (
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {t("create.savedPaymentMethods.useSaved")}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {cryptos.map((m) => (
+                    <SavedPaymentMethodCard
+                      key={m.id}
+                      method={m}
+                      selected={selectedCryptoId === m.id}
+                      onSelect={() => selectCrypto(m)}
+                      compact
+                    />
+                  ))}
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={startManualCrypto}>
+                  <Plus className="h-4 w-4" /> {t("create.savedPaymentMethods.addNew")}
+                </Button>
+              </div>
+            ) : (
+              <>
+                {cryptos.length > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="px-0"
+                    onClick={() => setManualCrypto(false)}
+                  >
+                    {t("create.savedPaymentMethods.backToSaved")}
+                  </Button>
+                ) : null}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field label={t("create.paymentMethods.cryptoCurrency")}>
+                    <Select
+                      value={state.crypto.currency}
+                      onValueChange={(v) => onChange({ crypto: { ...state.crypto, currency: v } })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CRYPTO_PAYMENT_CURRENCIES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label={tc("labels.network")}>
+                    <Select
+                      value={state.crypto.network}
+                      onValueChange={(v) => onChange({ crypto: { ...state.crypto, network: v } })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAYMENT_NETWORKS.map((n) => (
+                          <SelectItem key={n} value={n}>
+                            {n}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label={tc("labels.walletAddress")} full>
+                    <Input
+                      value={state.crypto.walletAddress}
+                      onChange={(e) =>
+                        onChange({ crypto: { ...state.crypto, walletAddress: e.target.value } })
+                      }
+                      placeholder={t("create.paymentMethods.walletPlaceholder")}
+                      className="font-mono text-sm"
+                    />
+                  </Field>
+                </div>
+                {showCryptoSaveHint ? (
+                  <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium">
+                        {t("create.savedPaymentMethods.saveCryptoTitle")}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t("create.savedPaymentMethods.saveCryptoDesc")}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" onClick={() => setSavePrompt("crypto")}>
+                        {t("create.savedPaymentMethods.saveMethod")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDismissedCryptoSave(true)}
+                      >
+                        {t("create.savedPaymentMethods.notNow")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         )}
 
@@ -405,6 +690,31 @@ export function PaymentStep({ state, onChange, headingRef }: Props) {
           </div>
         )}
       </div>
+
+      <Dialog open={!!savePrompt} onOpenChange={(open) => !open && setSavePrompt(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {savePrompt === "bank"
+                ? t("create.savedPaymentMethods.saveBankTitle")
+                : t("create.savedPaymentMethods.saveCryptoTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {savePrompt === "bank"
+                ? t("create.savedPaymentMethods.saveBankDesc")
+                : t("create.savedPaymentMethods.saveCryptoDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSavePrompt(null)}>
+              {t("create.savedPaymentMethods.notNow")}
+            </Button>
+            <Button type="button" onClick={() => void confirmSave()} disabled={saveBusy}>
+              {t("create.savedPaymentMethods.saveMethod")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
