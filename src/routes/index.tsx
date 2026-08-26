@@ -169,7 +169,8 @@ const BUSINESS_PLAN_FEATURES = [
 function Landing() {
   const { t } = useTranslation("landing");
   const { t: tc } = useTranslation("common");
-  const { user } = useSession();
+  const { user, loading: sessionLoading } = useSession();
+  const isAuthenticated = Boolean(user);
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlan | null>(null);
   const currentPlan = (user?.plan ?? null) as UserPlan | null;
 
@@ -249,14 +250,36 @@ function Landing() {
               {t("hero.description")}
             </p>
             <div className="mt-6 sm:mt-7 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
-              <Button asChild variant="hero" size="lg" className="w-full sm:w-auto">
-                <Link to="/register" preload="intent">
-                  {t("hero.createFirstInvoice")} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="ghostLight" size="lg" className="w-full sm:w-auto">
-                <a href="#demo-invoice">{t("hero.viewDemoInvoice")}</a>
-              </Button>
+              {sessionLoading ? (
+                <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-3" aria-hidden>
+                  <div className="h-11 w-full sm:w-52 rounded-md bg-white/10" />
+                  <div className="h-11 w-full sm:w-40 rounded-md bg-white/10" />
+                </div>
+              ) : isAuthenticated ? (
+                <>
+                  <Button asChild variant="hero" size="lg" className="w-full sm:w-auto">
+                    <Link to="/invoices/new" preload="intent">
+                      {t("hero.createNewDocument")} <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghostLight" size="lg" className="w-full sm:w-auto">
+                    <Link to="/dashboard" preload="intent">
+                      {t("hero.goToDashboard")}
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="hero" size="lg" className="w-full sm:w-auto">
+                    <Link to="/register" preload="intent">
+                      {t("hero.createFirstInvoice")} <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghostLight" size="lg" className="w-full sm:w-auto">
+                    <a href="#demo-invoice">{t("hero.viewDemoInvoice")}</a>
+                  </Button>
+                </>
+              )}
             </div>
             <ul className="mt-7 sm:mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2 text-sm text-on-dark-secondary">
               <li className="flex items-center gap-2">

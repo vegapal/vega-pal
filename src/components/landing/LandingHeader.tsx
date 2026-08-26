@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
 import { PUBLIC_NAV_LINKS } from "@/lib/landing-nav";
+import { useSession } from "@/lib/vegapal-store";
 import { ArrowRight, Menu } from "lucide-react";
 
 const LanguageSwitcher = lazy(() =>
@@ -13,8 +14,19 @@ const LanguageSwitcher = lazy(() =>
 
 const landingNavLinkClass = "hover:text-on-dark transition-colors";
 
+function AuthCtaSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={className} aria-hidden>
+      <div className="h-9 w-[4.75rem] rounded-md bg-white/10" />
+      <div className="h-9 w-[7.5rem] rounded-md bg-white/10" />
+    </div>
+  );
+}
+
 export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: { className?: string }) {
   const { t: tc } = useTranslation("common");
+  const { user, loading } = useSession();
+  const isAuthenticated = Boolean(user);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -56,16 +68,35 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: {
             <Suspense fallback={<span className="h-9 w-16" aria-hidden />}>
               <LanguageSwitcher variant="landing" />
             </Suspense>
-            <Button asChild variant="ghostLight" size="sm">
-              <Link to="/login" preload="intent">
-                {tc("nav.login")}
-              </Link>
-            </Button>
-            <Button asChild variant="hero" size="sm" className="whitespace-nowrap">
-              <Link to="/register" preload="intent">
-                {tc("nav.register")} <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            {loading ? (
+              <AuthCtaSkeleton className="flex items-center gap-2" />
+            ) : isAuthenticated ? (
+              <>
+                <Button asChild variant="ghostLight" size="sm">
+                  <Link to="/dashboard" preload="intent">
+                    {tc("nav.dashboard")}
+                  </Link>
+                </Button>
+                <Button asChild variant="hero" size="sm" className="whitespace-nowrap">
+                  <Link to="/invoices/new" preload="intent">
+                    {tc("nav.createDocument")} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghostLight" size="sm">
+                  <Link to="/login" preload="intent">
+                    {tc("nav.signIn")}
+                  </Link>
+                </Button>
+                <Button asChild variant="hero" size="sm" className="whitespace-nowrap">
+                  <Link to="/register" preload="intent">
+                    {tc("nav.getStarted")} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
           <div className="flex md:hidden items-center gap-1">
             <Suspense fallback={<span className="h-9 w-9" aria-hidden />}>
@@ -109,14 +140,51 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: {
                   )}
                 </nav>
                 <div className="mt-auto pt-8 border-t border-white/10 flex flex-col gap-3">
-                  <Button asChild variant="ghostLight" className="w-full" onClick={() => setMobileOpen(false)}>
-                    <Link to="/login">{tc("nav.login")}</Link>
-                  </Button>
-                  <Button asChild variant="hero" className="w-full" onClick={() => setMobileOpen(false)}>
-                    <Link to="/register">
-                      {tc("nav.register")} <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                  {loading ? (
+                    <AuthCtaSkeleton className="flex flex-col gap-3 [&>div]:w-full" />
+                  ) : isAuthenticated ? (
+                    <>
+                      <Button
+                        asChild
+                        variant="ghostLight"
+                        className="w-full"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <Link to="/dashboard">{tc("nav.dashboard")}</Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="hero"
+                        className="w-full"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <Link to="/invoices/new">
+                          {tc("nav.createDocument")} <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        asChild
+                        variant="ghostLight"
+                        className="w-full"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <Link to="/login">{tc("nav.signIn")}</Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="hero"
+                        className="w-full"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <Link to="/register">
+                          {tc("nav.getStarted")} <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>

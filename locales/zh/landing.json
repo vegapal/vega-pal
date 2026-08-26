@@ -15,6 +15,8 @@
     "description": "几秒钟创建安全发票，分享一个付款链接，让客户通过 USDT、银行转账或现金付款 — 并提供专业的付款确认。",
     "createFirstInvoice": "创建您的第一张发票",
     "viewDemoInvoice": "查看演示发票",
+    "createNewDocument": "Create new document",
+    "goToDashboard": "Go to dashboard",
     "features": {
       "pdfInvoices": "专业 PDF 发票",
       "paymentMethods": "加密货币、银行与现金收款",

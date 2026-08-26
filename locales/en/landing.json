@@ -15,6 +15,8 @@
     "description": "Create a secure invoice in seconds, share one payment link, and let your client pay by USDT, bank transfer, or cash — with a professional paid confirmation.",
     "createFirstInvoice": "Create your first invoice",
     "viewDemoInvoice": "View demo invoice",
+    "createNewDocument": "Create new document",
+    "goToDashboard": "Go to dashboard",
     "features": {
       "pdfInvoices": "Professional PDF invoices",
       "paymentMethods": "Crypto, Bank & Cash Payments",
