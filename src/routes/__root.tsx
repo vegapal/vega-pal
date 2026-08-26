@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     }> = [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "32x32" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "manifest", href: "/site.webmanifest" },
       {
@@ -139,6 +139,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: DEFAULT_TITLE },
       { name: "twitter:description", content: DEFAULT_DESCRIPTION },
       { property: "og:url", content: absoluteUrl("/") },
+      { property: "og:image", content: absoluteUrl("/brand/og-brand.jpg") },
+      { name: "twitter:image", content: absoluteUrl("/brand/og-brand.jpg") },
       { name: "robots", content: "index, follow" },
       { name: "theme-color", content: "#0B203A" },
       { property: "og:site_name", content: SITE_NAME },

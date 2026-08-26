@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/Logo";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { PublicSiteFooter } from "@/components/landing/PublicSiteFooter";
 import { TelegramIcon } from "@/components/icons/TelegramIcon";

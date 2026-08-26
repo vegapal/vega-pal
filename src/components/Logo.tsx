@@ -13,7 +13,7 @@ const LOGO_HEIGHT: Record<LogoSize, string> = {
   hero: "h-12 sm:h-14",
 };
 
-const ICON_BOX: Record<LogoSize, string> = {
+const MARK_BOX: Record<LogoSize, string> = {
   sm: "h-7 w-7",
   default: "h-8 w-8",
   lg: "h-10 w-10",
@@ -29,13 +29,19 @@ export function Logo({
 }: {
   light?: boolean;
   size?: LogoSize;
-  /** Compact mark for sidebars / mobile. */
+  /** Standalone V mark for compact / mobile placements. */
   markOnly?: boolean;
   className?: string;
 }) {
-  const variant: LogoVariant = markOnly ? "icon" : light ? "white" : "primary";
+  const variant: LogoVariant = markOnly
+    ? light
+      ? "markWhite"
+      : "mark"
+    : light
+      ? "white"
+      : "primary";
   const src = resolveBrandLogoSrc(variant);
-  const heightClass = markOnly ? ICON_BOX[size] : LOGO_HEIGHT[size];
+  const heightClass = markOnly ? MARK_BOX[size] : LOGO_HEIGHT[size];
 
   return (
     <img
@@ -44,7 +50,6 @@ export function Logo({
       className={cn(
         "inline-block w-auto max-w-full object-contain object-left select-none",
         heightClass,
-        !markOnly && "aspect-[280/64]",
         markOnly && "aspect-square",
         className,
       )}

@@ -13,6 +13,12 @@ function fontDataUrl(fileName: string): string {
   return `data:font/woff2;base64,${buf.toString("base64")}`;
 }
 
+/** Official brand mark as data URI so Playwright PDF has no broken /brand/* fetches. */
+function brandMarkDataUrl(): string {
+  const buf = readFileSync(join(moduleDir, "../../../public/brand/mark-primary.png"));
+  return `data:image/png;base64,${buf.toString("base64")}`;
+}
+
 function invoiceDocumentCssForPdf(): string {
   const raw = readFileSync(
     join(moduleDir, "../../components/invoice-document/invoice-document.css"),
@@ -37,7 +43,11 @@ export function renderInvoiceDocumentMarkup(model: InvoiceDocumentModel): string
 
 export function renderInvoiceDocumentHtmlDocument(model: InvoiceDocumentModel): string {
   const css = invoiceDocumentCssForPdf();
-  const body = renderInvoiceDocumentMarkup(model);
+  const mark = brandMarkDataUrl();
+  const body = renderInvoiceDocumentMarkup(model).replaceAll(
+    'src="/brand/mark-primary.png"',
+    `src="${mark}"`,
+  );
   return `<!DOCTYPE html>
 <html lang="${model.locale}" dir="${model.dir}">
 <head>

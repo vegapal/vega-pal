@@ -1,15 +1,28 @@
-# VegaPal brand assets
+# VegaPal Official Brand Pack
 
-Official V1 production identity.
+Approved source: VegaPal gradient V + VegaPal wordmark.
 
-| File | Use |
-|------|-----|
-| `logo-primary.svg` / `.png` | Light backgrounds (headers, auth mobile, footer) |
-| `logo-white.svg` / `.png` | Dark / navy backgrounds |
-| `icon.svg` / `.png` | Compact UI, favicon source, PDF footer mark |
-| `icon-192.png` / `icon-512.png` | PWA / webmanifest |
-| `maskable-192.png` / `maskable-512.png` | Maskable PWA icons |
-| `apple-touch-icon.png` | iOS home screen (also copied to `/public/apple-touch-icon.png`) |
-| `favicon.ico` | Legacy browsers (also `/public/favicon.ico`) |
+## Keep / use
+- logo-primary.png — full horizontal logo for light backgrounds
+- logo-white.png — gradient V + white wordmark for dark backgrounds
+- mark-primary.png — standalone V for compact UI
+- mark-white.png — monochrome white V when required
+- app-icon-master.png — approved rounded-square app icon master
+- favicon.png / favicon.ico — browser tab
+- apple-touch-icon.png — iOS home screen
+- icon-192.png / icon-512.png — web app/PWA
+- maskable-192.png / maskable-512.png — PWA maskable icons
+- social-avatar-512.png — social profile avatar
+- og-brand.jpg — optional social/Open Graph brand image
 
-Prefer SVG in the product UI. Drop replacement SVGs into this folder without changing component APIs.
+## Important
+These files are derived from the approved artwork without redesigning the logo.
+
+No SVG files are included because the approved source is raster artwork.
+Do NOT keep/generated placeholder SVG artwork as the official logo.
+If a true vector master is created later, replace the PNG master assets with the approved vector exports.
+
+## Usage
+- Full logo: landing page, auth, desktop dashboard/admin branding, PDF
+- Standalone V: favicon, compact/mobile UI, social avatar
+- White logo: dark backgrounds

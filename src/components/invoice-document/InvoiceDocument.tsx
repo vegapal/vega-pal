@@ -158,7 +158,7 @@ export function InvoiceDocument({ model, className }: Props) {
         <footer className="invoice-page-footer">
           <div className="invoice-page-footer-left">
             <span className="invoice-powered">
-              <img src="/brand/icon.svg" alt="" width={14} height={14} />
+              <img src="/brand/mark-primary.png" alt="" width={14} height={14} />
               Created with VegaPal
             </span>
             <span>vega-pal.com</span>
