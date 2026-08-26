@@ -12,6 +12,7 @@ import {
   FileText,
   ShieldCheck,
   User,
+  Wallet,
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { MobileProfileSheet, ProfileSidebarMenu } from "@/components/ProfileAccountMenu";
@@ -33,18 +34,38 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (pendingEmailConfirmation) return <ConfirmEmailPending email={authEmail} />;
   if (!user) return null;
 
-  const nav = [
+  type NavItem = {
+    to: "/dashboard" | "/invoices" | "/invoices/new" | "/settings" | "/settings/payment-methods" | "/admin";
+    label: string;
+    icon: typeof LayoutDashboard;
+    exact?: boolean;
+  };
+
+  const desktopNav: NavItem[] = [
     { to: "/dashboard", label: t("nav.overview"), icon: LayoutDashboard, exact: true },
     { to: "/invoices", label: t("nav.documents"), icon: FileText, exact: true },
     { to: "/invoices/new", label: t("nav.createDocument"), icon: FilePlus2 },
-    { to: "/settings", label: t("nav.settings"), icon: Settings },
+    {
+      to: "/settings/payment-methods",
+      label: t("nav.paymentMethods"),
+      icon: Wallet,
+      exact: true,
+    },
+    { to: "/settings", label: t("nav.settings"), icon: Settings, exact: true },
     ...(isAdmin
-      ? [{ to: "/admin", label: t("nav.adminPanel"), icon: ShieldCheck, exact: false } as const]
+      ? [{ to: "/admin" as const, label: t("nav.adminPanel"), icon: ShieldCheck, exact: false }]
       : []),
   ];
 
-  const isActive = (n: (typeof nav)[number]) =>
-    n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(n.to + "/");
+  const mobileNav: NavItem[] = [
+    { to: "/dashboard", label: t("nav.overview"), icon: LayoutDashboard, exact: true },
+    { to: "/invoices", label: t("nav.documents"), icon: FileText, exact: true },
+    { to: "/invoices/new", label: t("nav.createDocument"), icon: FilePlus2 },
+    { to: "/settings", label: t("nav.settings"), icon: Settings, exact: false },
+  ];
+
+  const isActive = (n: NavItem) =>
+    n.exact ? pathname === n.to : pathname === n.to || pathname.startsWith(`${n.to}/`);
 
   const linkClass = (active: boolean) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 motion-reduce:transition-none ${
@@ -65,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 space-y-0.5">
-          {nav.map((n) => {
+          {desktopNav.map((n) => {
             const active = isActive(n);
             return (
               <Link
@@ -114,7 +135,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur flex pb-[env(safe-area-inset-bottom,0px)]"
           aria-label="App navigation"
         >
-          {nav.map((n) => {
+          {mobileNav.map((n) => {
             const active = isActive(n);
             return (
               <Link

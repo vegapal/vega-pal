@@ -8,6 +8,7 @@ import {
   Settings,
   Sun,
   User,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -127,6 +128,16 @@ export function ProfileMenuBody({ user, onClose, variant }: MenuBodyProps) {
             {t("nav.settings")}
           </span>
         </Link>
+        <Link
+          to="/settings/payment-methods"
+          onClick={onClose}
+          className={cn(rowClass, "text-foreground")}
+        >
+          <span className="flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+            {t("nav.paymentMethods")}
+          </span>
+        </Link>
         <Link to="/pricing" onClick={onClose} className={cn(rowClass, "text-foreground")}>
           <span>{t("profileMenu.planRow", { plan: planLabel(user?.plan, t) })}</span>
         </Link>
@@ -193,6 +204,12 @@ export function ProfileMenuBody({ user, onClose, variant }: MenuBodyProps) {
         <Link to="/settings" className="cursor-pointer">
           <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
           {t("nav.settings")}
+        </Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link to="/settings/payment-methods" className="cursor-pointer">
+          <Wallet className="h-4 w-4 mr-2 text-muted-foreground" />
+          {t("nav.paymentMethods")}
         </Link>
       </DropdownMenuItem>
       <DropdownMenuItem asChild>

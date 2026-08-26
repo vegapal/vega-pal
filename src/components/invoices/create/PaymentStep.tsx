@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -423,6 +424,17 @@ export function PaymentStep({
               <p className="text-[11px] text-muted-foreground">{ts("paymentMethods.securityNote")}</p>
             </div>
 
+            {banks.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                <Link
+                  to="/settings/payment-methods"
+                  className="text-primary underline-offset-2 hover:underline font-medium"
+                >
+                  {t("create.savedPaymentMethods.manageInSettings")}
+                </Link>
+              </p>
+            ) : null}
+
             {banks.length > 0 && !manualBank ? (
               <div className="space-y-3">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -555,6 +567,17 @@ export function PaymentStep({
               <p className="text-sm font-medium">{t("create.paymentMethods.cryptoPayment")}</p>
               <p className="text-[11px] text-muted-foreground">{ts("paymentMethods.securityNote")}</p>
             </div>
+
+            {cryptos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                <Link
+                  to="/settings/payment-methods"
+                  className="text-primary underline-offset-2 hover:underline font-medium"
+                >
+                  {t("create.savedPaymentMethods.manageInSettings")}
+                </Link>
+              </p>
+            ) : null}
 
             {cryptos.length > 0 && !manualCrypto ? (
               <div className="space-y-3">

@@ -19,9 +19,11 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as SettingsPaymentMethodsRouteImport } from './routes/settings.payment-methods'
 import { Route as PayIdRouteImport } from './routes/pay.$id'
 import { Route as LearnWhatIsAnInvoiceRouteImport } from './routes/learn.what-is-an-invoice'
 import { Route as LearnWhatIsABillRouteImport } from './routes/learn.what-is-a-bill'
@@ -90,6 +92,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const LearnIndexRoute = LearnIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -104,6 +111,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const SettingsPaymentMethodsRoute = SettingsPaymentMethodsRouteImport.update({
+  id: '/payment-methods',
+  path: '/payment-methods',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const PayIdRoute = PayIdRouteImport.update({
   id: '/pay/$id',
@@ -201,7 +213,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/invoices/$id': typeof InvoicesIdRoute
   '/invoices/new': typeof InvoicesNewRoute
@@ -217,9 +229,11 @@ export interface FileRoutesByFullPath {
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
+  '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/admin/': typeof AdminIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/learn/': typeof LearnIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
@@ -231,7 +245,6 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/settings': typeof SettingsRoute
   '/invoices/$id': typeof InvoicesIdRoute
   '/invoices/new': typeof InvoicesNewRoute
   '/learn/business': typeof LearnBusinessRoute
@@ -246,9 +259,11 @@ export interface FileRoutesByTo {
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
+  '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/admin': typeof AdminIndexRoute
   '/invoices': typeof InvoicesIndexRoute
   '/learn': typeof LearnIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
@@ -263,7 +278,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/invoices/$id': typeof InvoicesIdRoute
   '/invoices/new': typeof InvoicesNewRoute
@@ -279,9 +294,11 @@ export interface FileRoutesById {
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
+  '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/admin/': typeof AdminIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/learn/': typeof LearnIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
@@ -313,9 +330,11 @@ export interface FileRouteTypes {
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
+    | '/settings/payment-methods'
     | '/admin/'
     | '/invoices/'
     | '/learn/'
+    | '/settings/'
     | '/admin/users/$userId'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
@@ -327,7 +346,6 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/reset-password'
-    | '/settings'
     | '/invoices/$id'
     | '/invoices/new'
     | '/learn/business'
@@ -342,9 +360,11 @@ export interface FileRouteTypes {
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
+    | '/settings/payment-methods'
     | '/admin'
     | '/invoices'
     | '/learn'
+    | '/settings'
     | '/admin/users/$userId'
     | '/admin/users'
   id:
@@ -374,9 +394,11 @@ export interface FileRouteTypes {
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
+    | '/settings/payment-methods'
     | '/admin/'
     | '/invoices/'
     | '/learn/'
+    | '/settings/'
     | '/admin/users/$userId'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
@@ -391,7 +413,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   InvoicesIdRoute: typeof InvoicesIdRoute
   InvoicesNewRoute: typeof InvoicesNewRoute
   PayIdRoute: typeof PayIdRoute
@@ -470,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/learn/': {
       id: '/learn/'
       path: '/'
@@ -490,6 +519,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/settings/payment-methods': {
+      id: '/settings/payment-methods'
+      path: '/payment-methods'
+      fullPath: '/settings/payment-methods'
+      preLoaderRoute: typeof SettingsPaymentMethodsRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/pay/$id': {
       id: '/pay/$id'
@@ -671,6 +707,20 @@ const LearnRouteChildren: LearnRouteChildren = {
 
 const LearnRouteWithChildren = LearnRoute._addFileChildren(LearnRouteChildren)
 
+interface SettingsRouteChildren {
+  SettingsPaymentMethodsRoute: typeof SettingsPaymentMethodsRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsPaymentMethodsRoute: SettingsPaymentMethodsRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -681,7 +731,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   InvoicesIdRoute: InvoicesIdRoute,
   InvoicesNewRoute: InvoicesNewRoute,
   PayIdRoute: PayIdRoute,

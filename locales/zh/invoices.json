@@ -113,7 +113,8 @@
       "saveCryptoTitle": "保存此钱包以用于未来发票？",
       "saveCryptoDesc": "保存此公开钱包地址和网络，以便在未来发票中复用。",
       "saveMethod": "保存付款方式",
-      "notNow": "暂时不用"
+      "notNow": "暂时不用",
+      "manageInSettings": "管理已保存的付款方式"
     }
   },
   "wizard": {

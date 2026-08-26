@@ -14,6 +14,7 @@
     "invoices": "发票",
     "createInvoice": "创建发票",
     "settings": "设置",
+    "paymentMethods": "付款方式",
     "signOut": "退出登录",
     "adminPanel": "管理面板",
     "openMenu": "打开导航菜单",

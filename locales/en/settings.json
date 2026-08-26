@@ -19,7 +19,8 @@
     },
     "paymentMethods": {
       "title": "Payment Methods",
-      "desc": "Save bank accounts and crypto wallets to reuse on future invoices. Invoices keep a snapshot of the details you select."
+      "desc": "Save bank accounts and crypto wallets to reuse on future invoices. Invoices keep a snapshot of the details you select.",
+      "manage": "Manage payment methods"
     },
     "notifications": {
       "title": "Notifications",

@@ -14,6 +14,7 @@
     "invoices": "ใบแจ้งหนี้",
     "createInvoice": "สร้างใบแจ้งหนี้",
     "settings": "ตั้งค่า",
+    "paymentMethods": "วิธีการชำระเงิน",
     "signOut": "ออกจากระบบ",
     "adminPanel": "แผงผู้ดูแล",
     "openMenu": "เปิดเมนูนำทาง",

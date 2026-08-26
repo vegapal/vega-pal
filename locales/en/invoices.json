@@ -106,7 +106,8 @@
       "saveCryptoTitle": "Save this wallet for future invoices?",
       "saveCryptoDesc": "Save this public wallet address and network to reuse it on future invoices.",
       "saveMethod": "Save payment method",
-      "notNow": "Not now"
+      "notNow": "Not now",
+      "manageInSettings": "Manage saved payment methods"
     },
     "preview": {
       "livePreview": "Live preview",
