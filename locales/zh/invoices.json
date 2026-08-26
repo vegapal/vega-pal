@@ -196,7 +196,8 @@
       "removeField": "Remove {{field}}",
       "allAdded": "All optional fields are already on this document.",
       "termsLabel": "Terms & conditions",
-      "confirmRemoveWithContent": "Remove {{field}} and discard its text?"
+      "confirmRemoveWithContent": "Remove {{field}} and discard its text?",
+      "termsDocumentHint": "这些条款将作为备注显示在生成的文档中。"
     },
     "items": {
       "heading": "Line items",
@@ -251,17 +252,15 @@
       "description": "Something went wrong loading this page. Your other invoices are safe — try again or go back to the list."
     },
     "validation": {
-      "clientNameRequired": "Client name is required.",
-      "clientEmailRequired": "Client email is required.",
-      "clientEmailInvalid": "Enter a valid client email.",
-      "titleRequired": "Document title is required.",
-      "issueDateRequired": "Issue date is required.",
-      "dueDateRequired": "Due date is required.",
-      "dueBeforeIssue": "Due date must be on or after the issue date.",
-      "itemsRequired": "Add at least one line item with a description and quantity.",
-      "walletRequired": "Enter a wallet address for crypto payment.",
-      "paymentMethodRequired": "Enable at least one payment method.",
-      "subjectRequired": "Enter a subject or description for this document."
+      "clientNameRequired": "客户或公司名称不能为空。",
+      "clientEmailInvalid": "请输入有效的客户邮箱。",
+      "issueDateRequired": "签发日期不能为空。",
+      "dueDateRequired": "到期日期不能为空。",
+      "dueBeforeIssue": "到期日期必须等于或晚于签发日期。",
+      "itemsRequired": "请至少添加一行包含描述和数量的明细。",
+      "walletRequired": "请输入加密货币支付的钱包地址。",
+      "paymentMethodRequired": "请至少启用一种支付方式。",
+      "subjectRequired": "请输入此文档的主题或描述。"
     }
   },
   "detail": {
@@ -274,7 +273,8 @@
     "markAsDraft": "标记为草稿",
     "markAsCancelled": "标记为已取消",
     "shareTitle": "分享给客户",
-    "shareDescription": "发送此安全链接以接收付款。"
+    "shareDescription": "发送此安全链接以接收付款。",
+    "paymentStatus": "付款状态"
   },
   "paymentCards": {
     "cryptoPayment": "加密货币付款"
@@ -300,5 +300,26 @@
     "viewInvoiceNumber": "View {{number}}",
     "editDraftInvoice": "Edit draft invoice",
     "listBadge": "Converted"
+  },
+  "documentType": {
+    "taxInvoice": "税务发票",
+    "quotation": "报价单",
+    "proforma": "形式发票"
+  },
+  "documentStatus": {
+    "draft": "草稿",
+    "issued": "已签发",
+    "accepted": "已接受",
+    "rejected": "已拒绝",
+    "cancelled": "已取消",
+    "expired": "已过期"
+  },
+  "paymentStatus": {
+    "not_applicable": "不适用",
+    "unpaid": "未付款",
+    "partially_paid": "部分付款",
+    "paid": "已付款",
+    "overdue": "逾期",
+    "refunded": "已退款"
   }
 }

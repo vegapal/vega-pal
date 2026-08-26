@@ -21,7 +21,10 @@
     "openMenu": "Открыть меню навигации",
     "documents": "Documents",
     "createDocument": "Create document",
-    "plan": "Plan"
+    "plan": "Plan",
+    "account": "Аккаунт",
+    "accountMenu": "Меню аккаунта",
+    "sidebar": "Основная боковая панель"
   },
   "language": {
     "label": "Язык",
@@ -152,7 +155,7 @@
     "usageUnlimited": "Безлимитные счета",
     "usageFree": "{{used}} / {{limit}} счетов в этом месяце",
     "warningNearLimit": "Вы использовали {{used}} из {{limit}} счетов в этом месяце.",
-    "limitReached": "Вы использовали все 5 счетов Free-тарифа в этом месяце.",
+    "limitReached": "Вы использовали все 3 documents, включённые в ваш бесплатный план в этом месяце.",
     "upgradePlan": "Сменить тариф",
     "upgradeToPro": "Перейти на Pro",
     "viewPlans": "Смотреть тарифы",
@@ -222,5 +225,10 @@
     "shared": "Отправлено",
     "shareFallbackDownload": "Поделиться здесь нельзя — PDF скачан вместо этого.",
     "generateFailed": "Не удалось создать PDF. Попробуйте ещё раз."
+  },
+  "plans": {
+    "free": "Бесплатный план",
+    "pro": "План Pro",
+    "business": "План Business"
   }
 }

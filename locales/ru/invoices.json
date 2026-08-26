@@ -196,7 +196,8 @@
       "removeField": "Remove {{field}}",
       "allAdded": "All optional fields are already on this document.",
       "termsLabel": "Terms & conditions",
-      "confirmRemoveWithContent": "Remove {{field}} and discard its text?"
+      "confirmRemoveWithContent": "Remove {{field}} and discard its text?",
+      "termsDocumentHint": "Эти условия будут отображаться как примечания в созданном документе."
     },
     "items": {
       "heading": "Line items",
@@ -251,17 +252,15 @@
       "description": "Something went wrong loading this page. Your other invoices are safe — try again or go back to the list."
     },
     "validation": {
-      "clientNameRequired": "Client name is required.",
-      "clientEmailRequired": "Client email is required.",
-      "clientEmailInvalid": "Enter a valid client email.",
-      "titleRequired": "Document title is required.",
-      "issueDateRequired": "Issue date is required.",
-      "dueDateRequired": "Due date is required.",
-      "dueBeforeIssue": "Due date must be on or after the issue date.",
-      "itemsRequired": "Add at least one line item with a description and quantity.",
-      "walletRequired": "Enter a wallet address for crypto payment.",
-      "paymentMethodRequired": "Enable at least one payment method.",
-      "subjectRequired": "Enter a subject or description for this document."
+      "clientNameRequired": "Укажите имя клиента или компании.",
+      "clientEmailInvalid": "Введите корректный email клиента.",
+      "issueDateRequired": "Укажите дату выставления.",
+      "dueDateRequired": "Укажите срок оплаты.",
+      "dueBeforeIssue": "Срок оплаты должен быть не раньше даты выставления.",
+      "itemsRequired": "Добавьте хотя бы одну позицию с описанием и количеством.",
+      "walletRequired": "Укажите адрес кошелька для оплаты криптовалютой.",
+      "paymentMethodRequired": "Включите хотя бы один способ оплаты.",
+      "subjectRequired": "Укажите тему или описание для этого документа."
     }
   },
   "detail": {
@@ -274,7 +273,8 @@
     "markAsDraft": "Отметить как черновик",
     "markAsCancelled": "Отметить как отменённый",
     "shareTitle": "Поделиться с клиентом",
-    "shareDescription": "Отправьте эту безопасную ссылку для получения оплаты."
+    "shareDescription": "Отправьте эту безопасную ссылку для получения оплаты.",
+    "paymentStatus": "Статус оплаты"
   },
   "paymentCards": {
     "cryptoPayment": "Оплата криптовалютой"
@@ -300,5 +300,26 @@
     "viewInvoiceNumber": "View {{number}}",
     "editDraftInvoice": "Edit draft invoice",
     "listBadge": "Converted"
+  },
+  "documentType": {
+    "taxInvoice": "Налоговый счёт",
+    "quotation": "Коммерческое предложение",
+    "proforma": "Проформа-счёт"
+  },
+  "documentStatus": {
+    "draft": "Черновик",
+    "issued": "Выставлен",
+    "accepted": "Принят",
+    "rejected": "Отклонён",
+    "cancelled": "Отменён",
+    "expired": "Истёк"
+  },
+  "paymentStatus": {
+    "not_applicable": "Н/П",
+    "unpaid": "Не оплачен",
+    "partially_paid": "Частично оплачен",
+    "paid": "Оплачен",
+    "overdue": "Просрочен",
+    "refunded": "Возвращён"
   }
 }

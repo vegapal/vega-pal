@@ -38,7 +38,9 @@
     "security:check-client-secrets": "node scripts/check-client-secrets.mjs",
     "test:security-contracts": "npx tsx scripts/test-security-contracts.harness.ts",
     "test:cross-user-auth": "node scripts/run-cross-user-auth.mjs",
-    "test:mobile-prelaunch": "node scripts/run-mobile-prelaunch.mjs"
+    "test:mobile-prelaunch": "node scripts/run-mobile-prelaunch.mjs",
+    "i18n:audit": "node scripts/i18n-audit.mjs",
+    "test:i18n": "npx tsx scripts/test-i18n.harness.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

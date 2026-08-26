@@ -121,7 +121,8 @@
       "deleteDescription": "This will permanently delete the user account, profile, invoices, invoice items, and audit history. This action cannot be undone.",
       "typeDelete": "Type DELETE to confirm",
       "cannotDeleteSelf": "You cannot delete your own account from the admin panel."
-    }
+    },
+    "successDeleted": "ลบผู้ใช้เรียบร้อยแล้ว"
   },
   "nav": {
     "dashboard": "Dashboard",

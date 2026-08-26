@@ -174,9 +174,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   const lang = typeof document !== "undefined" ? i18n.language : DEFAULT_LANGUAGE;
+  const dir = lang === "ar" ? "rtl" : "ltr";
 
   return (
-    <html lang={lang}>
+    <html lang={lang} dir={dir}>
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />

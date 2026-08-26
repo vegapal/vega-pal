@@ -196,7 +196,8 @@
       "removeField": "Remove {{field}}",
       "allAdded": "All optional fields are already on this document.",
       "termsLabel": "Terms & conditions",
-      "confirmRemoveWithContent": "Remove {{field}} and discard its text?"
+      "confirmRemoveWithContent": "Remove {{field}} and discard its text?",
+      "termsDocumentHint": "ข้อกำหนดเหล่านี้จะแสดงเป็นหมายเหตุในเอกสารที่สร้าง"
     },
     "items": {
       "heading": "Line items",
@@ -251,17 +252,15 @@
       "description": "Something went wrong loading this page. Your other invoices are safe — try again or go back to the list."
     },
     "validation": {
-      "clientNameRequired": "Client name is required.",
-      "clientEmailRequired": "Client email is required.",
-      "clientEmailInvalid": "Enter a valid client email.",
-      "titleRequired": "Document title is required.",
-      "issueDateRequired": "Issue date is required.",
-      "dueDateRequired": "Due date is required.",
-      "dueBeforeIssue": "Due date must be on or after the issue date.",
-      "itemsRequired": "Add at least one line item with a description and quantity.",
-      "walletRequired": "Enter a wallet address for crypto payment.",
-      "paymentMethodRequired": "Enable at least one payment method.",
-      "subjectRequired": "Enter a subject or description for this document."
+      "clientNameRequired": "ต้องระบุชื่อลูกค้าหรือบริษัท",
+      "clientEmailInvalid": "กรุณากรอกอีเมลลูกค้าให้ถูกต้อง",
+      "issueDateRequired": "ต้องระบุวันที่ออกเอกสาร",
+      "dueDateRequired": "ต้องระบุวันครบกำหนด",
+      "dueBeforeIssue": "วันครบกำหนดต้องเป็นวันเดียวกับหรือหลังวันที่ออกเอกสาร",
+      "itemsRequired": "เพิ่มรายการอย่างน้อย 1 รายการพร้อมคำอธิบายและจำนวน",
+      "walletRequired": "กรุณากรอกที่อยู่กระเป๋าเงินสำหรับการชำระด้วยคริปโต",
+      "paymentMethodRequired": "เปิดใช้งานวิธีชำระเงินอย่างน้อย 1 วิธี",
+      "subjectRequired": "กรุณากรอกหัวข้อหรือคำอธิบายของเอกสารนี้"
     }
   },
   "detail": {
@@ -274,7 +273,8 @@
     "markAsDraft": "ทำเครื่องหมายว่าเป็นฉบับร่าง",
     "markAsCancelled": "ทำเครื่องหมายว่ายกเลิกแล้ว",
     "shareTitle": "แชร์ให้ลูกค้า",
-    "shareDescription": "ส่งลิงก์นี้เพื่อรับชำระเงิน"
+    "shareDescription": "ส่งลิงก์นี้เพื่อรับชำระเงิน",
+    "paymentStatus": "สถานะการชำระเงิน"
   },
   "paymentCards": {
     "cryptoPayment": "ชำระด้วยคริปโต"
@@ -300,5 +300,26 @@
     "viewInvoiceNumber": "View {{number}}",
     "editDraftInvoice": "Edit draft invoice",
     "listBadge": "Converted"
+  },
+  "documentType": {
+    "taxInvoice": "ใบกำกับภาษี",
+    "quotation": "ใบเสนอราคา",
+    "proforma": "ใบ Proforma"
+  },
+  "documentStatus": {
+    "draft": "ฉบับร่าง",
+    "issued": "ออกแล้ว",
+    "accepted": "ยอมรับแล้ว",
+    "rejected": "ปฏิเสธแล้ว",
+    "cancelled": "ยกเลิกแล้ว",
+    "expired": "หมดอายุ"
+  },
+  "paymentStatus": {
+    "not_applicable": "ไม่เกี่ยวข้อง",
+    "unpaid": "ยังไม่ชำระ",
+    "partially_paid": "ชำระบางส่วน",
+    "paid": "ชำระแล้ว",
+    "overdue": "เกินกำหนด",
+    "refunded": "คืนเงินแล้ว"
   }
 }

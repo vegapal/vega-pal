@@ -58,6 +58,7 @@ if (typeof window !== "undefined") {
 i18n.on("languageChanged", (lng) => {
   if (typeof document !== "undefined") {
     document.documentElement.lang = lng;
+    document.documentElement.dir = lng === "ar" ? "rtl" : "ltr";
   }
   if (isSupportedLanguage(lng)) {
     persistLanguage(lng);
@@ -66,6 +67,7 @@ i18n.on("languageChanged", (lng) => {
 
 if (typeof document !== "undefined") {
   document.documentElement.lang = i18n.language;
+  document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
 }
 
 export default i18n;

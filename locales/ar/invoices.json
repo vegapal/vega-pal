@@ -196,7 +196,8 @@
       "removeField": "Remove {{field}}",
       "allAdded": "All optional fields are already on this document.",
       "termsLabel": "Terms & conditions",
-      "confirmRemoveWithContent": "Remove {{field}} and discard its text?"
+      "confirmRemoveWithContent": "Remove {{field}} and discard its text?",
+      "termsDocumentHint": "ستظهر هذه الشروط كملاحظات في المستند المُنشأ."
     },
     "items": {
       "heading": "Line items",
@@ -251,17 +252,15 @@
       "description": "Something went wrong loading this page. Your other invoices are safe — try again or go back to the list."
     },
     "validation": {
-      "clientNameRequired": "Client name is required.",
-      "clientEmailRequired": "Client email is required.",
-      "clientEmailInvalid": "Enter a valid client email.",
-      "titleRequired": "Document title is required.",
-      "issueDateRequired": "Issue date is required.",
-      "dueDateRequired": "Due date is required.",
-      "dueBeforeIssue": "Due date must be on or after the issue date.",
-      "itemsRequired": "Add at least one line item with a description and quantity.",
-      "walletRequired": "Enter a wallet address for crypto payment.",
-      "paymentMethodRequired": "Enable at least one payment method.",
-      "subjectRequired": "Enter a subject or description for this document."
+      "clientNameRequired": "اسم العميل أو الشركة مطلوب.",
+      "clientEmailInvalid": "أدخل بريداً إلكترونياً صالحاً للعميل.",
+      "issueDateRequired": "تاريخ الإصدار مطلوب.",
+      "dueDateRequired": "تاريخ الاستحقاق مطلوب.",
+      "dueBeforeIssue": "يجب أن يكون تاريخ الاستحقاق في أو بعد تاريخ الإصدار.",
+      "itemsRequired": "أضف بنداً واحداً على الأقل مع وصف وكمية.",
+      "walletRequired": "أدخل عنوان محفظة للدفع بالعملات الرقمية.",
+      "paymentMethodRequired": "فعّل طريقة دفع واحدة على الأقل.",
+      "subjectRequired": "أدخل موضوعاً أو وصفاً لهذا المستند."
     }
   },
   "detail": {
@@ -274,7 +273,8 @@
     "markAsDraft": "Mark as draft",
     "markAsCancelled": "Mark as cancelled",
     "shareTitle": "Share with your client",
-    "shareDescription": "Send this secure link to receive payment."
+    "shareDescription": "Send this secure link to receive payment.",
+    "paymentStatus": "حالة الدفع"
   },
   "paymentCards": {
     "cryptoPayment": "Crypto payment"
@@ -300,5 +300,26 @@
     "viewInvoiceNumber": "View {{number}}",
     "editDraftInvoice": "Edit draft invoice",
     "listBadge": "Converted"
+  },
+  "documentType": {
+    "taxInvoice": "فاتورة ضريبية",
+    "quotation": "عرض سعر",
+    "proforma": "فاتورة مبدئية"
+  },
+  "documentStatus": {
+    "draft": "مسودة",
+    "issued": "صادرة",
+    "accepted": "مقبولة",
+    "rejected": "مرفوضة",
+    "cancelled": "ملغاة",
+    "expired": "منتهية الصلاحية"
+  },
+  "paymentStatus": {
+    "not_applicable": "غ/م",
+    "unpaid": "غير مدفوعة",
+    "partially_paid": "مدفوعة جزئياً",
+    "paid": "مدفوعة",
+    "overdue": "متأخرة",
+    "refunded": "مستردة"
   }
 }

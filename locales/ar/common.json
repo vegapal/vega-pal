@@ -21,7 +21,10 @@
     "openMenu": "Open navigation menu",
     "documents": "Documents",
     "createDocument": "Create document",
-    "plan": "Plan"
+    "plan": "Plan",
+    "account": "الحساب",
+    "accountMenu": "قائمة الحساب",
+    "sidebar": "الشريط الجانبي الرئيسي"
   },
   "language": {
     "label": "Language",
@@ -152,7 +155,7 @@
     "usageUnlimited": "فواتير غير محدودة",
     "usageFree": "{{used}} / {{limit}} فاتورة مستخدمة هذا الشهر",
     "warningNearLimit": "لقد استخدمت {{used}} من {{limit}} فواتير هذا الشهر.",
-    "limitReached": "لقد استخدمت جميع الفواتير الخمس المدرجة في خطتك المجانية هذا الشهر.",
+    "limitReached": "لقد استخدمت جميع الـ 3 documents المتضمنة في خطتك المجانية (Free) هذا الشهر.",
     "upgradePlan": "ترقية الخطة",
     "upgradeToPro": "الترقية إلى Pro",
     "viewPlans": "عرض الخطط",
@@ -222,5 +225,10 @@
     "shared": "تمت المشاركة",
     "shareFallbackDownload": "المشاركة غير متاحة هنا — تم تنزيل ملف PDF بدلاً من ذلك.",
     "generateFailed": "تعذر إنشاء ملف PDF. يرجى المحاولة مرة أخرى."
+  },
+  "plans": {
+    "free": "الخطة المجانية",
+    "pro": "خطة Pro",
+    "business": "خطة Business"
   }
 }

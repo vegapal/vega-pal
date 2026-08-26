@@ -21,7 +21,10 @@
     "openMenu": "เปิดเมนูนำทาง",
     "documents": "Documents",
     "createDocument": "Create document",
-    "plan": "Plan"
+    "plan": "Plan",
+    "account": "บัญชี",
+    "accountMenu": "เมนูบัญชี",
+    "sidebar": "แถบด้านข้างหลัก"
   },
   "language": {
     "label": "ภาษา",
@@ -152,7 +155,7 @@
     "usageUnlimited": "ใบแจ้งหนี้ไม่จำกัด",
     "usageFree": "ใช้ใบแจ้งหนี้ {{used}} / {{limit}} ใบในเดือนนี้",
     "warningNearLimit": "คุณใช้ใบแจ้งหนี้ {{used}} จาก {{limit}} ใบในเดือนนี้",
-    "limitReached": "คุณใช้ใบแจ้งหนี้ครบ 5 ใบในแพ็กเกจ Free ของเดือนนี้แล้ว",
+    "limitReached": "คุณใช้ครบ 3 documents ที่รวมอยู่ในแผน Free ของคุณในเดือนนี้แล้ว",
     "upgradePlan": "อัปเกรดแพ็กเกจ",
     "upgradeToPro": "อัปเกรดเป็น Pro",
     "viewPlans": "ดูแพ็กเกจ",
@@ -222,5 +225,10 @@
     "shared": "แชร์แล้ว",
     "shareFallbackDownload": "ไม่สามารถแชร์ได้ที่นี่ — ดาวน์โหลด PDF ให้แทนแล้ว",
     "generateFailed": "ไม่สามารถสร้าง PDF ได้ กรุณาลองอีกครั้ง"
+  },
+  "plans": {
+    "free": "แผน Free",
+    "pro": "แผน Pro",
+    "business": "แผน Business"
   }
 }

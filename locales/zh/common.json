@@ -21,7 +21,10 @@
     "openMenu": "打开导航菜单",
     "documents": "Documents",
     "createDocument": "Create document",
-    "plan": "Plan"
+    "plan": "Plan",
+    "account": "账户",
+    "accountMenu": "账户菜单",
+    "sidebar": "主侧边栏"
   },
   "language": {
     "label": "语言",
@@ -152,7 +155,7 @@
     "usageUnlimited": "无限发票",
     "usageFree": "本月已使用 {{used}} / {{limit}} 张发票",
     "warningNearLimit": "您本月已使用 {{used}} / {{limit}} 张发票。",
-    "limitReached": "您已用完 Free 套餐本月包含的 5 张发票。",
+    "limitReached": "您本月已用完 Free 计划包含的 3 documents。",
     "upgradePlan": "升级套餐",
     "upgradeToPro": "升级到 Pro",
     "viewPlans": "查看套餐",
@@ -222,5 +225,10 @@
     "shared": "已分享",
     "shareFallbackDownload": "此处无法分享 — 已改为下载 PDF。",
     "generateFailed": "无法生成 PDF，请重试。"
+  },
+  "plans": {
+    "free": "免费版",
+    "pro": "Pro 版",
+    "business": "Business 版"
   }
 }
