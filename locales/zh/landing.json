@@ -20,7 +20,7 @@
     "features": {
       "pdfInvoices": "专业 PDF 发票",
       "paymentMethods": "加密货币、银行与现金收款",
-      "verifiedPages": "可验证的付款页面"
+      "verifiedPages": "可分享的付款页面"
     },
     "demo": {
       "billedTo": "账单收件人",
@@ -97,69 +97,75 @@
     }
   },
   "pricing": {
-    "eyebrow": "价格",
-    "title": "简单、透明、公平。",
-    "subtitle": "所有套餐均在 PDF 发票和付款页面展示 VegaPal — 始终如此。",
+    "eyebrow": "Pricing",
+    "title": "Simple, transparent, fair.",
+    "subtitle": "Start free. Upgrade to Pro when you need unlimited documents.",
     "plans": {
       "free": {
         "name": "Free",
-        "description": "包含开票所需的一切，立即开始。",
-        "cta": "免费开始",
+        "description": "Create professional documents with essential tools.",
+        "cta": "Start free",
+        "ctaCurrent": "Current plan",
         "features": {
-          "invoices": "每月 5 张发票",
-          "pdf": "PDF 发票",
-          "paymentPages": "公开付款页面",
-          "payments": "加密货币、银行与现金收款",
-          "dashboard": "控制台",
-          "branding": "自定义品牌",
-          "qr": "二维码",
-          "excel": "Excel 导出",
-          "reports": "报表",
-          "multiCurrency": "多币种发票",
-          "footer": "Powered by VegaPal 页脚"
+          "documents": "3 documents per month",
+          "pdf": "PDF invoices",
+          "paymentPages": "Shareable payment pages",
+          "payments": "Bank, crypto & cash payment details",
+          "dashboard": "Dashboard",
+          "branding": "Custom branding",
+          "qr": "QR codes",
+          "excel": "Excel export",
+          "multiCurrency": "Multi-currency documents",
+          "footer": "Powered by VegaPal footer"
         }
       },
       "pro": {
         "name": "Pro",
-        "description": "适合正在成长的自由职业者与小企业。",
-        "cta": "使用 USDT 付款",
+        "description": "Unlimited documents and saved payment methods for growing work.",
+        "cta": "Upgrade to Pro",
+        "ctaUpgrade": "Upgrade to Pro",
+        "ctaCurrent": "Current plan",
+        "ctaContact": "Contact us",
+        "ctaSemiannual": "Get 6 Months for {{price}}",
+        "recommendedBadge": "Recommended",
+        "bestValueBadge": "Best value",
+        "launchPriceBadge": "Launch price",
+        "launchPriceLabel": "Launch price",
+        "launchPriceSupport": "Introductory pricing for early VegaPal users.",
+        "billingAria": "Choose Pro billing period",
+        "billingMonthly": "Monthly",
+        "billingSemiannual": "6 Months — Save {{percent}}%",
+        "perSixMonths": "/ 6 months",
+        "saveAmount": "Save {{amount}}",
+        "perMonthEquivalent": "Equivalent to {{amount}}/month",
+        "semiannualSupport": "Get six months of unlimited VegaPal for {{offer}} instead of {{monthlyTotal}} when paying monthly.",
+        "limitedLaunchOffer": "Limited launch offer",
         "features": {
-          "invoices": "无限发票",
-          "users": "2 位用户",
-          "everythingFree": "包含 Free 全部功能",
-          "prioritySupport": "优先支持",
-          "earlyAccess": "新功能抢先体验",
-          "footer": "Powered by VegaPal 页脚"
-        }
-      },
-      "business": {
-        "name": "Business",
-        "description": "适合需要更高用量与管控的团队。",
-        "cta": "使用 USDT 付款",
-        "features": {
-          "invoices": "无限发票",
-          "users": "4 位用户",
-          "everythingPro": "包含 Pro 全部功能",
-          "teamManagement": "团队管理",
-          "multipleWallets": "多个钱包",
-          "analytics": "高级分析",
-          "api": "API 即将推出",
-          "prioritySupport": "优先支持",
-          "footer": "Powered by VegaPal 页脚"
+          "documents": "Unlimited documents",
+          "savedPaymentMethods": "Saved payment methods",
+          "everythingFree": "Everything in Free",
+          "prioritySupport": "Priority support",
+          "earlyAccess": "Early access to new features",
+          "footer": "Powered by VegaPal footer"
         }
       }
     }
   },
   "subscriptionModal": {
-    "title": "使用 USDT 付款 — {{plan}}",
-    "description": "请按月套餐金额发送 USDT。我们确认付款后将手动激活您的套餐。",
-    "amountLabel": "金额",
-    "paymentMethods": "付款方式",
+    "title": "Complete your {{plan}} payment",
+    "description": "Send the exact amount in USDT, then share your TXID or payment screenshot with support so we can activate your plan manually.",
+    "amountLabel": "Amount due",
+    "paymentMethods": "Payment methods",
     "networkTron": "TRON TRC20",
     "networkBep20": "BNB Smart Chain BEP20",
-    "instructions": "付款后，请将交易 ID（TXID）或付款截图发送至 info@vega-pal.com 或 Telegram @vegapal，以便激活套餐。",
+    "instructions": "After payment, please send your transaction ID (TXID) or payment screenshot to info@vega-pal.com or @vegapal on Telegram so we can activate your plan.",
     "telegram": "Telegram",
-    "networkWarning": "发送 USDT 前请务必选择正确的网络，错误网络可能导致资金丢失。"
+    "networkWarning": "Please make sure you select the correct network before sending USDT. Payments sent on the wrong network may be lost.",
+    "amountSuffixMonthly": "USDT / month",
+    "amountSuffixSemiannual": "USDT / 6 months",
+    "periodMonthly": "Monthly billing",
+    "periodSemiannual": "6-month launch offer",
+    "manualNotice": "Checkout is manual today. After you pay, VegaPal support activates your Pro plan — this is not an automated card charge."
   },
   "cta": {
     "title": "准备好发送您的第一张 USDT 发票了吗？",

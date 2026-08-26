@@ -322,7 +322,7 @@ END $$;
 
 -- ========== 20260630120000_invoice_plan_limit.sql ==========
 
--- Enforce Free plan monthly invoice limit (5) at the database layer.
+-- Enforce Free plan monthly document limit (3) at the database layer.
 
 CREATE OR REPLACE FUNCTION public.count_user_invoices_this_month(p_user_id uuid)
 RETURNS integer
@@ -357,7 +357,7 @@ BEGIN
     monthly_count := public.count_user_invoices_this_month(NEW.user_id);
     IF monthly_count >= 5 THEN
       RAISE EXCEPTION 'FREE_PLAN_INVOICE_LIMIT'
-        USING MESSAGE = 'You have reached the Free plan limit of 5 invoices this month. Upgrade to Pro to create unlimited invoices.';
+        USING MESSAGE = 'You have reached the Free plan limit of 3 documents this month. Upgrade to Pro to create unlimited invoices.';
     END IF;
   END IF;
 
@@ -1021,7 +1021,7 @@ BEGIN
     monthly_count := public.count_user_invoices_this_month(NEW.user_id);
     IF monthly_count >= 5 THEN
       RAISE EXCEPTION 'FREE_PLAN_INVOICE_LIMIT'
-        USING MESSAGE = 'You have reached the Free plan limit of 5 invoices this month. Upgrade to Pro to create unlimited invoices.';
+        USING MESSAGE = 'You have reached the Free plan limit of 3 documents this month. Upgrade to Pro to create unlimited invoices.';
     END IF;
   END IF;
 

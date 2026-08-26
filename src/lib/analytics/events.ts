@@ -149,6 +149,65 @@ export function trackInvoicePaid(
   }
 }
 
+function trackSimpleEvent(
+  eventName: string,
+  params?: Record<string, string | number | boolean | undefined>,
+): void {
+  if (!isBrowser() || !analyticsEnabled()) return;
+  try {
+    const payload = params ?? {};
+    pushDataLayer({ event: eventName, ...payload });
+    gtagEvent(eventName, payload);
+  } catch {
+    /* ignore */
+  }
+}
+
+function currentPath(): string | undefined {
+  if (!isBrowser()) return undefined;
+  try {
+    return window.location.pathname;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Generic marketing CTA click. Used by session-aware CTAs on SEO landing pages. */
+export function trackMarketingCta(
+  eventName: string,
+  props?: { path?: string; cta?: string },
+): void {
+  trackSimpleEvent(eventName, {
+    path: props?.path ?? currentPath(),
+    cta: props?.cta,
+  });
+}
+
+export function trackHomepagePrimaryCta(): void {
+  trackMarketingCta("homepage_primary_cta", { path: "/" });
+}
+
+export function trackSeoPageCta(slug: string): void {
+  trackSimpleEvent("seo_page_cta", { slug, path: currentPath() });
+}
+
+/** Registration flow started (form submitted). trackSignUp remains the completed event. */
+export function trackRegisterStarted(): void {
+  trackSimpleEvent("register_started", { path: currentPath() });
+}
+
+export function trackPdfDownloaded(): void {
+  trackSimpleEvent("pdf_downloaded");
+}
+
+export function trackPublicLinkCopied(): void {
+  trackSimpleEvent("public_link_copied");
+}
+
+export function trackUpgradeClicked(plan?: string): void {
+  trackSimpleEvent("upgrade_clicked", { plan });
+}
+
 export function trackSubscriptionStarted(
   plan: string,
   value?: number,

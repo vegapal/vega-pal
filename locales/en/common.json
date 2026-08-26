@@ -172,7 +172,7 @@
     "usageUnlimited": "Unlimited invoices",
     "usageFree": "{{used}} / {{limit}} invoices used this month",
     "warningNearLimit": "You have used {{used}} of {{limit}} invoices this month.",
-    "limitReached": "You've used all 5 invoices included in your Free plan this month.",
+    "limitReached": "You've used all 3 documents included in your Free plan this month.",
     "upgradePlan": "Upgrade plan",
     "upgradeToPro": "Upgrade to Pro",
     "viewPlans": "View plans",

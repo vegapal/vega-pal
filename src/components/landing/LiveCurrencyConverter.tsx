@@ -31,25 +31,26 @@ const FIAT_FLAG: Partial<Record<CurrencyCode, string>> = {
   INR: "🇮🇳",
 };
 
-function CurrencyIcon({ code, compact = false }: { code: CurrencyCode; compact?: boolean }) {
-  const box = compact ? "h-6 w-6" : "h-7 w-7";
+function CurrencyIcon({ code }: { code: CurrencyCode }) {
   const src = CRYPTO_ICON_SRC[code];
   if (src) {
     return (
-      <img
-        src={src}
-        alt=""
-        width={28}
-        height={28}
-        className={cn(box, "shrink-0 rounded-full object-contain")}
-        decoding="async"
-        aria-hidden
-      />
+      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center">
+        <img
+          src={src}
+          alt=""
+          width={32}
+          height={32}
+          className="h-8 w-8 object-contain"
+          decoding="async"
+          aria-hidden
+        />
+      </span>
     );
   }
   return (
     <span
-      className={cn(box, "inline-flex shrink-0 items-center justify-center text-[1.1rem] leading-none")}
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-[1.25rem] leading-none"
       aria-hidden
     >
       {FIAT_FLAG[code] ?? "💱"}
@@ -121,7 +122,7 @@ function CurrencyPicker({
                   isSelected ? "bg-primary/10" : "hover:bg-slate-50 active:bg-slate-100",
                 )}
               >
-                <CurrencyIcon code={code} compact />
+                <CurrencyIcon code={code} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold leading-tight text-foreground">{code}</span>
                   <span className="block truncate text-[11px] leading-tight text-muted-foreground">

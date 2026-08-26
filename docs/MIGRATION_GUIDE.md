@@ -304,7 +304,7 @@ Creates:
 - `public.user_activity_logs` + `log_user_activity` RPC
 - `public.expire_due_subscriptions()` — marks expired rows and syncs `profiles.plan`
 
-**Vercel cron (optional cleanup):** `GET/POST /api/cron/expire-subscriptions` hourly via `vercel.json`.
+**Vercel cron (optional cleanup):** `GET/POST /api/cron/expire-subscriptions` daily at 03:00 UTC (`0 3 * * *`) via `vercel.json` (Hobby-compatible).
 
 Set env:
 

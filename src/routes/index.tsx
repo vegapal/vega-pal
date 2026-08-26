@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { LandingHeader } from "@/components/landing/LandingHeader";
+import { PublicPricingSection } from "@/components/landing/PublicPricingSection";
 import { PublicSiteFooter } from "@/components/landing/PublicSiteFooter";
 import { TelegramIcon } from "@/components/icons/TelegramIcon";
 import {
@@ -41,76 +42,6 @@ const SubscriptionPaymentModal = lazy(() =>
 
 type SubscriptionPlan = import("@/components/landing/SubscriptionPaymentModal").SubscriptionPlan;
 
-function PricingCard({
-  name,
-  description,
-  price,
-  features,
-  cta,
-  variant,
-  popular = false,
-  href,
-  onCtaClick,
-  disabled = false,
-}: {
-  name: string;
-  description: string;
-  price: number;
-  features: string[];
-  cta: string;
-  variant: "outline" | "hero";
-  popular?: boolean;
-  href?: string;
-  onCtaClick?: () => void;
-  disabled?: boolean;
-}) {
-  const { t: tc } = useTranslation("common");
-
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border bg-card p-8 flex flex-col relative shadow-soft",
-        popular ? "border-2 border-primary shadow-elevated" : "border-border",
-      )}
-    >
-      {popular && (
-        <span className="absolute -top-3 left-8 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-          {tc("popular")}
-        </span>
-      )}
-      <h3 className="font-semibold text-lg">{name}</h3>
-      <p className="text-sm text-muted-foreground mt-1">{description}</p>
-      <p className="mt-6 text-3xl sm:text-5xl font-bold tracking-tight">
-        ${price}
-        <span className="text-base text-muted-foreground font-medium">{tc("monthly")}</span>
-      </p>
-      <ul className="mt-6 space-y-3 text-sm flex-1">
-        {features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
-      {href ? (
-        <Button asChild variant={variant} size="lg" className="mt-8 w-full" disabled={disabled}>
-          <Link to={href}>{cta}</Link>
-        </Button>
-      ) : (
-        <Button
-          type="button"
-          variant={variant}
-          size="lg"
-          className="mt-8 w-full"
-          onClick={onCtaClick}
-          disabled={disabled || !onCtaClick}
-        >
-          {cta}
-        </Button>
-      )}
-    </div>
-  );
-}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -152,19 +83,6 @@ const HOW_IT_WORKS_STEPS = [
   { n: "03", key: "getPaid" },
 ] as const;
 
-const FREE_PLAN_FEATURES = [
-  "invoices", "pdf", "paymentPages", "payments", "dashboard", "branding",
-  "qr", "excel", "reports", "multiCurrency", "footer",
-] as const;
-
-const PRO_PLAN_FEATURES = [
-  "invoices", "users", "everythingFree", "prioritySupport", "earlyAccess", "footer",
-] as const;
-
-const BUSINESS_PLAN_FEATURES = [
-  "invoices", "users", "everythingPro", "teamManagement", "multipleWallets",
-  "analytics", "api", "prioritySupport", "footer",
-] as const;
 
 function Landing() {
   const { t } = useTranslation("landing");
@@ -174,45 +92,7 @@ function Landing() {
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlan | null>(null);
   const currentPlan = (user?.plan ?? null) as UserPlan | null;
 
-  const freeCta =
-    currentPlan === "free"
-      ? { label: t("pricing.plans.free.ctaCurrent"), href: "/dashboard" as const, onClick: undefined }
-      : currentPlan
-        ? { label: t("pricing.plans.free.cta"), href: "/dashboard" as const, onClick: undefined }
-        : { label: t("pricing.plans.free.cta"), href: "/register" as const, onClick: undefined };
-
-  const proCta =
-    currentPlan === "pro"
-      ? { label: t("pricing.plans.pro.ctaCurrent"), href: undefined, onClick: undefined, disabled: true }
-      : currentPlan === "business"
-        ? { label: t("pricing.plans.pro.ctaContact"), href: "/#contact" as const, onClick: undefined }
-        : currentPlan === "free"
-          ? {
-              label: t("pricing.plans.pro.ctaUpgrade"),
-              href: undefined,
-              onClick: () => setSubscriptionPlan({ planKey: "pro", price: 19 }),
-            }
-          : {
-              label: t("pricing.plans.pro.cta"),
-              href: undefined,
-              onClick: () => setSubscriptionPlan({ planKey: "pro", price: 19 }),
-            };
-
-  const businessCta =
-    currentPlan === "business"
-      ? { label: t("pricing.plans.business.ctaCurrent"), href: undefined, onClick: undefined, disabled: true }
-      : currentPlan === "pro" || currentPlan === "free"
-        ? {
-            label: t("pricing.plans.business.ctaUpgrade"),
-            href: undefined,
-            onClick: () => setSubscriptionPlan({ planKey: "business", price: 49 }),
-          }
-        : {
-            label: t("pricing.plans.business.cta"),
-            href: undefined,
-            onClick: () => setSubscriptionPlan({ planKey: "business", price: 49 }),
-          };
-
+  
   return (
     <div className="min-h-screen bg-canvas overflow-x-hidden">
       {subscriptionPlan !== null && (
@@ -386,51 +266,17 @@ function Landing() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-24 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto">
-            <p className="text-sm font-semibold text-primary uppercase tracking-wider">{t("pricing.eyebrow")}</p>
-            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink">{t("pricing.title")}</h2>
-            <p className="mt-4 text-slate">
-              {t("pricing.subtitle")}
-            </p>
-          </div>
-          <div className="mt-14 grid lg:grid-cols-3 gap-6">
-            <PricingCard
-              name={t("pricing.plans.free.name")}
-              description={t("pricing.plans.free.description")}
-              price={0}
-              features={FREE_PLAN_FEATURES.map((key) => t(`pricing.plans.free.features.${key}`))}
-              cta={freeCta.label}
-              variant="outline"
-              href={freeCta.href}
-            />
-            <PricingCard
-              name={t("pricing.plans.pro.name")}
-              description={t("pricing.plans.pro.description")}
-              price={19}
-              popular
-              features={PRO_PLAN_FEATURES.map((key) => t(`pricing.plans.pro.features.${key}`))}
-              cta={proCta.label}
-              variant="hero"
-              href={proCta.href}
-              onCtaClick={proCta.onClick}
-              disabled={Boolean(proCta.disabled)}
-            />
-            <PricingCard
-              name={t("pricing.plans.business.name")}
-              description={t("pricing.plans.business.description")}
-              price={49}
-              features={BUSINESS_PLAN_FEATURES.map((key) => t(`pricing.plans.business.features.${key}`))}
-              cta={businessCta.label}
-              variant="outline"
-              href={businessCta.href}
-              onCtaClick={businessCta.onClick}
-              disabled={Boolean(businessCta.disabled)}
-            />
-          </div>
-        </div>
-      </section>
+      <PublicPricingSection
+        currentPlan={currentPlan}
+        isAuthenticated={isAuthenticated}
+        onSelectPro={(selection) =>
+          setSubscriptionPlan({
+            planKey: selection.planKey,
+            price: selection.price,
+            billingPeriod: selection.billingPeriod,
+          })
+        }
+      />
 
       {/* CTA */}
       <section className="pb-24 bg-canvas">

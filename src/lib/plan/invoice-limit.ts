@@ -13,7 +13,7 @@ export type InvoicePlanUsage = {
 };
 
 export const FREE_PLAN_LIMIT_MESSAGE =
-  "You have reached the Free plan limit of 5 invoices this month. Upgrade to Pro to create unlimited invoices.";
+  "You have reached the Free plan limit of 3 documents this month. Upgrade to Pro to create unlimited invoices.";
 
 export function isFreePlanLimitError(err: unknown): boolean {
   const message =
@@ -22,7 +22,7 @@ export function isFreePlanLimitError(err: unknown): boolean {
       : String(err ?? "");
   return (
     message.includes("FREE_PLAN_INVOICE_LIMIT") ||
-    message.includes("Free plan limit of 5 invoices")
+    message.includes("Free plan limit of 3 documents")
   );
 }
 

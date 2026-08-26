@@ -21,6 +21,7 @@ export const LANDING_JSON_LD = {
       publisher: {
         "@id": `${SITE_ORIGIN}/#organization`,
       },
+      description: DEFAULT_DESCRIPTION,
     },
     {
       "@type": "SoftwareApplication",

@@ -20,7 +20,7 @@
     "features": {
       "pdfInvoices": "Профессиональные PDF-счета",
       "paymentMethods": "Крипто, банк и наличные",
-      "verifiedPages": "Проверенные страницы оплаты"
+      "verifiedPages": "Страницы оплаты для клиента"
     },
     "demo": {
       "billedTo": "Плательщик",
@@ -97,69 +97,75 @@
     }
   },
   "pricing": {
-    "eyebrow": "Тарифы",
-    "title": "Просто, прозрачно, честно.",
-    "subtitle": "На всех тарифах VegaPal на PDF-счетах и страницах оплаты — всегда.",
+    "eyebrow": "Pricing",
+    "title": "Simple, transparent, fair.",
+    "subtitle": "Start free. Upgrade to Pro when you need unlimited documents.",
     "plans": {
       "free": {
         "name": "Free",
-        "description": "Всё необходимое для старта.",
-        "cta": "Начать бесплатно",
+        "description": "Create professional documents with essential tools.",
+        "cta": "Start free",
+        "ctaCurrent": "Current plan",
         "features": {
-          "invoices": "5 счетов / мес.",
-          "pdf": "PDF-счета",
-          "paymentPages": "Публичные страницы оплаты",
-          "payments": "Крипто, банк и наличные",
-          "dashboard": "Панель",
-          "branding": "Свой брендинг",
-          "qr": "QR-код",
-          "excel": "Экспорт в Excel",
-          "reports": "Отчёты",
-          "multiCurrency": "Мультивалютные счета",
-          "footer": "Подпись Powered by VegaPal"
+          "documents": "3 documents per month",
+          "pdf": "PDF invoices",
+          "paymentPages": "Shareable payment pages",
+          "payments": "Bank, crypto & cash payment details",
+          "dashboard": "Dashboard",
+          "branding": "Custom branding",
+          "qr": "QR codes",
+          "excel": "Excel export",
+          "multiCurrency": "Multi-currency documents",
+          "footer": "Powered by VegaPal footer"
         }
       },
       "pro": {
         "name": "Pro",
-        "description": "Для фрилансеров и малого бизнеса в росте.",
-        "cta": "Оплатить USDT",
+        "description": "Unlimited documents and saved payment methods for growing work.",
+        "cta": "Upgrade to Pro",
+        "ctaUpgrade": "Upgrade to Pro",
+        "ctaCurrent": "Current plan",
+        "ctaContact": "Contact us",
+        "ctaSemiannual": "Get 6 Months for {{price}}",
+        "recommendedBadge": "Recommended",
+        "bestValueBadge": "Best value",
+        "launchPriceBadge": "Launch price",
+        "launchPriceLabel": "Launch price",
+        "launchPriceSupport": "Introductory pricing for early VegaPal users.",
+        "billingAria": "Choose Pro billing period",
+        "billingMonthly": "Monthly",
+        "billingSemiannual": "6 Months — Save {{percent}}%",
+        "perSixMonths": "/ 6 months",
+        "saveAmount": "Save {{amount}}",
+        "perMonthEquivalent": "Equivalent to {{amount}}/month",
+        "semiannualSupport": "Get six months of unlimited VegaPal for {{offer}} instead of {{monthlyTotal}} when paying monthly.",
+        "limitedLaunchOffer": "Limited launch offer",
         "features": {
-          "invoices": "Безлимитные счета",
-          "users": "2 пользователя",
-          "everythingFree": "Всё из Free",
-          "prioritySupport": "Приоритетная поддержка",
-          "earlyAccess": "Ранний доступ к новым функциям",
-          "footer": "Подпись Powered by VegaPal"
-        }
-      },
-      "business": {
-        "name": "Business",
-        "description": "Для команд с большим объёмом и контролем.",
-        "cta": "Оплатить USDT",
-        "features": {
-          "invoices": "Безлимитные счета",
-          "users": "4 пользователя",
-          "everythingPro": "Всё из Pro",
-          "teamManagement": "Управление командой",
-          "multipleWallets": "Несколько кошельков",
-          "analytics": "Расширенная аналитика",
-          "api": "API скоро",
-          "prioritySupport": "Приоритетная поддержка",
-          "footer": "Подпись Powered by VegaPal"
+          "documents": "Unlimited documents",
+          "savedPaymentMethods": "Saved payment methods",
+          "everythingFree": "Everything in Free",
+          "prioritySupport": "Priority support",
+          "earlyAccess": "Early access to new features",
+          "footer": "Powered by VegaPal footer"
         }
       }
     }
   },
   "subscriptionModal": {
-    "title": "Оплата USDT — {{plan}}",
-    "description": "Отправьте сумму месячного тарифа в USDT. Тариф активируется вручную после подтверждения оплаты.",
-    "amountLabel": "Сумма",
-    "paymentMethods": "Способы оплаты",
+    "title": "Complete your {{plan}} payment",
+    "description": "Send the exact amount in USDT, then share your TXID or payment screenshot with support so we can activate your plan manually.",
+    "amountLabel": "Amount due",
+    "paymentMethods": "Payment methods",
     "networkTron": "TRON TRC20",
     "networkBep20": "BNB Smart Chain BEP20",
-    "instructions": "После оплаты отправьте TXID или скриншот на info@vega-pal.com или в Telegram @vegapal для активации тарифа.",
+    "instructions": "After payment, please send your transaction ID (TXID) or payment screenshot to info@vega-pal.com or @vegapal on Telegram so we can activate your plan.",
     "telegram": "Telegram",
-    "networkWarning": "Перед отправкой USDT выберите правильную сеть. Платежи в неверной сети могут быть потеряны."
+    "networkWarning": "Please make sure you select the correct network before sending USDT. Payments sent on the wrong network may be lost.",
+    "amountSuffixMonthly": "USDT / month",
+    "amountSuffixSemiannual": "USDT / 6 months",
+    "periodMonthly": "Monthly billing",
+    "periodSemiannual": "6-month launch offer",
+    "manualNotice": "Checkout is manual today. After you pay, VegaPal support activates your Pro plan — this is not an automated card charge."
   },
   "cta": {
     "title": "Готовы отправить первый счёт в USDT?",

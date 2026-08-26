@@ -2,7 +2,7 @@ export type UserPlan = "free" | "pro" | "business";
 
 export const USER_PLANS: UserPlan[] = ["free", "pro", "business"];
 
-export const FREE_PLAN_MONTHLY_INVOICE_LIMIT = 5;
+export const FREE_PLAN_MONTHLY_INVOICE_LIMIT = 3;
 
 export type PlanLimits = {
   label: string;
@@ -20,7 +20,7 @@ export const PLAN_LIMITS: Record<UserPlan, PlanLimits> = {
     label: "Free",
     maxUsers: 1,
     maxInvoicesPerMonth: FREE_PLAN_MONTHLY_INVOICE_LIMIT,
-    features: ["1 user", "5 invoices per month", "All core features"],
+    features: ["1 user", "3 documents per month", "All core features"],
   },
   pro: {
     label: "Pro",

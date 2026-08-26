@@ -810,11 +810,11 @@ export const auth = {
       json: { email, turnstileToken },
     });
   },
-  async resendConfirmationEmail(email: string) {
+  async resendConfirmationEmail(email: string, turnstileToken?: string) {
     logAuthRedirect("resend", getEmailConfirmRedirectUrl());
     await authApiRequest("/api/auth/resend-confirmation", {
       method: "POST",
-      json: { email },
+      json: { email, turnstileToken },
     });
   },
   async updateProfile(patch: Partial<User>) {
