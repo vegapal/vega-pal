@@ -57,7 +57,7 @@ IndexNow notifies Bing, Yandex and other participants that a URL changed. Google
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `INDEXNOW_KEY` | Yes, to enable | 8–128 chars, letters/digits/dashes. Also served at `/{key}.txt` by `src/server.ts`. |
+| `INDEXNOW_KEY` | Yes, to enable | 8–128 chars, letters/digits/dashes. Verification file at `public/{key}.txt` (served at `https://vega-pal.com/{key}.txt`). |
 | `INDEXNOW_NOTIFY_SECRET` | Optional | Enables `POST /api/indexnow/notify`. Without it the endpoint 404s. |
 
 ### Setup
