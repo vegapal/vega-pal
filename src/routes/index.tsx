@@ -297,77 +297,29 @@ function Landing() {
             </ul>
           </div>
 
-          {/* Premium product mockup: invoice + pay page */}
-          <div id="demo-invoice" className="relative scroll-mt-24 sm:scroll-mt-28 w-full min-w-0 max-w-full">
-            <div className="absolute -inset-6 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
-            <div className="relative grid gap-3 sm:gap-4">
-              {/* Invoice document card */}
-              <div className="rounded-2xl bg-white text-ink shadow-elevated border border-white/40 overflow-hidden">
-                <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/80 bg-[#F8FAFC]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="h-8 w-8 rounded-lg bg-[#082D4F] text-white text-xs font-bold inline-flex items-center justify-center shrink-0">
-                      V
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{t("hero.demo.clientName")}</p>
-                      <p className="text-[11px] text-slate font-mono">INV-0042</p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10 text-success text-[11px] font-semibold ring-1 ring-success/20 shrink-0">
-                    <Check className="h-3 w-3" strokeWidth={2.5} />
-                    {t("hero.demo.paid")}
-                  </span>
-                </div>
-                <div className="p-4 sm:p-5 space-y-4">
-                  <div className="flex justify-between gap-4 text-sm">
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wider text-slate">{t("hero.demo.billedTo")}</p>
-                      <p className="font-medium mt-0.5">{t("hero.demo.clientName")}</p>
-                      <p className="text-xs text-slate break-all">{t("hero.demo.clientEmail")}</p>
-                    </div>
-                    <div className="text-end shrink-0">
-                      <p className="text-[11px] uppercase tracking-wider text-slate">{t("hero.demo.title")}</p>
-                      <p className="mt-1 text-xl sm:text-2xl font-bold tabular-nums tracking-tight">
-                        12,500 <span className="text-sm font-semibold text-slate">AED</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-border bg-[#F8FAFC] divide-y divide-border text-sm">
-                    <div className="flex justify-between gap-3 px-3 py-2.5">
-                      <span className="text-slate truncate">Consulting services</span>
-                      <span className="font-medium tabular-nums shrink-0">8,000.00</span>
-                    </div>
-                    <div className="flex justify-between gap-3 px-3 py-2.5">
-                      <span className="text-slate truncate">Platform setup</span>
-                      <span className="font-medium tabular-nums shrink-0">4,500.00</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment page strip */}
-              <div className="rounded-2xl bg-white/95 border border-white/50 shadow-soft p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate">
-                    {t("hero.demo.cryptoPayment")}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-ink">Bank · Crypto · Cash</p>
-                  <p className="mt-1 text-xs text-slate leading-relaxed">
-                    Shareable payment page with clear instructions.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="rounded-lg bg-[#E8F2FC] text-[#0D4F7C] text-xs font-semibold px-2.5 py-1.5">
-                    AED
-                  </span>
-                  <span className="rounded-lg bg-[#E8F2FC] text-[#0D4F7C] text-xs font-semibold px-2.5 py-1.5">
-                    USDT
-                  </span>
-                  <Button asChild size="sm" className="rounded-lg">
-                    <Link to="/register">{t("hero.createFirstInvoice")}</Link>
-                  </Button>
-                </div>
-              </div>
+          {/* Premium marketing visual */}
+          <div
+            id="demo-invoice"
+            className="relative scroll-mt-24 sm:scroll-mt-28 w-full min-w-0 max-w-full lg:justify-self-end"
+          >
+            <div
+              className={cn(
+                "relative mx-auto w-full max-w-[min(100%,40rem)] lg:max-w-[42.5rem] xl:max-w-[45rem]",
+                "rounded-2xl sm:rounded-3xl overflow-hidden",
+                "bg-white/5 ring-1 ring-white/10 shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)]",
+                "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700",
+              )}
+            >
+              <img
+                src="/marketing/hero-invoice-dashboard.png"
+                alt="VegaPal dashboard and invoice payment interface"
+                width={1448}
+                height={1086}
+                decoding="async"
+                fetchPriority="high"
+                className="block w-full h-auto aspect-[1448/1086] object-contain object-center select-none"
+                draggable={false}
+              />
             </div>
           </div>
         </div>
