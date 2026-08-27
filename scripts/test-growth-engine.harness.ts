@@ -57,6 +57,17 @@ assert.ok(sql.includes("UNIQUE (subscription_payment_request_id)"));
 assert.ok(sql.includes("get_public_invoice_referral_code"));
 pass("migration security + idempotency constraints");
 
+const harden = path.join(
+  "supabase",
+  "migrations",
+  "20260827150000_harden_qualify_referral_caller.sql",
+);
+assert.ok(fs.existsSync(harden), "qualify caller harden migration missing");
+const hardenSql = fs.readFileSync(harden, "utf8");
+assert.ok(hardenSql.includes("caller <> p_user_id"));
+assert.ok(hardenSql.includes("REVOKE ALL ON FUNCTION public.qualify_referral_for_user"));
+pass("qualify_referral_for_user cross-user harden migration present");
+
 // Canonical must ignore query params (site helper)
 import { absoluteUrl } from "../src/lib/seo/site.ts";
 assert.equal(absoluteUrl("/usdt-invoice-generator"), `${SITE_ORIGIN}/usdt-invoice-generator`);
