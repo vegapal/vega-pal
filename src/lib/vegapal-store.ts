@@ -319,8 +319,9 @@ async function assertCanCreateInvoice(userId: string, _plan: UserPlan): Promise<
   const plan = usage?.plan ?? _plan;
   if (plan !== "free") return;
 
+  const limit = usage?.monthlyLimit ?? FREE_PLAN_MONTHLY_INVOICE_LIMIT;
   const used = usage?.invoicesThisMonth;
-  if (used !== undefined && used >= FREE_PLAN_MONTHLY_INVOICE_LIMIT) {
+  if (used !== undefined && used >= limit) {
     const limitError = new Error(FREE_PLAN_LIMIT_MESSAGE) as Error & { code?: string };
     limitError.code = "free_plan_invoice_limit";
     throw limitError;
@@ -334,7 +335,7 @@ async function assertCanCreateInvoice(userId: string, _plan: UserPlan): Promise<
     .lt("created_at", startOfNextUtcMonthIso());
 
   if (error) throw error;
-  if ((count ?? 0) >= FREE_PLAN_MONTHLY_INVOICE_LIMIT) {
+  if ((count ?? 0) >= limit) {
     const limitError = new Error(FREE_PLAN_LIMIT_MESSAGE) as Error & { code?: string };
     limitError.code = "free_plan_invoice_limit";
     throw limitError;

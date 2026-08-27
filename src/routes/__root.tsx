@@ -24,6 +24,7 @@ import {
 import { GOOGLE_SITE_VERIFICATION } from "@/lib/analytics/config";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
+import { GrowthAttributionCapture } from "@/components/growth/GrowthAttributionCapture";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -200,6 +201,7 @@ function RootComponent() {
       <QueryClientProvider client={queryClient}>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <PageViewTracker />
+        <GrowthAttributionCapture />
         <Outlet />
       </QueryClientProvider>
     </I18nextProvider>

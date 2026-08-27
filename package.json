@@ -40,7 +40,8 @@
     "test:cross-user-auth": "node scripts/run-cross-user-auth.mjs",
     "test:mobile-prelaunch": "node scripts/run-mobile-prelaunch.mjs",
     "i18n:audit": "node scripts/i18n-audit.mjs",
-    "test:i18n": "npx tsx scripts/test-i18n.harness.ts"
+    "test:i18n": "npx tsx scripts/test-i18n.harness.ts",
+    "test:growth": "npx tsx scripts/test-growth-engine.harness.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

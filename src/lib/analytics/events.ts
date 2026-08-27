@@ -208,6 +208,14 @@ export function trackUpgradeClicked(plan?: string): void {
   trackSimpleEvent("upgrade_clicked", { plan });
 }
 
+/** Non-PII growth events (referral, checkout funnel helpers). */
+export function trackSimpleGrowthEvent(
+  eventName: string,
+  params?: Record<string, string | number | boolean | undefined>,
+): void {
+  trackSimpleEvent(eventName, params);
+}
+
 export function trackSubscriptionStarted(
   plan: string,
   value?: number,

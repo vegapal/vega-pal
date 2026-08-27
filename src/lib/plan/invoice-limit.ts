@@ -22,7 +22,8 @@ export function isFreePlanLimitError(err: unknown): boolean {
       : String(err ?? "");
   return (
     message.includes("FREE_PLAN_INVOICE_LIMIT") ||
-    message.includes("Free plan limit of 3 documents")
+    message.includes("Free plan limit of 3 documents") ||
+    message.includes("Free plan document limit for this month")
   );
 }
 

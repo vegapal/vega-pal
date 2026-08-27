@@ -74,6 +74,14 @@ export default {
         return await applySecurityHeaders(response);
       }
 
+      if (url.pathname.startsWith("/api/admin/growth")) {
+        const { handleGrowthAdminApiRequest } = await import(
+          "@/lib/growth/growth-admin-api.server"
+        );
+        const response = await handleGrowthAdminApiRequest(request);
+        return await applySecurityHeaders(response);
+      }
+
       if (url.pathname.startsWith("/api/admin")) {
         const { handleAdminApiRequest } = await import("@/lib/admin/admin-api.server");
         const response = await handleAdminApiRequest(request);
