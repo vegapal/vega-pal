@@ -25,6 +25,7 @@ import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SettingsPaymentMethodsRouteImport } from './routes/settings.payment-methods'
+import { Route as SettingsInviteRouteImport } from './routes/settings.invite'
 import { Route as PayIdRouteImport } from './routes/pay.$id'
 import { Route as LearnWhatIsAnInvoiceRouteImport } from './routes/learn.what-is-an-invoice'
 import { Route as LearnWhatIsABillRouteImport } from './routes/learn.what-is-a-bill'
@@ -41,6 +42,7 @@ import { Route as InvoicesNewRouteImport } from './routes/invoices.new'
 import { Route as InvoicesIdRouteImport } from './routes/invoices.$id'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
+import { Route as AdminGrowthRouteImport } from './routes/admin.growth'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin.users.index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin.users.$userId'
 
@@ -124,6 +126,11 @@ const SettingsPaymentMethodsRoute = SettingsPaymentMethodsRouteImport.update({
   path: '/payment-methods',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsInviteRoute = SettingsInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const PayIdRoute = PayIdRouteImport.update({
   id: '/pay/$id',
   path: '/pay/$id',
@@ -204,6 +211,11 @@ const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminGrowthRoute = AdminGrowthRouteImport.update({
+  id: '/growth',
+  path: '/growth',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -227,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/admin/growth': typeof AdminGrowthRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/invoices/$id': typeof InvoicesIdRoute
@@ -243,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
+  '/settings/invite': typeof SettingsInviteRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/admin/': typeof AdminIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
@@ -260,6 +274,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/growth': typeof AdminGrowthRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/invoices/$id': typeof InvoicesIdRoute
   '/invoices/new': typeof InvoicesNewRoute
@@ -275,6 +290,7 @@ export interface FileRoutesByTo {
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
+  '/settings/invite': typeof SettingsInviteRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/admin': typeof AdminIndexRoute
   '/invoices': typeof InvoicesIndexRoute
@@ -296,6 +312,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/admin/growth': typeof AdminGrowthRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/invoices/$id': typeof InvoicesIdRoute
@@ -312,6 +329,7 @@ export interface FileRoutesById {
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
+  '/settings/invite': typeof SettingsInviteRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/admin/': typeof AdminIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
@@ -334,6 +352,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/settings'
+    | '/admin/growth'
     | '/admin/payments'
     | '/admin/users'
     | '/invoices/$id'
@@ -350,6 +369,7 @@ export interface FileRouteTypes {
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
+    | '/settings/invite'
     | '/settings/payment-methods'
     | '/admin/'
     | '/invoices/'
@@ -367,6 +387,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/reset-password'
+    | '/admin/growth'
     | '/admin/payments'
     | '/invoices/$id'
     | '/invoices/new'
@@ -382,6 +403,7 @@ export interface FileRouteTypes {
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
+    | '/settings/invite'
     | '/settings/payment-methods'
     | '/admin'
     | '/invoices'
@@ -402,6 +424,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/settings'
+    | '/admin/growth'
     | '/admin/payments'
     | '/admin/users'
     | '/invoices/$id'
@@ -418,6 +441,7 @@ export interface FileRouteTypes {
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
+    | '/settings/invite'
     | '/settings/payment-methods'
     | '/admin/'
     | '/invoices/'
@@ -559,6 +583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsPaymentMethodsRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/invite': {
+      id: '/settings/invite'
+      path: '/invite'
+      fullPath: '/settings/invite'
+      preLoaderRoute: typeof SettingsInviteRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/pay/$id': {
       id: '/pay/$id'
       path: '/pay/$id'
@@ -671,6 +702,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPaymentsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/growth': {
+      id: '/admin/growth'
+      path: '/growth'
+      fullPath: '/admin/growth'
+      preLoaderRoute: typeof AdminGrowthRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users/': {
       id: '/admin/users/'
       path: '/'
@@ -703,12 +741,14 @@ const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
 )
 
 interface AdminRouteChildren {
+  AdminGrowthRoute: typeof AdminGrowthRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminUsersRoute: typeof AdminUsersRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminGrowthRoute: AdminGrowthRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminUsersRoute: AdminUsersRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
@@ -749,11 +789,13 @@ const LearnRouteChildren: LearnRouteChildren = {
 const LearnRouteWithChildren = LearnRoute._addFileChildren(LearnRouteChildren)
 
 interface SettingsRouteChildren {
+  SettingsInviteRoute: typeof SettingsInviteRoute
   SettingsPaymentMethodsRoute: typeof SettingsPaymentMethodsRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsInviteRoute: SettingsInviteRoute,
   SettingsPaymentMethodsRoute: SettingsPaymentMethodsRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }

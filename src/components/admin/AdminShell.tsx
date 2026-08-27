@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
-import { LayoutDashboard, Users, LogOut, CircleAlert, CreditCard } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, CircleAlert, CreditCard, TrendingUp } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { ConfirmEmailPending } from "@/components/auth/ConfirmEmailPending";
@@ -74,6 +74,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { to: "/admin/users", label: "Users", icon: Users, exact: false },
     { to: "/admin/payments", label: "Payments", icon: CreditCard, exact: false },
+    { to: "/admin/growth", label: "Growth", icon: TrendingUp, exact: false },
   ];
 
   const isActive = (item: (typeof nav)[number]) =>

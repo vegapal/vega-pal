@@ -305,6 +305,19 @@ export async function approveSubscriptionPaymentRequest(
 
     if (updateError) throw updateError;
 
+    try {
+      const { recordAffiliateCommissionForApproval } = await import(
+        "@/lib/growth/affiliate-commission.server"
+      );
+      await recordAffiliateCommissionForApproval(supabaseAdmin, {
+        referredUserId: current.userId,
+        paymentRequestId: current.id,
+        grossRevenueUsd: Number(current.amountUsdt ?? 0),
+      });
+    } catch {
+      /* commission accounting must not roll back Pro activation */
+    }
+
     const subId = String((updated as Record<string, unknown>).subscription_id ?? subscriptionId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: sub } = await (supabaseAdmin as any)
