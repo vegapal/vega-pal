@@ -18,7 +18,16 @@ export type ReferralStats = {
 /** Claim pending referral after auth. Never trusts referrer ID from client. */
 export async function claimPendingReferralAttribution(): Promise<boolean> {
   const code = readStoredReferralCode();
-  if (!code) return false;
+  if (!code) {
+    // Still attempt qualify for already-attributed users with docs (idempotent).
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc("qualify_my_referral_if_eligible");
+    } catch {
+      /* ignore */
+    }
+    return false;
+  }
 
   const utm = readStoredUtm();
   const landing = readStoredLandingPath();
@@ -38,6 +47,12 @@ export async function claimPendingReferralAttribution(): Promise<boolean> {
     const result = data as { ok?: boolean; attributed?: boolean; already?: boolean };
     if (result?.ok) {
       clearStoredReferralCode();
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).rpc("qualify_my_referral_if_eligible");
+      } catch {
+        /* ignore */
+      }
       return Boolean(result.attributed || result.already);
     }
     return false;
