@@ -39,7 +39,7 @@ export function LearnRelatedLinks({ currentId }: { currentId?: LearnCategoryId }
         <div>
           <h3 className="font-medium text-foreground mb-2">Featured guides</h3>
           <ul className="space-y-2">
-            {FEATURED_GUIDES.map((guide) => (
+            {FEATURED_GUIDES.slice(0, 6).map((guide) => (
               <li key={guide.path}>
                 <Link to={guide.path} className="text-primary hover:underline">
                   {guide.title}

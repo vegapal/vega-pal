@@ -68,6 +68,81 @@ export const SPRINT1_ARTICLE_META: LearnArticleMeta[] = [
   },
 ];
 
+/** Sprint 2: comparison and reference guides. */
+export const SPRINT2_ARTICLE_META: LearnArticleMeta[] = [
+  {
+    path: "/learn/invoice-vs-proforma-invoice",
+    title: "Invoice vs Proforma Invoice",
+    description:
+      "A proforma invoice requests payment before delivery; a tax invoice records a completed sale. Compare timing, tax treatment, numbering and the mistakes that cause disputes.",
+    category: "Invoice & Billing",
+    categoryPath: "/learn/invoice",
+    readingMinutes: 9,
+    publishedAt: "2026-08-27",
+    updatedAt: "2026-08-27",
+    keywords: [
+      "invoice vs proforma invoice",
+      "proforma invoice",
+      "tax invoice",
+      "advance payment",
+      "deposit",
+    ],
+    featured: true,
+  },
+  {
+    path: "/learn/quotation-vs-invoice",
+    title: "Quotation vs Invoice",
+    description:
+      "A quotation offers a price the client can decline; an invoice states an amount owed. Compare purpose, validity, wording and conversion.",
+    category: "Invoice & Billing",
+    categoryPath: "/learn/invoice",
+    readingMinutes: 9,
+    publishedAt: "2026-08-27",
+    updatedAt: "2026-08-27",
+    keywords: ["quotation vs invoice", "quotation", "estimate", "validity", "conversion"],
+    featured: true,
+  },
+  {
+    path: "/learn/invoice-payment-terms",
+    title: "Invoice Payment Terms",
+    description:
+      "What net 7, net 30, due on receipt and end-of-month mean, how to choose terms a client can meet, and how to word deposits and late fees.",
+    category: "Invoice & Billing",
+    categoryPath: "/learn/invoice",
+    readingMinutes: 10,
+    publishedAt: "2026-08-27",
+    updatedAt: "2026-08-27",
+    keywords: ["payment terms", "net 30", "due date", "late fee", "deposit"],
+    featured: true,
+  },
+  {
+    path: "/learn/proforma-invoice-example",
+    title: "Proforma Invoice Example",
+    description:
+      "A worked proforma invoice with fictional figures, field by field, plus a services variant and the errors to avoid.",
+    category: "Invoice & Billing",
+    categoryPath: "/learn/invoice",
+    readingMinutes: 9,
+    publishedAt: "2026-08-27",
+    updatedAt: "2026-08-27",
+    keywords: ["proforma invoice example", "proforma invoice format", "deposit", "template"],
+    featured: true,
+  },
+  {
+    path: "/learn/trc20-vs-erc20-for-usdt-payments",
+    title: "TRC20 vs ERC20 for USDT",
+    description:
+      "TRON and Ethereum both carry USDT, with different fees, speeds and address formats. How to choose per invoice and why the network must be on the document.",
+    category: "Payments",
+    categoryPath: "/learn/payments",
+    readingMinutes: 10,
+    publishedAt: "2026-08-27",
+    updatedAt: "2026-08-27",
+    keywords: ["trc20 vs erc20", "usdt network", "tron", "ethereum", "bep20", "stablecoin"],
+    featured: true,
+  },
+];
+
 export const CATEGORY_ARTICLE_META: LearnArticleMeta[] = [
   {
     path: "/learn/getting-started",
@@ -137,14 +212,19 @@ export const CATEGORY_ARTICLE_META: LearnArticleMeta[] = [
   },
 ];
 
-export const LEARN_ARTICLE_REGISTRY: LearnArticleMeta[] = [
+export const GUIDE_ARTICLE_META: LearnArticleMeta[] = [
   ...SPRINT1_ARTICLE_META,
+  ...SPRINT2_ARTICLE_META,
+];
+
+export const LEARN_ARTICLE_REGISTRY: LearnArticleMeta[] = [
+  ...GUIDE_ARTICLE_META,
   ...CATEGORY_ARTICLE_META,
 ];
 
-export const FEATURED_GUIDES = SPRINT1_ARTICLE_META.filter((a) => a.featured);
+export const FEATURED_GUIDES = GUIDE_ARTICLE_META.filter((a) => a.featured);
 
-export const LATEST_ARTICLES = [...SPRINT1_ARTICLE_META].sort(
+export const LATEST_ARTICLES = [...GUIDE_ARTICLE_META].sort(
   (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
 );
 
@@ -157,15 +237,13 @@ export function searchLearnArticles(query: string): LearnArticleMeta[] {
   if (!q) return [];
 
   return LEARN_ARTICLE_REGISTRY.filter((article) => {
-    const haystack = [
-      article.title,
-      article.description,
-      article.category,
-      ...article.keywords,
-    ]
+    const haystack = [article.title, article.description, article.category, ...article.keywords]
       .join(" ")
       .toLowerCase();
-    return haystack.includes(q) || q.split(/\s+/).some((word) => word.length > 1 && haystack.includes(word));
+    return (
+      haystack.includes(q) ||
+      q.split(/\s+/).some((word) => word.length > 1 && haystack.includes(word))
+    );
   }).slice(0, 8);
 }
 
@@ -176,11 +254,28 @@ export function sprint1NavFor(path: LearnRoutePath): {
   const idx = SPRINT1_ARTICLE_META.findIndex((a) => a.path === path);
   if (idx === -1) return {};
   return {
-    prev: idx > 0 ? { path: SPRINT1_ARTICLE_META[idx - 1].path, title: SPRINT1_ARTICLE_META[idx - 1].title } : undefined,
+    prev:
+      idx > 0
+        ? { path: SPRINT1_ARTICLE_META[idx - 1].path, title: SPRINT1_ARTICLE_META[idx - 1].title }
+        : undefined,
     next:
       idx < SPRINT1_ARTICLE_META.length - 1
         ? { path: SPRINT1_ARTICLE_META[idx + 1].path, title: SPRINT1_ARTICLE_META[idx + 1].title }
         : undefined,
+  };
+}
+
+export function sprint2NavFor(path: LearnRoutePath): {
+  prev?: { path: LearnRoutePath; title: string };
+  next?: { path: LearnRoutePath; title: string };
+} {
+  const idx = SPRINT2_ARTICLE_META.findIndex((a) => a.path === path);
+  if (idx === -1) return {};
+  const prev = idx > 0 ? SPRINT2_ARTICLE_META[idx - 1] : undefined;
+  const next = idx < SPRINT2_ARTICLE_META.length - 1 ? SPRINT2_ARTICLE_META[idx + 1] : undefined;
+  return {
+    prev: prev ? { path: prev.path, title: prev.title } : undefined,
+    next: next ? { path: next.path, title: next.title } : undefined,
   };
 }
 
