@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -18,21 +19,29 @@ import { Route as LearnRouteImport } from './routes/learn'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as SeoSlugRouteImport } from './routes/$seoSlug'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ToolsIndexRouteImport } from './routes/tools.index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as ToolsSlugRouteImport } from './routes/tools.$slug'
 import { Route as SettingsPaymentMethodsRouteImport } from './routes/settings.payment-methods'
 import { Route as SettingsInviteRouteImport } from './routes/settings.invite'
 import { Route as PayIdRouteImport } from './routes/pay.$id'
 import { Route as LearnWhatIsAnInvoiceRouteImport } from './routes/learn.what-is-an-invoice'
 import { Route as LearnWhatIsABillRouteImport } from './routes/learn.what-is-a-bill'
+import { Route as LearnTrc20VsErc20ForUsdtPaymentsRouteImport } from './routes/learn.trc20-vs-erc20-for-usdt-payments'
 import { Route as LearnSecurityRouteImport } from './routes/learn.security'
+import { Route as LearnQuotationVsInvoiceRouteImport } from './routes/learn.quotation-vs-invoice'
+import { Route as LearnProformaInvoiceExampleRouteImport } from './routes/learn.proforma-invoice-example'
 import { Route as LearnPaymentsRouteImport } from './routes/learn.payments'
+import { Route as LearnInvoiceVsProformaInvoiceRouteImport } from './routes/learn.invoice-vs-proforma-invoice'
 import { Route as LearnInvoiceVsBillRouteImport } from './routes/learn.invoice-vs-bill'
 import { Route as LearnInvoiceSoftwareRouteImport } from './routes/learn.invoice-software'
+import { Route as LearnInvoicePaymentTermsRouteImport } from './routes/learn.invoice-payment-terms'
 import { Route as LearnInvoiceGeneratorRouteImport } from './routes/learn.invoice-generator'
 import { Route as LearnInvoiceRouteImport } from './routes/learn.invoice'
 import { Route as LearnGettingStartedRouteImport } from './routes/learn.getting-started'
@@ -46,6 +55,11 @@ import { Route as AdminGrowthRouteImport } from './routes/admin.growth'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin.users.index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin.users.$userId'
 
+const ToolsRoute = ToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -91,6 +105,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeoSlugRoute = SeoSlugRouteImport.update({
   id: '/$seoSlug',
   path: '/$seoSlug',
@@ -100,6 +119,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsIndexRoute = ToolsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ToolsRoute,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
@@ -120,6 +144,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const ToolsSlugRoute = ToolsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ToolsRoute,
 } as any)
 const SettingsPaymentMethodsRoute = SettingsPaymentMethodsRouteImport.update({
   id: '/payment-methods',
@@ -146,16 +175,39 @@ const LearnWhatIsABillRoute = LearnWhatIsABillRouteImport.update({
   path: '/what-is-a-bill',
   getParentRoute: () => LearnRoute,
 } as any)
+const LearnTrc20VsErc20ForUsdtPaymentsRoute =
+  LearnTrc20VsErc20ForUsdtPaymentsRouteImport.update({
+    id: '/trc20-vs-erc20-for-usdt-payments',
+    path: '/trc20-vs-erc20-for-usdt-payments',
+    getParentRoute: () => LearnRoute,
+  } as any)
 const LearnSecurityRoute = LearnSecurityRouteImport.update({
   id: '/security',
   path: '/security',
   getParentRoute: () => LearnRoute,
 } as any)
+const LearnQuotationVsInvoiceRoute = LearnQuotationVsInvoiceRouteImport.update({
+  id: '/quotation-vs-invoice',
+  path: '/quotation-vs-invoice',
+  getParentRoute: () => LearnRoute,
+} as any)
+const LearnProformaInvoiceExampleRoute =
+  LearnProformaInvoiceExampleRouteImport.update({
+    id: '/proforma-invoice-example',
+    path: '/proforma-invoice-example',
+    getParentRoute: () => LearnRoute,
+  } as any)
 const LearnPaymentsRoute = LearnPaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
   getParentRoute: () => LearnRoute,
 } as any)
+const LearnInvoiceVsProformaInvoiceRoute =
+  LearnInvoiceVsProformaInvoiceRouteImport.update({
+    id: '/invoice-vs-proforma-invoice',
+    path: '/invoice-vs-proforma-invoice',
+    getParentRoute: () => LearnRoute,
+  } as any)
 const LearnInvoiceVsBillRoute = LearnInvoiceVsBillRouteImport.update({
   id: '/invoice-vs-bill',
   path: '/invoice-vs-bill',
@@ -166,6 +218,12 @@ const LearnInvoiceSoftwareRoute = LearnInvoiceSoftwareRouteImport.update({
   path: '/invoice-software',
   getParentRoute: () => LearnRoute,
 } as any)
+const LearnInvoicePaymentTermsRoute =
+  LearnInvoicePaymentTermsRouteImport.update({
+    id: '/invoice-payment-terms',
+    path: '/invoice-payment-terms',
+    getParentRoute: () => LearnRoute,
+  } as any)
 const LearnInvoiceGeneratorRoute = LearnInvoiceGeneratorRouteImport.update({
   id: '/invoice-generator',
   path: '/invoice-generator',
@@ -230,6 +288,7 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$seoSlug': typeof SeoSlugRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -239,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/tools': typeof ToolsRouteWithChildren
   '/admin/growth': typeof AdminGrowthRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
@@ -249,25 +309,33 @@ export interface FileRoutesByFullPath {
   '/learn/getting-started': typeof LearnGettingStartedRoute
   '/learn/invoice': typeof LearnInvoiceRoute
   '/learn/invoice-generator': typeof LearnInvoiceGeneratorRoute
+  '/learn/invoice-payment-terms': typeof LearnInvoicePaymentTermsRoute
   '/learn/invoice-software': typeof LearnInvoiceSoftwareRoute
   '/learn/invoice-vs-bill': typeof LearnInvoiceVsBillRoute
+  '/learn/invoice-vs-proforma-invoice': typeof LearnInvoiceVsProformaInvoiceRoute
   '/learn/payments': typeof LearnPaymentsRoute
+  '/learn/proforma-invoice-example': typeof LearnProformaInvoiceExampleRoute
+  '/learn/quotation-vs-invoice': typeof LearnQuotationVsInvoiceRoute
   '/learn/security': typeof LearnSecurityRoute
+  '/learn/trc20-vs-erc20-for-usdt-payments': typeof LearnTrc20VsErc20ForUsdtPaymentsRoute
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
   '/settings/invite': typeof SettingsInviteRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
+  '/tools/$slug': typeof ToolsSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/tools/': typeof ToolsIndexRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$seoSlug': typeof SeoSlugRoute
+  '/about': typeof AboutRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -283,19 +351,26 @@ export interface FileRoutesByTo {
   '/learn/getting-started': typeof LearnGettingStartedRoute
   '/learn/invoice': typeof LearnInvoiceRoute
   '/learn/invoice-generator': typeof LearnInvoiceGeneratorRoute
+  '/learn/invoice-payment-terms': typeof LearnInvoicePaymentTermsRoute
   '/learn/invoice-software': typeof LearnInvoiceSoftwareRoute
   '/learn/invoice-vs-bill': typeof LearnInvoiceVsBillRoute
+  '/learn/invoice-vs-proforma-invoice': typeof LearnInvoiceVsProformaInvoiceRoute
   '/learn/payments': typeof LearnPaymentsRoute
+  '/learn/proforma-invoice-example': typeof LearnProformaInvoiceExampleRoute
+  '/learn/quotation-vs-invoice': typeof LearnQuotationVsInvoiceRoute
   '/learn/security': typeof LearnSecurityRoute
+  '/learn/trc20-vs-erc20-for-usdt-payments': typeof LearnTrc20VsErc20ForUsdtPaymentsRoute
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
   '/settings/invite': typeof SettingsInviteRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
+  '/tools/$slug': typeof ToolsSlugRoute
   '/admin': typeof AdminIndexRoute
   '/invoices': typeof InvoicesIndexRoute
   '/learn': typeof LearnIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/tools': typeof ToolsIndexRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
@@ -303,6 +378,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$seoSlug': typeof SeoSlugRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -312,6 +388,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/tools': typeof ToolsRouteWithChildren
   '/admin/growth': typeof AdminGrowthRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
@@ -322,19 +399,26 @@ export interface FileRoutesById {
   '/learn/getting-started': typeof LearnGettingStartedRoute
   '/learn/invoice': typeof LearnInvoiceRoute
   '/learn/invoice-generator': typeof LearnInvoiceGeneratorRoute
+  '/learn/invoice-payment-terms': typeof LearnInvoicePaymentTermsRoute
   '/learn/invoice-software': typeof LearnInvoiceSoftwareRoute
   '/learn/invoice-vs-bill': typeof LearnInvoiceVsBillRoute
+  '/learn/invoice-vs-proforma-invoice': typeof LearnInvoiceVsProformaInvoiceRoute
   '/learn/payments': typeof LearnPaymentsRoute
+  '/learn/proforma-invoice-example': typeof LearnProformaInvoiceExampleRoute
+  '/learn/quotation-vs-invoice': typeof LearnQuotationVsInvoiceRoute
   '/learn/security': typeof LearnSecurityRoute
+  '/learn/trc20-vs-erc20-for-usdt-payments': typeof LearnTrc20VsErc20ForUsdtPaymentsRoute
   '/learn/what-is-a-bill': typeof LearnWhatIsABillRoute
   '/learn/what-is-an-invoice': typeof LearnWhatIsAnInvoiceRoute
   '/pay/$id': typeof PayIdRoute
   '/settings/invite': typeof SettingsInviteRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
+  '/tools/$slug': typeof ToolsSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/tools/': typeof ToolsIndexRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
@@ -343,6 +427,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$seoSlug'
+    | '/about'
     | '/admin'
     | '/dashboard'
     | '/forgot-password'
@@ -352,6 +437,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/settings'
+    | '/tools'
     | '/admin/growth'
     | '/admin/payments'
     | '/admin/users'
@@ -362,25 +448,33 @@ export interface FileRouteTypes {
     | '/learn/getting-started'
     | '/learn/invoice'
     | '/learn/invoice-generator'
+    | '/learn/invoice-payment-terms'
     | '/learn/invoice-software'
     | '/learn/invoice-vs-bill'
+    | '/learn/invoice-vs-proforma-invoice'
     | '/learn/payments'
+    | '/learn/proforma-invoice-example'
+    | '/learn/quotation-vs-invoice'
     | '/learn/security'
+    | '/learn/trc20-vs-erc20-for-usdt-payments'
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
     | '/settings/invite'
     | '/settings/payment-methods'
+    | '/tools/$slug'
     | '/admin/'
     | '/invoices/'
     | '/learn/'
     | '/settings/'
+    | '/tools/'
     | '/admin/users/$userId'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$seoSlug'
+    | '/about'
     | '/dashboard'
     | '/forgot-password'
     | '/login'
@@ -396,25 +490,33 @@ export interface FileRouteTypes {
     | '/learn/getting-started'
     | '/learn/invoice'
     | '/learn/invoice-generator'
+    | '/learn/invoice-payment-terms'
     | '/learn/invoice-software'
     | '/learn/invoice-vs-bill'
+    | '/learn/invoice-vs-proforma-invoice'
     | '/learn/payments'
+    | '/learn/proforma-invoice-example'
+    | '/learn/quotation-vs-invoice'
     | '/learn/security'
+    | '/learn/trc20-vs-erc20-for-usdt-payments'
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
     | '/settings/invite'
     | '/settings/payment-methods'
+    | '/tools/$slug'
     | '/admin'
     | '/invoices'
     | '/learn'
     | '/settings'
+    | '/tools'
     | '/admin/users/$userId'
     | '/admin/users'
   id:
     | '__root__'
     | '/'
     | '/$seoSlug'
+    | '/about'
     | '/admin'
     | '/dashboard'
     | '/forgot-password'
@@ -424,6 +526,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/settings'
+    | '/tools'
     | '/admin/growth'
     | '/admin/payments'
     | '/admin/users'
@@ -434,19 +537,26 @@ export interface FileRouteTypes {
     | '/learn/getting-started'
     | '/learn/invoice'
     | '/learn/invoice-generator'
+    | '/learn/invoice-payment-terms'
     | '/learn/invoice-software'
     | '/learn/invoice-vs-bill'
+    | '/learn/invoice-vs-proforma-invoice'
     | '/learn/payments'
+    | '/learn/proforma-invoice-example'
+    | '/learn/quotation-vs-invoice'
     | '/learn/security'
+    | '/learn/trc20-vs-erc20-for-usdt-payments'
     | '/learn/what-is-a-bill'
     | '/learn/what-is-an-invoice'
     | '/pay/$id'
     | '/settings/invite'
     | '/settings/payment-methods'
+    | '/tools/$slug'
     | '/admin/'
     | '/invoices/'
     | '/learn/'
     | '/settings/'
+    | '/tools/'
     | '/admin/users/$userId'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
@@ -454,6 +564,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SeoSlugRoute: typeof SeoSlugRoute
+  AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -463,6 +574,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRouteWithChildren
+  ToolsRoute: typeof ToolsRouteWithChildren
   InvoicesIdRoute: typeof InvoicesIdRoute
   InvoicesNewRoute: typeof InvoicesNewRoute
   PayIdRoute: typeof PayIdRoute
@@ -471,6 +583,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tools': {
+      id: '/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -534,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$seoSlug': {
       id: '/$seoSlug'
       path: '/$seoSlug'
@@ -547,6 +673,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/tools/': {
+      id: '/tools/'
+      path: '/'
+      fullPath: '/tools/'
+      preLoaderRoute: typeof ToolsIndexRouteImport
+      parentRoute: typeof ToolsRoute
     }
     '/settings/': {
       id: '/settings/'
@@ -575,6 +708,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/tools/$slug': {
+      id: '/tools/$slug'
+      path: '/$slug'
+      fullPath: '/tools/$slug'
+      preLoaderRoute: typeof ToolsSlugRouteImport
+      parentRoute: typeof ToolsRoute
     }
     '/settings/payment-methods': {
       id: '/settings/payment-methods'
@@ -611,6 +751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnWhatIsABillRouteImport
       parentRoute: typeof LearnRoute
     }
+    '/learn/trc20-vs-erc20-for-usdt-payments': {
+      id: '/learn/trc20-vs-erc20-for-usdt-payments'
+      path: '/trc20-vs-erc20-for-usdt-payments'
+      fullPath: '/learn/trc20-vs-erc20-for-usdt-payments'
+      preLoaderRoute: typeof LearnTrc20VsErc20ForUsdtPaymentsRouteImport
+      parentRoute: typeof LearnRoute
+    }
     '/learn/security': {
       id: '/learn/security'
       path: '/security'
@@ -618,11 +765,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnSecurityRouteImport
       parentRoute: typeof LearnRoute
     }
+    '/learn/quotation-vs-invoice': {
+      id: '/learn/quotation-vs-invoice'
+      path: '/quotation-vs-invoice'
+      fullPath: '/learn/quotation-vs-invoice'
+      preLoaderRoute: typeof LearnQuotationVsInvoiceRouteImport
+      parentRoute: typeof LearnRoute
+    }
+    '/learn/proforma-invoice-example': {
+      id: '/learn/proforma-invoice-example'
+      path: '/proforma-invoice-example'
+      fullPath: '/learn/proforma-invoice-example'
+      preLoaderRoute: typeof LearnProformaInvoiceExampleRouteImport
+      parentRoute: typeof LearnRoute
+    }
     '/learn/payments': {
       id: '/learn/payments'
       path: '/payments'
       fullPath: '/learn/payments'
       preLoaderRoute: typeof LearnPaymentsRouteImport
+      parentRoute: typeof LearnRoute
+    }
+    '/learn/invoice-vs-proforma-invoice': {
+      id: '/learn/invoice-vs-proforma-invoice'
+      path: '/invoice-vs-proforma-invoice'
+      fullPath: '/learn/invoice-vs-proforma-invoice'
+      preLoaderRoute: typeof LearnInvoiceVsProformaInvoiceRouteImport
       parentRoute: typeof LearnRoute
     }
     '/learn/invoice-vs-bill': {
@@ -637,6 +805,13 @@ declare module '@tanstack/react-router' {
       path: '/invoice-software'
       fullPath: '/learn/invoice-software'
       preLoaderRoute: typeof LearnInvoiceSoftwareRouteImport
+      parentRoute: typeof LearnRoute
+    }
+    '/learn/invoice-payment-terms': {
+      id: '/learn/invoice-payment-terms'
+      path: '/invoice-payment-terms'
+      fullPath: '/learn/invoice-payment-terms'
+      preLoaderRoute: typeof LearnInvoicePaymentTermsRouteImport
       parentRoute: typeof LearnRoute
     }
     '/learn/invoice-generator': {
@@ -762,10 +937,15 @@ interface LearnRouteChildren {
   LearnGettingStartedRoute: typeof LearnGettingStartedRoute
   LearnInvoiceRoute: typeof LearnInvoiceRoute
   LearnInvoiceGeneratorRoute: typeof LearnInvoiceGeneratorRoute
+  LearnInvoicePaymentTermsRoute: typeof LearnInvoicePaymentTermsRoute
   LearnInvoiceSoftwareRoute: typeof LearnInvoiceSoftwareRoute
   LearnInvoiceVsBillRoute: typeof LearnInvoiceVsBillRoute
+  LearnInvoiceVsProformaInvoiceRoute: typeof LearnInvoiceVsProformaInvoiceRoute
   LearnPaymentsRoute: typeof LearnPaymentsRoute
+  LearnProformaInvoiceExampleRoute: typeof LearnProformaInvoiceExampleRoute
+  LearnQuotationVsInvoiceRoute: typeof LearnQuotationVsInvoiceRoute
   LearnSecurityRoute: typeof LearnSecurityRoute
+  LearnTrc20VsErc20ForUsdtPaymentsRoute: typeof LearnTrc20VsErc20ForUsdtPaymentsRoute
   LearnWhatIsABillRoute: typeof LearnWhatIsABillRoute
   LearnWhatIsAnInvoiceRoute: typeof LearnWhatIsAnInvoiceRoute
   LearnIndexRoute: typeof LearnIndexRoute
@@ -777,10 +957,15 @@ const LearnRouteChildren: LearnRouteChildren = {
   LearnGettingStartedRoute: LearnGettingStartedRoute,
   LearnInvoiceRoute: LearnInvoiceRoute,
   LearnInvoiceGeneratorRoute: LearnInvoiceGeneratorRoute,
+  LearnInvoicePaymentTermsRoute: LearnInvoicePaymentTermsRoute,
   LearnInvoiceSoftwareRoute: LearnInvoiceSoftwareRoute,
   LearnInvoiceVsBillRoute: LearnInvoiceVsBillRoute,
+  LearnInvoiceVsProformaInvoiceRoute: LearnInvoiceVsProformaInvoiceRoute,
   LearnPaymentsRoute: LearnPaymentsRoute,
+  LearnProformaInvoiceExampleRoute: LearnProformaInvoiceExampleRoute,
+  LearnQuotationVsInvoiceRoute: LearnQuotationVsInvoiceRoute,
   LearnSecurityRoute: LearnSecurityRoute,
+  LearnTrc20VsErc20ForUsdtPaymentsRoute: LearnTrc20VsErc20ForUsdtPaymentsRoute,
   LearnWhatIsABillRoute: LearnWhatIsABillRoute,
   LearnWhatIsAnInvoiceRoute: LearnWhatIsAnInvoiceRoute,
   LearnIndexRoute: LearnIndexRoute,
@@ -804,9 +989,22 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
   SettingsRouteChildren,
 )
 
+interface ToolsRouteChildren {
+  ToolsSlugRoute: typeof ToolsSlugRoute
+  ToolsIndexRoute: typeof ToolsIndexRoute
+}
+
+const ToolsRouteChildren: ToolsRouteChildren = {
+  ToolsSlugRoute: ToolsSlugRoute,
+  ToolsIndexRoute: ToolsIndexRoute,
+}
+
+const ToolsRouteWithChildren = ToolsRoute._addFileChildren(ToolsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SeoSlugRoute: SeoSlugRoute,
+  AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
@@ -816,6 +1014,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRouteWithChildren,
+  ToolsRoute: ToolsRouteWithChildren,
   InvoicesIdRoute: InvoicesIdRoute,
   InvoicesNewRoute: InvoicesNewRoute,
   PayIdRoute: PayIdRoute,
