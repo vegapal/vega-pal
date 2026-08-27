@@ -5,7 +5,12 @@ import { PublicSiteFooter } from "@/components/landing/PublicSiteFooter";
 import { SeoBreadcrumb } from "@/components/seo/SeoBreadcrumb";
 import { SessionAwareCta } from "@/components/seo/SessionAwareCta";
 import { FREE_PLAN_MONTHLY_INVOICE_LIMIT } from "@/lib/admin/plans";
-import { getMarketingPage, type MarketingPage } from "@/lib/seo/marketing-pages";
+import {
+  getMarketingPage,
+  getPrimaryHubFor,
+  listHubSiblings,
+  type MarketingPage,
+} from "@/lib/seo/marketing-pages";
 
 type MarketingSeoPageProps = {
   page: MarketingPage;
@@ -13,6 +18,17 @@ type MarketingSeoPageProps = {
 
 export function MarketingSeoPage({ page }: MarketingSeoPageProps) {
   const related = page.relatedSlugs.map((slug) => getMarketingPage(slug));
+  const hub = getPrimaryHubFor(page);
+
+  // Modest cluster strip: hub siblings that are not already in the related grid.
+  const relatedSlugSet = new Set(page.relatedSlugs);
+  const clusterLinks = listHubSiblings(page, 12)
+    .filter((sibling) => !relatedSlugSet.has(sibling.slug))
+    .slice(0, 6);
+
+  const breadcrumbItems = hub
+    ? [{ name: "Home", href: "/" }, { name: hub.label, href: hub.path }, { name: page.eyebrow }]
+    : [{ name: "Home", href: "/" }, { name: page.eyebrow }];
 
   return (
     <div className="min-h-screen bg-canvas overflow-x-hidden">
@@ -20,7 +36,7 @@ export function MarketingSeoPage({ page }: MarketingSeoPageProps) {
         <div className="absolute inset-0 bg-mesh opacity-70" />
         <LandingHeader />
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 pt-24 sm:pt-32 pb-14 sm:pb-20">
-          <SeoBreadcrumb items={[{ name: "Home", href: "/" }, { name: page.eyebrow }]} />
+          <SeoBreadcrumb items={breadcrumbItems} />
           <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur px-3 py-1.5 text-xs sm:text-sm font-semibold text-on-dark-secondary">
             <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
             {page.eyebrow}
@@ -37,6 +53,7 @@ export function MarketingSeoPage({ page }: MarketingSeoPageProps) {
             secondaryLabel={page.secondaryCtaLabel}
             secondaryHref={page.secondaryHref}
             eventName="seo_page_cta"
+            pageSlug={page.slug}
           />
         </div>
       </section>
@@ -132,7 +149,32 @@ export function MarketingSeoPage({ page }: MarketingSeoPageProps) {
                 </a>
               ))}
             </div>
+            {clusterLinks.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate">
+                  More in {hub ? hub.label : "this cluster"}
+                </h3>
+                <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+                  {clusterLinks.map((item) => (
+                    <li key={item.slug}>
+                      <a href={item.path} className="text-primary hover:underline">
+                        {item.eyebrow}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <p className="mt-8 text-sm text-slate">
+              Free calculators for due dates, VAT and late fees live in the{" "}
+              <Link to="/tools" className="text-primary hover:underline">
+                tools hub
+              </Link>
+              .
+            </p>
+
+            <p className="mt-3 text-sm text-slate">
               Prefer background reading first? The{" "}
               <Link to="/learn" className="text-primary hover:underline">
                 VegaPal Learn guides
@@ -188,6 +230,7 @@ export function MarketingSeoPage({ page }: MarketingSeoPageProps) {
                   className="shrink-0"
                   primaryLabel={page.primaryCtaLabel}
                   eventName="seo_page_cta"
+                  pageSlug={page.slug}
                 />
               </div>
             </div>
