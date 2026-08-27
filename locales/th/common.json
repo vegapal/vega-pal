@@ -24,7 +24,8 @@
     "plan": "Plan",
     "account": "บัญชี",
     "accountMenu": "เมนูบัญชี",
-    "sidebar": "แถบด้านข้างหลัก"
+    "sidebar": "แถบด้านข้างหลัก",
+    "inviteEarn": "เชิญและรับรางวัล"
   },
   "language": {
     "label": "ภาษา",
@@ -136,7 +137,9 @@
   },
   "footer": {
     "copyright": "© {{year}} VegaPal การชำระเงินที่ปลอดภัย ธุรกรรมที่เชื่อถือได้",
-    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com",
+    "poweredBy": "ขับเคลื่อนโดย",
+    "createOwnFree": "สร้างใบแจ้งหนี้มืออาชีพของคุณฟรี"
   },
   "errors": {
     "pageNotFound": "ไม่พบหน้านี้",
@@ -159,6 +162,7 @@
     "upgradePlan": "อัปเกรดแพ็กเกจ",
     "upgradeToPro": "อัปเกรดเป็น Pro",
     "viewPlans": "ดูแพ็กเกจ",
+    "inviteEarnCta": "เชิญและรับเอกสารโบนัส",
     "renewPlan": "ต่ออายุแพ็กเกจ",
     "planLabel": "แพ็กเกจ {{plan}}",
     "freeAllowance": "{{limit}} ใบแจ้งหนี้ต่อเดือน",

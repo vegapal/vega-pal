@@ -127,5 +127,32 @@
   "nav": {
     "dashboard": "Dashboard",
     "users": "Users"
+  },
+  "growth": {
+    "title": "Рост",
+    "nav": "Рост",
+    "summary": "Сводка",
+    "rangeToday": "Сегодня",
+    "range7d": "7 дней",
+    "range30d": "30 дней",
+    "newUsers": "Новые пользователи",
+    "activatedUsers": "Активированные пользователи",
+    "activationRate": "Коэффициент активации",
+    "referralSignups": "Регистрации по рефералам",
+    "referralActivations": "Активации по рефералам",
+    "proCustomers": "Клиенты Pro",
+    "affiliateRevenue": "Приписанная выручка",
+    "affiliateCommissions": "Комиссии",
+    "topReferrers": "Топ реферальных кодов",
+    "affiliates": "Партнёры",
+    "createAffiliate": "Создать партнёра",
+    "name": "Имя",
+    "code": "Код",
+    "commissionRate": "Ставка комиссии",
+    "notes": "Заметки",
+    "commissions": "Комиссии",
+    "markPaid": "Отметить оплаченным",
+    "visitorNote": "Данные об анонимных посетителях поступают из GA4, а не из этой панели.",
+    "unavailable": "Движок роста пока недоступен. Примените последнюю миграцию базы данных."
   }
 }

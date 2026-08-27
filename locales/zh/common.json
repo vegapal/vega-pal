@@ -24,7 +24,8 @@
     "plan": "Plan",
     "account": "账户",
     "accountMenu": "账户菜单",
-    "sidebar": "主侧边栏"
+    "sidebar": "主侧边栏",
+    "inviteEarn": "邀请赚取"
   },
   "language": {
     "label": "语言",
@@ -136,7 +137,9 @@
   },
   "footer": {
     "copyright": "© {{year}} VegaPal。安全付款，值得信赖的交易。",
-    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com",
+    "poweredBy": "技术支持",
+    "createOwnFree": "免费创建您自己的专业发票"
   },
   "errors": {
     "pageNotFound": "页面未找到",
@@ -159,6 +162,7 @@
     "upgradePlan": "升级套餐",
     "upgradeToPro": "升级到 Pro",
     "viewPlans": "查看套餐",
+    "inviteEarnCta": "邀请好友，赚取 bonus 文档",
     "renewPlan": "续订套餐",
     "planLabel": "{{plan}} 套餐",
     "freeAllowance": "每月 {{limit}} 张发票",

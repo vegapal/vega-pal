@@ -1,5 +1,6 @@
 import { createFileRoute, useParams, Link } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { usePublicInvoice } from "@/lib/invoices/public-invoice";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
 import {
@@ -14,6 +15,9 @@ import { Logo } from "@/components/Logo";
 import { StatusPill } from "@/components/StatusBadge";
 import { InvoicePdfActions } from "@/components/invoice/InvoicePdfActions";
 import { Check, Ban } from "lucide-react";
+import { buildReferralLink } from "@/lib/growth/attribution-client";
+import { SITE_ORIGIN } from "@/lib/seo/site";
+import { supabase } from "@/integrations/supabase/client";
 
 import type { Invoice } from "@/lib/vegapal-store";
 
@@ -34,9 +38,39 @@ export const Route = createFileRoute("/pay/$id")({
   component: PublicInvoice,
 });
 
+function useOwnerReferralHref(invoiceId: string | undefined): string {
+  const [href, setHref] = useState(`${SITE_ORIGIN}/?utm_source=public_payment&utm_medium=referral`);
+  useEffect(() => {
+    if (!invoiceId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data } = await (supabase as any).rpc("get_public_invoice_referral_code", {
+          p_invoice_id: invoiceId,
+        });
+        if (cancelled) return;
+        if (typeof data === "string" && data) {
+          setHref(
+            buildReferralLink(data, { source: "public_payment", medium: "referral" }),
+          );
+        }
+      } catch {
+        /* keep default homepage UTM link */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [invoiceId]);
+  return href;
+}
+
 function PublicInvoice() {
   const { id } = useParams({ from: "/pay/$id" });
   const { data: inv, loading } = usePublicInvoice(id);
+  const { t: tPay } = useTranslation("common");
+  const ownerReferralHref = useOwnerReferralHref(id);
 
   if (loading) {
     return (
@@ -333,14 +367,27 @@ function PublicInvoice() {
             )}
 
             {d.showVegapalLogo && (
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
-                <Logo markOnly size="sm" className="!h-5 !w-5 opacity-90" />
-                <span>
-                  Powered by{" "}
-                  <Link to="/" className="font-semibold text-foreground hover:underline">
-                    VegaPal
-                  </Link>
-                </span>
+              <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground pt-2">
+                <div className="flex items-center justify-center gap-2">
+                  <Logo markOnly size="sm" className="!h-5 !w-5 opacity-90" />
+                  <span>
+                    {tPay("footer.poweredBy")}{" "}
+                    <a
+                      href={ownerReferralHref}
+                      className="font-semibold text-foreground hover:underline"
+                      rel="noopener noreferrer"
+                    >
+                      VegaPal
+                    </a>
+                  </span>
+                </div>
+                <a
+                  href={ownerReferralHref}
+                  className="text-center hover:underline"
+                  rel="noopener noreferrer"
+                >
+                  {tPay("footer.createOwnFree")}
+                </a>
               </div>
             )}
           </aside>

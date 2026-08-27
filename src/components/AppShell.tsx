@@ -13,6 +13,7 @@ import {
   UserCog,
   User,
   Wallet,
+  Gift,
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { MobileProfileSheet, ProfileSidebarMenu } from "@/components/ProfileAccountMenu";
@@ -35,7 +36,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!user) return null;
 
   type NavItem = {
-    to: "/dashboard" | "/invoices" | "/invoices/new" | "/settings" | "/settings/payment-methods" | "/admin";
+    to:
+      | "/dashboard"
+      | "/invoices"
+      | "/invoices/new"
+      | "/settings"
+      | "/settings/payment-methods"
+      | "/settings/invite"
+      | "/admin";
     label: string;
     icon: typeof LayoutDashboard;
     exact?: boolean;
@@ -51,6 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       icon: Wallet,
       exact: true,
     },
+    { to: "/settings/invite", label: t("nav.inviteEarn"), icon: Gift, exact: true },
     { to: "/settings", label: t("nav.settings"), icon: Settings, exact: true },
     ...(isAdmin
       ? [{ to: "/admin" as const, label: t("nav.adminPanel"), icon: UserCog, exact: false }]

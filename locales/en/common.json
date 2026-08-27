@@ -24,7 +24,8 @@
     "accountMenu": "Account menu",
     "adminPanel": "Admin Panel",
     "openMenu": "Open navigation menu",
-    "sidebar": "Main sidebar"
+    "sidebar": "Main sidebar",
+    "inviteEarn": "Invite & Earn"
   },
   "profileMenu": {
     "openMenu": "Open account menu",
@@ -153,7 +154,9 @@
   },
   "footer": {
     "copyright": "© {{year}} VegaPal. Secure Payments & Trusted Deals.",
-    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com",
+    "poweredBy": "Powered by",
+    "createOwnFree": "Create your own professional invoice free"
   },
   "errors": {
     "pageNotFound": "Page not found",
@@ -176,6 +179,7 @@
     "upgradePlan": "Upgrade plan",
     "upgradeToPro": "Upgrade to Pro",
     "viewPlans": "View plans",
+    "inviteEarnCta": "Invite & earn bonus documents",
     "renewPlan": "Renew plan",
     "planLabel": "{{plan}} Plan",
     "freeAllowance": "{{limit}} invoices per month",

@@ -459,9 +459,14 @@ export function InvoiceWizard({ editId }: Props) {
           {atInvoiceLimit ? (
             <div className="mt-3 space-y-3">
               <p className="text-sm leading-relaxed">{tc("plan.limitReached")}</p>
-              <Button asChild size="sm" variant="hero">
-                <Link to="/pricing">{tc("plan.upgradePlan")}</Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="hero">
+                  <Link to="/pricing">{tc("plan.upgradePlan")}</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/settings/invite">{tc("plan.inviteEarnCta")}</Link>
+                </Button>
+              </div>
             </div>
           ) : null}
         </div>

@@ -127,5 +127,32 @@
   "nav": {
     "dashboard": "لوحة التحكم",
     "users": "المستخدمون"
+  },
+  "growth": {
+    "title": "النمو",
+    "nav": "النمو",
+    "summary": "ملخص",
+    "rangeToday": "اليوم",
+    "range7d": "7 أيام",
+    "range30d": "30 يوماً",
+    "newUsers": "مستخدمون جدد",
+    "activatedUsers": "مستخدمون مفعّلون",
+    "activationRate": "معدل التفعيل",
+    "referralSignups": "تسجيلات الإحالة",
+    "referralActivations": "تفعيلات الإحالة",
+    "proCustomers": "عملاء Pro",
+    "affiliateRevenue": "الإيرادات المنسوبة",
+    "affiliateCommissions": "العمولات",
+    "topReferrers": "أفضل أكواد الإحالة",
+    "affiliates": "الشركاء",
+    "createAffiliate": "إنشاء شريك",
+    "name": "الاسم",
+    "code": "الرمز",
+    "commissionRate": "نسبة العمولة",
+    "notes": "ملاحظات",
+    "commissions": "العمولات",
+    "markPaid": "تحديد كمدفوع",
+    "visitorNote": "أعداد الزوار المجهولين تأتي من GA4، وليس من هذه اللوحة.",
+    "unavailable": "محرك النمو غير متاح بعد. طبّق أحدث ترحيل لقاعدة البيانات."
   }
 }

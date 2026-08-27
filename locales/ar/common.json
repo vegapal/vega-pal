@@ -24,7 +24,8 @@
     "plan": "Plan",
     "account": "الحساب",
     "accountMenu": "قائمة الحساب",
-    "sidebar": "الشريط الجانبي الرئيسي"
+    "sidebar": "الشريط الجانبي الرئيسي",
+    "inviteEarn": "ادعُ واكسب"
   },
   "language": {
     "label": "Language",
@@ -136,7 +137,9 @@
   },
   "footer": {
     "copyright": "© {{year}} VegaPal. Secure Payments & Trusted Deals.",
-    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com",
+    "poweredBy": "مدعوم من",
+    "createOwnFree": "أنشئ فاتورتك الاحترافية مجاناً"
   },
   "errors": {
     "pageNotFound": "Page not found",
@@ -159,6 +162,7 @@
     "upgradePlan": "ترقية الخطة",
     "upgradeToPro": "الترقية إلى Pro",
     "viewPlans": "عرض الخطط",
+    "inviteEarnCta": "ادعُ واكسب مستندات إضافية",
     "renewPlan": "تجديد الخطة",
     "planLabel": "خطة {{plan}}",
     "freeAllowance": "{{limit}} فواتير شهرياً",

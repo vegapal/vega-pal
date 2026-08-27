@@ -71,7 +71,7 @@ export function InvoicePlanUsageIndicator({
           <p className="text-sm leading-relaxed text-foreground">
             {t("plan.warningNearLimit", {
               used: usage.invoicesThisMonth,
-              limit: FREE_PLAN_MONTHLY_INVOICE_LIMIT,
+              limit: usage.monthlyLimit ?? FREE_PLAN_MONTHLY_INVOICE_LIMIT,
             })}
           </p>
         </div>
@@ -82,6 +82,9 @@ export function InvoicePlanUsageIndicator({
           <p className="text-sm leading-relaxed">{t("plan.limitReached")}</p>
           <Button asChild size="sm" variant="hero">
             <Link to="/" hash="pricing">{t("plan.upgradeToPro")}</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+            <Link to="/settings/invite">{t("plan.inviteEarnCta")}</Link>
           </Button>
         </div>
       ) : null}

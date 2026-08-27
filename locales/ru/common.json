@@ -24,7 +24,8 @@
     "plan": "Plan",
     "account": "Аккаунт",
     "accountMenu": "Меню аккаунта",
-    "sidebar": "Основная боковая панель"
+    "sidebar": "Основная боковая панель",
+    "inviteEarn": "Пригласить и заработать"
   },
   "language": {
     "label": "Язык",
@@ -136,7 +137,9 @@
   },
   "footer": {
     "copyright": "© {{year}} VegaPal. Безопасные платежи и надёжные сделки.",
-    "createdWithVegapal": "Created with VegaPal · vega-pal.com"
+    "createdWithVegapal": "Created with VegaPal · vega-pal.com",
+    "poweredBy": "На платформе",
+    "createOwnFree": "Создайте свой профессиональный счёт бесплатно"
   },
   "errors": {
     "pageNotFound": "Страница не найдена",
@@ -159,6 +162,7 @@
     "upgradePlan": "Сменить тариф",
     "upgradeToPro": "Перейти на Pro",
     "viewPlans": "Смотреть тарифы",
+    "inviteEarnCta": "Пригласите и получите bonus-документы",
     "renewPlan": "Продлить тариф",
     "planLabel": "Тариф {{plan}}",
     "freeAllowance": "{{limit}} счетов в месяц",

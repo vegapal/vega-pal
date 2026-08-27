@@ -127,5 +127,32 @@
   "nav": {
     "dashboard": "Dashboard",
     "users": "Users"
+  },
+  "growth": {
+    "title": "增长",
+    "nav": "增长",
+    "summary": "概览",
+    "rangeToday": "今天",
+    "range7d": "7 天",
+    "range30d": "30 天",
+    "newUsers": "新用户",
+    "activatedUsers": "已激活用户",
+    "activationRate": "激活率",
+    "referralSignups": "推荐注册",
+    "referralActivations": "推荐激活",
+    "proCustomers": "Pro 客户",
+    "affiliateRevenue": "归因收入",
+    "affiliateCommissions": "佣金",
+    "topReferrers": "热门推荐码",
+    "affiliates": "联盟伙伴",
+    "createAffiliate": "创建联盟伙伴",
+    "name": "名称",
+    "code": "代码",
+    "commissionRate": "佣金比例",
+    "notes": "备注",
+    "commissions": "佣金",
+    "markPaid": "标记已支付",
+    "visitorNote": "匿名访客数据来自 GA4，而非本仪表盘。",
+    "unavailable": "增长引擎尚未可用。请应用最新的数据库迁移。"
   }
 }

@@ -102,5 +102,22 @@
   "signOut": {
     "title": "Sign out",
     "description": "End your session on this device."
+  },
+  "invite": {
+    "title": "Invite & Earn",
+    "description": "Invite someone to VegaPal. When they create their first document, you both receive 2 bonus documents.",
+    "yourLink": "Your referral link",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "share": "Share",
+    "shareText": "Create professional invoices with VegaPal:",
+    "backToSettings": "← Settings",
+    "privacyNote": "Friends who join via your link are counted in aggregate only. Personal details are never shown here.",
+    "rules": "Base Free plan remains 3 documents per month. Bonus documents are promotional and capped at 10 per month. Pro users stay unlimited.",
+    "stats": {
+      "invited": "Invited",
+      "activated": "Activated",
+      "bonusDocs": "Bonus documents"
+    }
   }
 }

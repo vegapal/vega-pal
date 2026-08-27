@@ -127,5 +127,32 @@
   "nav": {
     "dashboard": "Dashboard",
     "users": "Users"
+  },
+  "growth": {
+    "title": "Growth",
+    "nav": "Growth",
+    "summary": "Summary",
+    "rangeToday": "Today",
+    "range7d": "7 days",
+    "range30d": "30 days",
+    "newUsers": "New users",
+    "activatedUsers": "Activated users",
+    "activationRate": "Activation rate",
+    "referralSignups": "Referral signups",
+    "referralActivations": "Referral activations",
+    "proCustomers": "Pro customers",
+    "affiliateRevenue": "Attributed revenue",
+    "affiliateCommissions": "Commissions",
+    "topReferrers": "Top referral codes",
+    "affiliates": "Affiliates",
+    "createAffiliate": "Create affiliate",
+    "name": "Name",
+    "code": "Code",
+    "commissionRate": "Commission rate",
+    "notes": "Notes",
+    "commissions": "Commissions",
+    "markPaid": "Mark paid",
+    "visitorNote": "Anonymous visitor counts come from GA4, not this dashboard.",
+    "unavailable": "Growth engine not available yet. Apply the latest database migration."
   }
 }

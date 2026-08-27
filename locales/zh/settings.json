@@ -102,5 +102,22 @@
     "loading": "正在加载付款方式…",
     "securityNote": "VegaPal 绝不会索取您的私钥或助记词。",
     "untitled": "未命名"
+  },
+  "invite": {
+    "title": "邀请赚取",
+    "description": "邀请他人使用 VegaPal。当他们创建第一份文档时，您和对方各获得 2 份 bonus 文档。",
+    "yourLink": "您的推荐链接",
+    "copyLink": "复制链接",
+    "copied": "已复制",
+    "share": "分享",
+    "shareText": "使用 VegaPal 创建专业发票：",
+    "backToSettings": "← 设置",
+    "privacyNote": "通过您的链接加入的好友仅以汇总方式统计，此处不会显示任何个人详情。",
+    "rules": "基础 Free 计划仍为每月 3 份文档。bonus 文档为促销性质，每月上限 10 份。Pro 用户仍不限量。",
+    "stats": {
+      "invited": "已邀请",
+      "activated": "已激活",
+      "bonusDocs": "bonus 文档"
+    }
   }
 }

@@ -127,5 +127,32 @@
   "nav": {
     "dashboard": "Dashboard",
     "users": "Users"
+  },
+  "growth": {
+    "title": "การเติบโต",
+    "nav": "การเติบโต",
+    "summary": "สรุป",
+    "rangeToday": "วันนี้",
+    "range7d": "7 วัน",
+    "range30d": "30 วัน",
+    "newUsers": "ผู้ใช้ใหม่",
+    "activatedUsers": "ผู้ใช้ที่เปิดใช้งาน",
+    "activationRate": "อัตราการเปิดใช้งาน",
+    "referralSignups": "การสมัครผ่านการแนะนำ",
+    "referralActivations": "การเปิดใช้งานผ่านการแนะนำ",
+    "proCustomers": "ลูกค้า Pro",
+    "affiliateRevenue": "รายได้ที่บันทึก",
+    "affiliateCommissions": "ค่าคอมมิชชัน",
+    "topReferrers": "รหัสแนะนำยอดนิยม",
+    "affiliates": "พันธมิตร",
+    "createAffiliate": "สร้างพันธมิตร",
+    "name": "ชื่อ",
+    "code": "รหัส",
+    "commissionRate": "อัตราค่าคอมมิชชัน",
+    "notes": "หมายเหตุ",
+    "commissions": "ค่าคอมมิชชัน",
+    "markPaid": "ทำเครื่องหมายว่าจ่ายแล้ว",
+    "visitorNote": "จำนวนผู้เยี่ยมชมนิรนามมาจาก GA4 ไม่ใช่จากแดชบอร์ดนี้",
+    "unavailable": "ระบบ Growth ยังไม่พร้อมใช้งาน กรุณาใช้ migration ฐานข้อมูลล่าสุด"
   }
 }
