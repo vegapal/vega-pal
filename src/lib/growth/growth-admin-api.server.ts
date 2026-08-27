@@ -19,6 +19,7 @@ export async function handleGrowthAdminApiRequest(request: Request): Promise<Res
     return json({ error: "Not found" }, 404);
   }
 
+  try {
   await requireAdminFromRequest(request);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -227,4 +228,9 @@ export async function handleGrowthAdminApiRequest(request: Request): Promise<Res
   }
 
   return json({ error: "Not found" }, 404);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    console.error("[admin-growth] unhandled", error);
+    return json({ error: "Internal server error" }, 500);
+  }
 }
