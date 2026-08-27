@@ -23,7 +23,10 @@ function pushDataLayer(payload: Record<string, unknown>): void {
   }
 }
 
-function gtagEvent(eventName: string, params?: Record<string, string | number | boolean | undefined>): void {
+function gtagEvent(
+  eventName: string,
+  params?: Record<string, string | number | boolean | undefined>,
+): void {
   if (!isBrowser() || typeof window.gtag !== "function") return;
   try {
     window.gtag("event", eventName, params);
@@ -128,11 +131,7 @@ export function trackQuotationConvertedToInvoice(targetDocumentStatus: "draft" |
   }
 }
 
-export function trackInvoicePaid(
-  invoiceId?: string,
-  value?: number,
-  currency?: string,
-): void {
+export function trackInvoicePaid(invoiceId?: string, value?: number, currency?: string): void {
   if (!isBrowser() || !analyticsEnabled()) return;
   try {
     const params: Record<string, string | number> = {};
@@ -175,11 +174,12 @@ function currentPath(): string | undefined {
 /** Generic marketing CTA click. Used by session-aware CTAs on SEO landing pages. */
 export function trackMarketingCta(
   eventName: string,
-  props?: { path?: string; cta?: string },
+  props?: { path?: string; cta?: string; pageSlug?: string },
 ): void {
   trackSimpleEvent(eventName, {
     path: props?.path ?? currentPath(),
     cta: props?.cta,
+    page_slug: props?.pageSlug,
   });
 }
 
@@ -189,6 +189,29 @@ export function trackHomepagePrimaryCta(): void {
 
 export function trackSeoPageCta(slug: string): void {
   trackSimpleEvent("seo_page_cta", { slug, path: currentPath() });
+}
+
+/**
+ * Primary CTA on a public SEO surface (marketing page, tools page, learn guide).
+ * page_slug identifies the page, never the visitor.
+ */
+export function trackSeoPrimaryCta(pageSlug: string, cta?: string): void {
+  trackSimpleEvent("seo_primary_cta", { page_slug: pageSlug, cta, path: currentPath() });
+}
+
+/** Visitor interacted with a free tool for the first time in this session. */
+export function trackToolStarted(pageSlug: string): void {
+  trackSimpleEvent("tool_started", { page_slug: pageSlug, path: currentPath() });
+}
+
+/** A tool produced a usable result (valid inputs, output shown). */
+export function trackToolCompleted(pageSlug: string, outcome?: string): void {
+  trackSimpleEvent("tool_completed", { page_slug: pageSlug, outcome, path: currentPath() });
+}
+
+/** CTA click from inside a tool page. */
+export function trackToolCtaClicked(pageSlug: string, cta?: string): void {
+  trackSimpleEvent("tool_cta_clicked", { page_slug: pageSlug, cta, path: currentPath() });
 }
 
 /** Registration flow started (form submitted). trackSignUp remains the completed event. */
@@ -216,11 +239,7 @@ export function trackSimpleGrowthEvent(
   trackSimpleEvent(eventName, params);
 }
 
-export function trackSubscriptionStarted(
-  plan: string,
-  value?: number,
-  currency?: string,
-): void {
+export function trackSubscriptionStarted(plan: string, value?: number, currency?: string): void {
   if (!isBrowser() || !analyticsEnabled()) return;
   try {
     const params: Record<string, string | number> = { plan };

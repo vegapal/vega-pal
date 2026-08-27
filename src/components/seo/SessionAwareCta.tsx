@@ -2,7 +2,7 @@ import { Link, type LinkProps } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { trackMarketingCta } from "@/lib/analytics/events";
+import { trackMarketingCta, trackSeoPrimaryCta } from "@/lib/analytics/events";
 import { useSession } from "@/lib/vegapal-store";
 
 type SessionAwareCtaProps = {
@@ -12,6 +12,8 @@ type SessionAwareCtaProps = {
   secondaryHref?: string;
   /** Analytics event name fired on primary click. */
   eventName?: string;
+  /** Page identifier (marketing slug, tool slug) sent as page_slug. Never PII. */
+  pageSlug?: string;
   className?: string;
 };
 
@@ -25,6 +27,7 @@ export function SessionAwareCta({
   secondaryLabel,
   secondaryHref,
   eventName,
+  pageSlug,
   className,
 }: SessionAwareCtaProps) {
   const { user, loading } = useSession();
@@ -45,7 +48,8 @@ export function SessionAwareCta({
   }
 
   const onPrimaryClick = () => {
-    if (eventName) trackMarketingCta(eventName, { cta: primaryLabel });
+    if (eventName) trackMarketingCta(eventName, { cta: primaryLabel, pageSlug });
+    if (pageSlug) trackSeoPrimaryCta(pageSlug, primaryLabel);
   };
 
   const isHash = Boolean(secondaryHref?.startsWith("#"));
