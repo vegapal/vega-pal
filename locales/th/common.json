@@ -1,5 +1,6 @@
 {
   "nav": {
+    "invoiceGenerator": "สร้างใบแจ้งหนี้",
     "features": "ฟีเจอร์",
     "converter": "แปลงสกุลเงิน",
     "howItWorks": "วิธีใช้งาน",

@@ -1,4 +1,5 @@
 export const PUBLIC_NAV_LINKS = [
+  { href: "/invoice-generator", labelKey: "invoiceGenerator" },
   { href: "/#features", labelKey: "features" },
   { href: "/#converter", labelKey: "converter" },
   { href: "/#pricing", labelKey: "pricing" },

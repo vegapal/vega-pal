@@ -1,5 +1,6 @@
 {
   "nav": {
+    "invoiceGenerator": "منشئ الفواتير",
     "features": "Features",
     "converter": "Converter",
     "howItWorks": "How it works",

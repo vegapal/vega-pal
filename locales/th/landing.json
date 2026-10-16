@@ -15,6 +15,7 @@
     "description": "สร้างใบแจ้งหนี้ที่ปลอดภัยในไม่กี่วินาที แชร์ลิงก์ชำระเงินเดียว ให้ลูกค้าจ่ายด้วย USDT โอนธนาคาร หรือเงินสด — พร้อมยืนยันการชำระอย่างมืออาชีพ",
     "createFirstInvoice": "สร้างใบแจ้งหนี้แรก",
     "viewDemoInvoice": "ดูตัวอย่างใบแจ้งหนี้",
+    "exploreInvoiceGenerator": "ดูข้อมูลเครื่องมือสร้างใบแจ้งหนี้",
     "createNewDocument": "Create new document",
     "goToDashboard": "Go to dashboard",
     "features": {
