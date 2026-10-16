@@ -1,13 +1,15 @@
 /** Shared production security headers for Nitro, Vercel, and the SSR wrapper. */
 
+// Basic GA4/GTM only: https://developers.google.com/tag-platform/security/guides/csp
+// No session replay, Google Signals, Ads/DoubleClick, preview, or unsafe-eval.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.frankfurter.dev https://api.coingecko.com https://challenges.cloudflare.com",
-  "frame-src https://challenges.cloudflare.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.frankfurter.dev https://api.coingecko.com https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://www.google.com",
+  "frame-src https://challenges.cloudflare.com https://www.googletagmanager.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

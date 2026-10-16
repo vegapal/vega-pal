@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { GOOGLE_TAG_MANAGER_ID, hasGoogleTagManager } from "@/lib/analytics/config";
+import { getAnalyticsPageContext } from "@/lib/analytics/privacy";
 
 const GTM_SCRIPT_ATTR = "data-vegapal-gtm";
 
@@ -9,7 +10,11 @@ export function GoogleTagManager() {
     if (document.querySelector(`script[${GTM_SCRIPT_ATTR}]`)) return;
 
     window.dataLayer = window.dataLayer ?? [];
-    window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+    window.dataLayer.push({
+      ...getAnalyticsPageContext(),
+      "gtm.start": Date.now(),
+      event: "gtm.js",
+    });
 
     const script = document.createElement("script");
     script.async = true;

@@ -207,6 +207,14 @@ async function handleSignup(request: Request): Promise<Response> {
         parsed.data.business,
       );
       if (!profile.ok) return profile.response;
+
+      // Delivery is optional and best effort; provider failures never change auth success.
+      try {
+        const { dispatchSignupNotifications } = await import("@/lib/monitoring/notification-delivery.server");
+        await dispatchSignupNotifications(1);
+      } catch {
+        console.warn("[monitoring] signup delivery unavailable");
+      }
     }
 
     return authApiJson({
@@ -343,6 +351,14 @@ async function handleLogin(request: Request): Promise<Response> {
     }
 
     logAuthStep("login_ok");
+    if (user) {
+      try {
+        const { recordSuccessfulServerLogin } = await import("@/lib/monitoring/login-monitoring.server");
+        await recordSuccessfulServerLogin(user.id);
+      } catch {
+        console.warn("[monitoring] login recording unavailable");
+      }
+    }
     return authApiJson({
       ok: true,
       session: {

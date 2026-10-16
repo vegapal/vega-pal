@@ -213,6 +213,42 @@ input values, no addresses or amounts are sent. `SessionAwareCta` takes an
 optional `pageSlug` so CTA clicks are attributable to the page that earned them.
 `npm run analytics:check-pii` remains the guard.
 
+### Local follow-up: measurement readiness (October 2026)
+
+The previous CSP allowed neither the Google script loader nor its collection
+requests. The local revision adds named GTM and basic GA4 origins to the shared
+server and Vercel headers, retaining the existing frame-ancestor, object,
+base-URI and form protections. It adds no Google Signals, Ads/DoubleClick,
+preview or session-replay allowances. The existing HTTPS image allowance remains
+for remote document images. Vendor guidance:
+[Google CSP](https://developers.google.com/tag-platform/security/guides/csp).
+
+App page views are now limited to published sitemap routes. Query strings,
+fragments, private document/account identifiers and private page titles are not
+included in app-controlled Google event context; the referrer is explicitly
+empty. Action events on private screens use route templates. Direct GA4 owns
+app events when configured; otherwise events are emitted as GTM custom-event
+objects, avoiding a second copy of the same action. GTM startup exposes the
+same sanitized fields for container configuration.
+
+Microsoft Clarity is intentionally not mounted. Counting visitors and account
+events does not require session recordings, and private-route isolation and
+consent for replay have not been implemented. A legacy Clarity ID alone does
+not enable replay.
+
+**Still requires account access:** confirm real production measurement IDs,
+turn off GA4 Enhanced Measurement's history-based page changes when using this
+manual page-view tracker, and inspect GTM for duplicate GA tags and tags using
+raw Page URL, Referrer or document content. `send_page_view: false` alone does
+not disable enhanced history events. Do not describe the external GA/GTM
+configuration or production collection as verified by these local changes.
+[Google manual page-view guidance](https://developers.google.com/analytics/devguides/collection/ga4/views).
+
+`scripts/test-analytics-security.harness.ts` checks header parity, required
+named Google origins, retained security restrictions, URL redaction, private
+page-view suppression and single-owner app event dispatch offline. It does not
+confirm Google reports, Search Console indexing, traffic counts or rankings.
+
 ## 11. Internationalization
 
 English-only, by choice. The app UI is translated into five locales, but the SEO

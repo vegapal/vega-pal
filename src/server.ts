@@ -65,6 +65,11 @@ export default {
         return await applySecurityHeaders(response);
       }
 
+      if (url.pathname === "/api/analytics/visit" || url.pathname.startsWith("/api/admin/monitoring")) {
+        const { handleMonitoringApiRequest } = await import("@/lib/monitoring/monitoring-api.server");
+        return await applySecurityHeaders(await handleMonitoringApiRequest(request));
+      }
+
       if (
         url.pathname.startsWith("/api/billing") ||
         url.pathname.startsWith("/api/admin/subscription-payments")

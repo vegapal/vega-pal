@@ -103,9 +103,6 @@ function LoginPage() {
       }
       await auth.signIn(normalizedEmail, parsed.data.password, turnstile.enabled ? turnstile.token : undefined);
       trackLogin("email");
-      void import("@/lib/activity/log-user-activity").then(({ logUserActivity }) =>
-        logUserActivity("login", { description: "Signed in" }),
-      );
       navigate({ to: "/dashboard" });
     } catch (err) {
       turnstile.reset();
