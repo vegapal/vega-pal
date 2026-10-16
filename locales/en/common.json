@@ -1,5 +1,6 @@
 {
   "nav": {
+    "invoiceGenerator": "Invoice generator",
     "features": "Features",
     "converter": "Converter",
     "howItWorks": "How it works",

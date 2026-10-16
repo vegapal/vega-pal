@@ -15,6 +15,7 @@
     "description": "Создайте безопасный счёт за секунды, отправьте одну ссылку на оплату — клиент платит USDT, банковским переводом или наличными с профессиональным подтверждением.",
     "createFirstInvoice": "Создать первый счёт",
     "viewDemoInvoice": "Посмотреть демо-счёт",
+    "exploreInvoiceGenerator": "Узнать о генераторе счетов",
     "createNewDocument": "Create new document",
     "goToDashboard": "Go to dashboard",
     "features": {

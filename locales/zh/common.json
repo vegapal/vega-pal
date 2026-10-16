@@ -1,5 +1,6 @@
 {
   "nav": {
+    "invoiceGenerator": "发票生成器",
     "features": "功能",
     "converter": "汇率换算",
     "howItWorks": "使用流程",

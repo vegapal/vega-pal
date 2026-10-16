@@ -161,6 +161,15 @@ function Landing() {
                 </>
               )}
             </div>
+            <p className="mt-4 text-sm">
+              <a
+                href="/invoice-generator"
+                className="inline-flex items-center gap-2 rounded-sm text-on-dark-secondary underline underline-offset-4 transition-colors hover:text-on-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {t("hero.exploreInvoiceGenerator")}
+                <ArrowRight className="h-4 w-4 shrink-0 rtl:rotate-180" aria-hidden />
+              </a>
+            </p>
             <ul className="mt-7 sm:mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2 text-sm text-on-dark-secondary">
               <li className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary shrink-0" />

@@ -12,7 +12,7 @@ const LanguageSwitcher = lazy(() =>
   import("@/components/LanguageSwitcher").then((m) => ({ default: m.LanguageSwitcher })),
 );
 
-const landingNavLinkClass = "hover:text-on-dark transition-colors";
+const landingNavLinkClass = "whitespace-nowrap hover:text-on-dark transition-colors";
 
 function AuthCtaSkeleton({ className }: { className?: string }) {
   return (
@@ -48,7 +48,7 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: {
           <Logo light size="hero" />
         </Link>
         <nav
-          className="hidden md:flex items-center gap-5 lg:gap-7 text-sm text-on-dark-secondary"
+          className="hidden xl:flex items-center gap-4 2xl:gap-6 text-sm text-on-dark-secondary"
           aria-label="Main navigation"
         >
           {PUBLIC_NAV_LINKS.map((link) =>
@@ -64,7 +64,7 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: {
           )}
         </nav>
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2">
             <Suspense fallback={<span className="h-9 w-16" aria-hidden />}>
               <LanguageSwitcher variant="landing" />
             </Suspense>
@@ -98,7 +98,7 @@ export function LandingHeader({ className = "absolute top-0 inset-x-0 z-20" }: {
               </>
             )}
           </div>
-          <div className="flex md:hidden items-center gap-1">
+          <div className="flex xl:hidden items-center gap-1">
             <Suspense fallback={<span className="h-9 w-9" aria-hidden />}>
               <LanguageSwitcher variant="landing" compact />
             </Suspense>
