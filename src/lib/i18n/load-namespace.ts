@@ -1,35 +1,24 @@
-import i18n, { type I18nNamespace } from "./index";
-import { isSupportedLanguage, type SupportedLanguage } from "./languages";
+import i18n, { i18nReady } from "./index";
+import { DEFAULT_LANGUAGE } from "./languages";
+import type { I18nNamespace } from "./namespaces";
 
-export const BOOTSTRAP_NAMESPACES: I18nNamespace[] = ["common", "landing"];
+export { BOOTSTRAP_NAMESPACES } from "./namespaces";
 
-const loadedNamespaces = new Set<I18nNamespace>(BOOTSTRAP_NAMESPACES);
-
-export function markNamespacesLoaded(namespaces: readonly I18nNamespace[]) {
-  for (const ns of namespaces) {
-    loadedNamespaces.add(ns);
-  }
+export function hasNamespaceResources(namespace: I18nNamespace) {
+  return i18n.hasResourceBundle(i18n.language, namespace) ||
+    i18n.hasResourceBundle(DEFAULT_LANGUAGE, namespace);
 }
 
 export async function ensureNamespacesLoaded(namespaces: I18nNamespace[]) {
-  const pending = namespaces.filter((ns) => !loadedNamespaces.has(ns));
-  if (pending.length === 0) return;
-
-  const lng = i18n.language;
-  if (lng !== "en" && isSupportedLanguage(lng)) {
-    const { ensureLanguageLoaded } = await import("./load-locale");
-    await ensureLanguageLoaded(lng);
-  }
-
-  const stillPending = namespaces.filter((ns) => !loadedNamespaces.has(ns));
-  if (stillPending.length === 0) return;
-
-  const loadLng = lng !== "en" && isSupportedLanguage(lng) ? lng : "en";
-  await Promise.all(
-    stillPending.map(async (ns) => {
-      const mod = await import(`../../../locales/${loadLng}/${ns}.json`);
-      i18n.addResourceBundle(loadLng, ns, mod.default, true, true);
-      loadedNamespaces.add(ns);
-    }),
-  );
+  await i18nReady;
+  // i18next tracks bundles by language and namespace, including English fallback.
+  // Its returned promise resolves even on backend errors, so use the callback.
+  await new Promise<void>((resolve, reject) => {
+    void i18n.loadNamespaces(namespaces, (error) => {
+      if (error) reject(error);
+      else if (namespaces.some((ns) => !hasNamespaceResources(ns))) {
+        reject(new Error("Required translations are unavailable."));
+      } else resolve();
+    });
+  });
 }

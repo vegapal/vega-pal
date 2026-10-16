@@ -1,19 +1,17 @@
-import i18n from "./index";
-import { I18N_NAMESPACES } from "./index";
+import i18n, { i18nReady } from "./index";
+import { I18N_NAMESPACES } from "./namespaces";
 import type { SupportedLanguage } from "./languages";
-import { markNamespacesLoaded } from "./load-namespace";
-
-const loaded = new Set<SupportedLanguage>(["en"]);
 
 export function isLanguageBundleLoaded(lng: SupportedLanguage) {
-  return loaded.has(lng);
+  return I18N_NAMESPACES.every((ns) => i18n.hasResourceBundle(lng, ns));
 }
 
 export async function ensureLanguageLoaded(lng: SupportedLanguage) {
-  if (lng === "en" || loaded.has(lng)) return;
+  await i18nReady;
+  if (isLanguageBundleLoaded(lng)) return;
 
   const bundles = await Promise.all(
-    I18N_NAMESPACES.map(async (ns) => {
+    I18N_NAMESPACES.filter((ns) => !i18n.hasResourceBundle(lng, ns)).map(async (ns) => {
       const mod = await import(`../../../locales/${lng}/${ns}.json`);
       return [ns, mod.default] as const;
     }),
@@ -22,7 +20,4 @@ export async function ensureLanguageLoaded(lng: SupportedLanguage) {
   for (const [ns, data] of bundles) {
     i18n.addResourceBundle(lng, ns, data, true, true);
   }
-
-  markNamespacesLoaded(I18N_NAMESPACES);
-  loaded.add(lng);
 }
