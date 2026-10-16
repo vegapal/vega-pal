@@ -21,6 +21,41 @@
       "pendingInvoices": "Pending invoices"
     }
   },
+  "audience": {
+    "title": "Visitors and new accounts",
+    "subtitle": "The last 30 UTC days. Updates every minute while this page is visible.",
+    "refresh": "Refresh",
+    "loading": "Loading visitor and account activity…",
+    "loadError": "Could not refresh activity. Any figures still shown are from the last successful refresh. Please try again.",
+    "notConfiguredTitle": "Monitoring is not available yet",
+    "notConfiguredBody": "Activity monitoring has not been installed or could not be read. Complete setup or restore access to see figures. Unavailable data does not mean zero visitors.",
+    "metrics": {
+      "uniqueVisitors": "Visitors (estimated browsers)",
+      "visits": "Visits",
+      "newAccounts": "New accounts",
+      "signedInUsers": "Users who signed in",
+      "logins": "Sign-ins"
+    },
+    "measurementNote": "Visitors estimate distinct browsers using an identifier that expires after 30 days. A visit is one browser session per UTC day on public pages. Privacy opt-outs and blocked storage are excluded. Sign-ins count successful email logins, not current online users.",
+    "period": "Reporting window starts {{date}}.",
+    "dailyTitle": "Daily activity",
+    "utcNote": "Days use UTC. Collection begins when monitoring is enabled; earlier visitor activity cannot be recovered.",
+    "chartLabel": "Daily visitors, visits, new accounts, and sign-ins for the last 30 UTC days",
+    "viewDailyData": "View daily figures",
+    "date": "Date (UTC)",
+    "notificationsTitle": "New account notifications",
+    "notificationsNote": "Up to 50 account notifications, with unread notifications first. The unread total includes all unread notifications. Read status is shared by administrators.",
+    "unread": "{{count}} unread",
+    "deliveryConfigured": "External alerts are configured for new accounts.",
+    "deliveryPending": "Notifications appear here. Email alerts have not been configured yet.",
+    "emptyNotifications": "No new account notifications yet.",
+    "newAccount": "New account",
+    "unreadNotification": "Unread notification",
+    "markRead": "Mark as read",
+    "saving": "Saving…",
+    "read": "Read",
+    "readError": "Could not mark this notification as read. Please try again."
+  },
   "users": {
     "title": "Users",
     "subtitle": "Manage accounts, plans, and access status.",

@@ -30,8 +30,13 @@ export async function handleSubscriptionsExpireCron(request: Request): Promise<R
 
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // The existing authenticated daily job also retries bounded notification
+    // deliveries and enforces monitoring retention when nobody opens admin.
+    const { dispatchSignupNotifications } = await import("@/lib/monitoring/notification-delivery.server");
+    const notifications = await dispatchSignupNotifications(5);
+    await supabaseAdmin.rpc("get_site_monitoring_summary" as never).abortSignal(AbortSignal.timeout(2_000));
     const expired = await expireDueSubscriptions(supabaseAdmin);
-    return json({ ok: true, expired });
+    return json({ ok: true, expired, notifications });
   } catch (err) {
     console.error("[cron] expire subscriptions failed", err);
     return json({ error: "Could not expire subscriptions." }, 500);

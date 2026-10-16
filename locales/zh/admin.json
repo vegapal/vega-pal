@@ -21,6 +21,41 @@
       "pendingInvoices": "Pending invoices"
     }
   },
+  "audience": {
+    "title": "访客和新账户",
+    "subtitle": "最近 30 个 UTC 日期。此页面可见时每分钟更新。",
+    "refresh": "刷新",
+    "loading": "正在加载访客和账户活动…",
+    "loadError": "无法刷新活动。如仍显示数据，则为上次成功刷新时的数据。请重试。",
+    "notConfiguredTitle": "监测尚不可用",
+    "notConfiguredBody": "活动监测尚未安装或无法读取。完成设置或恢复访问后即可查看统计。数据不可用并不表示访客为零。",
+    "metrics": {
+      "uniqueVisitors": "访客（估算浏览器数）",
+      "visits": "访问次数",
+      "newAccounts": "新账户",
+      "signedInUsers": "已登录用户数",
+      "logins": "登录次数"
+    },
+    "measurementNote": "访客数通过有效期 30 天的浏览器标识估算。每个浏览器会话在每个 UTC 日期访问公共页面计为一次访问。拒绝跟踪或禁用存储的浏览器不计入。登录次数指成功的邮箱登录，并非当前在线人数。",
+    "period": "报告期始于 {{date}}。",
+    "dailyTitle": "每日活动",
+    "utcNote": "日期使用 UTC。启用监测后才开始收集，无法恢复此前的访问记录。",
+    "chartLabel": "最近 30 个 UTC 日期的每日访客、访问、新账户和登录次数",
+    "viewDailyData": "查看每日数据",
+    "date": "日期（UTC）",
+    "notificationsTitle": "新账户通知",
+    "notificationsNote": "最多显示 50 条账户通知，未读通知优先。未读总数包含所有未读通知。管理员之间共享阅读状态。",
+    "unread": "{{count}} 条未读",
+    "deliveryConfigured": "已配置新账户外部提醒。",
+    "deliveryPending": "通知将显示在此处，邮件提醒尚未配置。",
+    "emptyNotifications": "暂无新账户通知。",
+    "newAccount": "新账户",
+    "unreadNotification": "未读通知",
+    "markRead": "标记为已读",
+    "saving": "正在保存…",
+    "read": "已读",
+    "readError": "无法将通知标记为已读，请重试。"
+  },
   "users": {
     "title": "Users",
     "subtitle": "Manage accounts, plans, and access status.",

@@ -18,6 +18,7 @@ import { fetchAdminStats, type AdminStats } from "@/lib/admin/admin-client";
 import { formatAppError } from "@/lib/auth/errors";
 import { ensureNamespacesLoaded } from "@/lib/i18n/load-namespace";
 import { FormError } from "@/components/ui/form-error";
+import { AdminAudiencePanel } from "@/components/admin/AdminAudiencePanel";
 
 export const Route = createFileRoute("/admin/")({
   beforeLoad: () => ensureNamespacesLoaded(["admin"]),
@@ -44,6 +45,8 @@ function AdminDashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">{t("dashboard.title")}</h1>
         <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
       </div>
+
+      <AdminAudiencePanel />
 
       {error ? (
         <FormError message={error} />

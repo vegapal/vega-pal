@@ -8,16 +8,23 @@ import {
   hasGoogleAnalytics,
   hasGoogleTagManager,
 } from "@/lib/analytics/config";
+import {
+  getAnalyticsPageContext,
+  isPublicAnalyticsPath,
+  sanitizeAnalyticsPath,
+} from "@/lib/analytics/privacy";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
 function pushDataLayer(payload: Record<string, unknown>): void {
-  if (!isBrowser()) return;
+  // Direct GA owns app events when present. A second custom-event push can
+  // trigger GTM-managed GA tags and count the same action twice.
+  if (!isBrowser() || !hasGoogleTagManager || hasGoogleAnalytics) return;
   try {
     window.dataLayer = window.dataLayer ?? [];
-    window.dataLayer.push(payload);
+    window.dataLayer.push({ ...payload, ...getAnalyticsPageContext() });
   } catch {
     /* ignore */
   }
@@ -27,9 +34,13 @@ function gtagEvent(
   eventName: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): void {
-  if (!isBrowser() || typeof window.gtag !== "function") return;
+  if (!isBrowser() || !hasGoogleAnalytics || typeof window.gtag !== "function") return;
   try {
-    window.gtag("event", eventName, params);
+    window.gtag("event", eventName, {
+      send_to: GOOGLE_ANALYTICS_ID,
+      ...params,
+      ...getAnalyticsPageContext(),
+    });
   } catch {
     /* ignore */
   }
@@ -40,15 +51,11 @@ function adsConversion(
   params?: Record<string, string | number | boolean | undefined>,
 ): void {
   if (!GOOGLE_ADS_ID || !label) return;
-  gtagEvent("conversion", {
-    send_to: `${GOOGLE_ADS_ID}/${label}`,
-    ...params,
-  });
-  pushDataLayer({
-    event: "ads_conversion",
-    send_to: `${GOOGLE_ADS_ID}/${label}`,
-    ...params,
-  });
+  if (hasGoogleAnalytics) {
+    gtagEvent("conversion", { send_to: `${GOOGLE_ADS_ID}/${label}`, ...params });
+  } else {
+    pushDataLayer({ event: "ads_conversion", send_to: `${GOOGLE_ADS_ID}/${label}`, ...params });
+  }
 }
 
 function analyticsEnabled(): boolean {
@@ -56,18 +63,21 @@ function analyticsEnabled(): boolean {
 }
 
 export function trackPageView(path: string, title?: string): void {
-  if (!isBrowser() || !analyticsEnabled()) return;
+  if (!isBrowser() || !analyticsEnabled() || !isPublicAnalyticsPath(path)) return;
   try {
-    const pageTitle = title ?? document.title;
+    const context = getAnalyticsPageContext(path, title);
+    // Also replace gtag defaults so later automatic events cannot inherit a
+    // query string or document token from document.location.
+    if (hasGoogleAnalytics && typeof window.gtag === "function") {
+      window.gtag("set", context);
+    }
     pushDataLayer({
       event: "page_view",
-      page_path: path,
-      page_title: pageTitle,
+      ...context,
     });
     if (hasGoogleAnalytics && GOOGLE_ANALYTICS_ID) {
       gtagEvent("page_view", {
-        page_path: path,
-        page_title: pageTitle,
+        ...context,
         send_to: GOOGLE_ANALYTICS_ID,
       });
     }
@@ -165,7 +175,7 @@ function trackSimpleEvent(
 function currentPath(): string | undefined {
   if (!isBrowser()) return undefined;
   try {
-    return window.location.pathname;
+    return sanitizeAnalyticsPath(window.location.pathname);
   } catch {
     return undefined;
   }
@@ -177,7 +187,7 @@ export function trackMarketingCta(
   props?: { path?: string; cta?: string; pageSlug?: string },
 ): void {
   trackSimpleEvent(eventName, {
-    path: props?.path ?? currentPath(),
+    path: props?.path ? sanitizeAnalyticsPath(props.path) : currentPath(),
     cta: props?.cta,
     page_slug: props?.pageSlug,
   });
