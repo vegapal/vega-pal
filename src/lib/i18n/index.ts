@@ -5,25 +5,16 @@ import {
   getStoredLanguage,
   isSupportedLanguage,
   persistLanguage,
+  SUPPORTED_LANGUAGES,
 } from "./languages";
-import { BOOTSTRAP_NAMESPACES } from "./load-namespace";
+import { BOOTSTRAP_NAMESPACES } from "./namespaces";
+import { localeBackend } from "./locale-backend";
 
 import enCommon from "../../../locales/en/common.json";
 import enLanding from "../../../locales/en/landing.json";
 import enAuth from "../../../locales/en/auth.json";
-import { markNamespacesLoaded } from "./load-namespace";
 
-export const I18N_NAMESPACES = [
-  "common",
-  "landing",
-  "auth",
-  "dashboard",
-  "invoices",
-  "settings",
-  "admin",
-] as const;
-
-export type I18nNamespace = (typeof I18N_NAMESPACES)[number];
+export { I18N_NAMESPACES, type I18nNamespace } from "./namespaces";
 
 const resources = {
   en: {
@@ -33,12 +24,12 @@ const resources = {
   },
 } as const;
 
-markNamespacesLoaded(["auth"]);
-
-void i18n.use(initReactI18next).init({
+export const i18nReady = i18n.use(localeBackend).use(initReactI18next).init({
   resources,
+  partialBundledLanguages: true,
   lng: DEFAULT_LANGUAGE,
   fallbackLng: DEFAULT_LANGUAGE,
+  supportedLngs: SUPPORTED_LANGUAGES.map((language) => language.code),
   defaultNS: "common",
   ns: [...BOOTSTRAP_NAMESPACES],
   returnEmptyString: false,
